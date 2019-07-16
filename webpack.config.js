@@ -24,7 +24,7 @@
       devServer:{
           contentBase: './dist',
           hot: true,
-          host: '192.168.1.70'
+          host: '0.0.0.0'
       },
       plugins:[
           new webpack.HotModuleReplacementPlugin({

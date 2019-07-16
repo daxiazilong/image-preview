@@ -118,7 +118,11 @@ export default class ImgPreview{
         }
 
         
-        
+        /**
+         * 后续需要用width和height 以及定位实现
+         * transform的模拟效果，因为transform不占据文档流
+         * 当前放大的元素会与其他元素重叠
+         */
         if( scaleX > 1 ){
             curItem.dataset.isEnlargement = 'enlargement';
             // 放大之后 图片相对视口位置不变
@@ -163,23 +167,12 @@ export default class ImgPreview{
 
         if( curItem.dataset.isEnlargement == 'enlargement' ){
             // 放大的时候的移动
-
+            this.handleMoveEnlage(e);
         }else{
             //正常情况下的移动
-
+            this.handleMoveNormal(e)
         }
-        let curX: number = Math.round(e.touches[0].pageX);
-
-        let offset = curX - this.startX;
-        this.imgContainerMoveX += offset;
-        if( this.imgContainerMoveX > this.maxMoveX  ){
-            this.imgContainerMoveX = this.maxMoveX;
-        }else if( this.imgContainerMoveX < this.minMoveX ){
-            this.imgContainerMoveX = this.minMoveX;
-        }
-        this.startX = curX;
-
-        this.imgContainer.style.transform = `translateX(${ this.imgContainerMoveX }px)`
+        
         
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
@@ -232,6 +225,23 @@ export default class ImgPreview{
             this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, this.step )
         }
         
+    }
+    handleMoveNormal( e: TouchEvent & MouseEvent ){
+        let curX: number = Math.round(e.touches[0].pageX);
+
+        let offset = curX - this.startX;
+        this.imgContainerMoveX += offset;
+        if( this.imgContainerMoveX > this.maxMoveX  ){
+            this.imgContainerMoveX = this.maxMoveX;
+        }else if( this.imgContainerMoveX < this.minMoveX ){
+            this.imgContainerMoveX = this.minMoveX;
+        }
+        this.startX = curX;
+
+        this.imgContainer.style.transform = `translateX(${ this.imgContainerMoveX }px)`
+    }
+    handleMoveEnlage( e: TouchEvent & MouseEvent ){
+        console.log('我放大了')
     }
     animate(
         el: HTMLElement,

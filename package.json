@@ -7,6 +7,9 @@
     "dev": "webpack-dev-server --mode=development",
     "build": "webpack --mode=production"
   },
+  "repository": {
+    "url": "https://github.com/daxiazilong/image-preview"
+  },
   "author": "zilong",
   "license": "ISC",
   "dependencies": {},
