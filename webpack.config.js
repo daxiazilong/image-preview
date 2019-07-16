@@ -3,7 +3,8 @@
   const HtmlWebpackPlugin = require('html-webpack-plugin');
 
   const dev = (process.argv[2].split('=')[1]) == "development";
-  const compilePath = dev ? './src/ts/test.ts' :'./src/ts/index.ts'
+  const compilePath = dev ? './src/ts/test.ts' :'./src/ts/index.ts';
+  const output = dev ? 'dist' : 'release';
   module.exports = {
       entry: compilePath,
       module: {
@@ -18,11 +19,12 @@
       },
       output: {
           filename: 'bundle.js',
-          path: path.resolve(__dirname, 'dist')
+          path: path.resolve(__dirname, output)
       },
       devServer:{
           contentBase: './dist',
           hot: true,
+          host: '192.168.1.70'
       },
       plugins:[
           new webpack.HotModuleReplacementPlugin({
