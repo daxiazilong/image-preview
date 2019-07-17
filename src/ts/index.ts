@@ -1,3 +1,5 @@
+import { stat } from "fs";
+
 export default class ImgPreview{
     // 上次点击时间和执行单击事件的计时器
     public lastClick: number = -Infinity;
@@ -144,8 +146,8 @@ export default class ImgPreview{
                                  transform: scale3d(${ scaleX },${ scaleY },1);
                                  transform-origin: ${ mouseX - Number(curItem.dataset.left) }px ${ mouseY - Number(curItem.dataset.top) }px;
                                 `;
-            curItem.dataset.top = `0`;
-            curItem.dataset.left = `0`;
+            curItem.dataset.top = '0';
+            curItem.dataset.left = '0';
         }
 
         
@@ -240,14 +242,20 @@ export default class ImgPreview{
             let top: number = Number(curItem.dataset.top) || 0;
             let left: number = Number(curItem.dataset.left) || 0;
             curItem.dataset.top = (top - (0.025)*centerY ).toString();
-            curItem.dataset.left = (top - (0.025)*centerX ).toString();
+            curItem.dataset.left = (left - (0.025)*centerX ).toString();
             curItem.style.cssText += `
                     width: ${curItemWidth*1.025}px;
                     height: ${curItemHeihgt*1.025}px;
-                    top: ${ top }px;
-                    left: ${ left }px;
+                    top: ${ curItem.dataset.top }px;
+                    left: ${ curItem.dataset.left }px;
             `
-    
+            let stat = document.getElementById('stat');
+            stat.innerText = `
+                width: ${curItemWidth*1.025}px;
+                height: ${curItemHeihgt*1.025}px;
+                top: ${ curItem.dataset.top }px;
+                left: ${ curItem.dataset.left }px;
+            `
 
         }
 
