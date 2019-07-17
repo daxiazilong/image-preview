@@ -5,6 +5,19 @@
   const dev = (process.argv[2].split('=')[1]) == "development";
   const compilePath = dev ? './src/ts/test.ts' :'./src/ts/index.ts';
   const output = dev ? 'dist' : 'release';
+
+  function getIp(){
+    var interfaces = require('os').networkInterfaces();
+    for(var devName in interfaces){
+        var iface = interfaces[devName];
+        for(var i=0;i<iface.length;i++){
+            var alias = iface[i];
+            if(alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal){
+                return alias.address;
+            }
+        }
+    }
+  }
   module.exports = {
       entry: compilePath,
       module: {
@@ -24,7 +37,7 @@
       devServer:{
           contentBase: './dist',
           hot: true,
-          host: '0.0.0.0'
+          host: getIp()
       },
       plugins:[
           new webpack.HotModuleReplacementPlugin({

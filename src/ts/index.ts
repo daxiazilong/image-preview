@@ -3,14 +3,19 @@ export default class ImgPreview{
     public lastClick: number = -Infinity;
     public performerClick: any;
     public threshold: number;//阈值 手指移动超过这个值则切换下一屏幕
-    public startX: number;//手指移动的起始坐标
-    public touchStartX: number;
+    public startX: number;//手指移动时的x起始坐标
+    public touchStartX: number;//手指第一次点击时的x起点坐标
+    public startY: number;//手指移动时的y起始坐标
+    public touchStartY: number; //手指第一次点击时的y起点坐标
     public curIndex: number = 0;//当前第几个图片
     public imgContainerMoveX: number = 0;//图片容器x轴的移动距离
     public imgContainerMoveY: number = 0;//图片容器y轴的移动距离
     public screenWidth: number ;//屏幕宽度
     public imgsNumber: number = 4;//图片数量
     public step: number = 10; //动画每帧的位移
+
+    public curPoint1: { x: number, y: number };//双指缩放时的第一个点
+    public curPoint2: { x: number, y: number };//双指缩放的第二个点
 
     public maxMoveX: number; // 滑动时的最大距离
     public minMoveX: number; // 滑动时的最小距离
@@ -38,7 +43,22 @@ export default class ImgPreview{
         this.ref.addEventListener('touchend',this.handleToucnEnd.bind(this));
     }
     handleTouchStart(e: TouchEvent & MouseEvent){
+        switch( e.touches.length ){
+            case 1:
+                this.handleOneStart(e);
+                break;
+            case 2:
+                this.handleTwoStart(e);
+                break;
+            default:
+                break;
+                
+        }
+        
+    }
+    handleOneStart(e: TouchEvent & MouseEvent ) :void{
         this.touchStartX = this.startX = Math.round(e.touches[0].pageX);
+        this.touchStartY = this.startY = Math.round(e.touches[0].pageY);
 
         let now = (new Date()).getTime();
 
@@ -58,7 +78,18 @@ export default class ImgPreview{
         }
         this.lastClick = (new Date()).getTime();
     }
+    handleTwoStart(e: TouchEvent & MouseEvent ) :void{
 
+        this.curPoint1 = {
+            x: e.touches[0].pageX,
+            y: e.touches[0].pageY
+        };
+        this.curPoint2 = {
+            x: e.touches[1].pageX,
+            y: e.touches[1].pageY
+        };
+
+    }
     handleClick(e:MouseEvent){
         console.log('click')
     }
@@ -157,29 +188,111 @@ export default class ImgPreview{
 
     }
     handleMove(e: TouchEvent & MouseEvent){
+
         clearTimeout( this.performerClick )
         if( this.isAnimating ){
             return;
         } 
 
+        
+        // 双指缩放时的处理
+        if( e.touches.length == 2 ){
+            
+            this.handleZoom( e );
+            return;
+        }
+
         const curItem: HTMLElement = this.imgItems[this.curIndex];
-        const curImg: HTMLImageElement = curItem.querySelector('img');
 
         if( curItem.dataset.isEnlargement == 'enlargement' ){
-            // 放大的时候的移动
+            // 放大的时候的移动是查看放大后的图片
             this.handleMoveEnlage(e);
         }else{
-            //正常情况下的移动
+            //正常情况下的移动是图片左右切换
             this.handleMoveNormal(e)
         }
         
         
     }
+    handleZoom(e: TouchEvent & MouseEvent ) :void{
+        
+        const curItem: HTMLElement = this.imgItems[this.curIndex];
+        const curImg: HTMLImageElement = curItem.querySelector('img');
+
+        const curItemWidth: number = curItem.getBoundingClientRect().width;
+        const curItemHeihgt: number = curItem.getBoundingClientRect().height;
+
+        const distaceBefore: number = 
+            Math.sqrt( Math.pow( this.curPoint1.x - this.curPoint2.x,2) + Math.pow( this.curPoint1.y - this.curPoint2.y,2) );
+
+        const distanceNow: number = 
+            Math.sqrt( Math.pow( e.touches[0].pageX - e.touches[1].pageX,2) + Math.pow( e.touches[0].pageY - e.touches[1].pageY,2) );
+        
+        const centerX: number = ( this.curPoint1.x + this.curPoint2.x ) / 2;
+        const centerY: number = ( this.curPoint1.y + this.curPoint2.y ) / 2;
+       
+        
+        if( distaceBefore > distanceNow ){//缩小
+
+
+        }else if( distaceBefore < distanceNow ){//放大
+            curItem.dataset.isEnlargement = 'enlargement';
+            let top: number = Number(curItem.dataset.top) || 0;
+            let left: number = Number(curItem.dataset.left) || 0;
+            curItem.dataset.top = (top - (0.025)*centerY ).toString();
+            curItem.dataset.left = (top - (0.025)*centerX ).toString();
+            curItem.style.cssText += `
+                    width: ${curItemWidth*1.025}px;
+                    height: ${curItemHeihgt*1.025}px;
+                    top: ${ top }px;
+                    left: ${ left }px;
+            `
+    
+
+        }
+
+
+    }
     handleToucnEnd(e: TouchEvent & MouseEvent){
-        if( this.isAnimating ){
+        if( this.isAnimating || e.changedTouches.length !== 1 ){//动画正在进行时，或者不是单指操作时一律不处理
             return;
         } 
+
+        const curItem: HTMLElement = this.imgItems[this.curIndex];
+
+
+        if( curItem.dataset.isEnlargement == 'enlargement' ){
+            // 放大的时候
+            this.handleTEndEnlarge(e);
+        }else{
+            //正常情况下的
+            this.handleTEndEnNormal(e)
+        }
        
+        
+    }
+    handleTEndEnlarge ( e: TouchEvent & MouseEvent) : void{
+        const curItem: HTMLElement = this.imgItems[this.curIndex];
+        const curImg: HTMLImageElement = curItem.querySelector('img');
+
+        const curItemWidth: number = curItem.getBoundingClientRect().width;
+        const curItemHeihgt: number = curItem.getBoundingClientRect().height;
+
+        const maxTop: number = 0;
+        const maxBottom: number = window.innerHeight - curItemHeihgt;
+        const maxLeft: number = 0;
+        const MaxRight: number = window.innerWidth - curItemWidth;
+
+        const curItemTop: number  = Number(curItem.dataset.top);
+        const curItemLeft: number  = Number(curItem.dataset.left);
+
+        if( curItemTop > maxTop ){
+            this.animate( curItem, 'top', curItemTop, 0, -this.step )
+            curItem.dataset.top = "0"
+        }
+    }
+    handleTEndEnNormal ( e: TouchEvent & MouseEvent) : void{
+        console.log(e)
         let endX: number = Math.round(e.changedTouches[0].pageX);
 
         if(  endX - this.touchStartX >= this.threshold ){//前一张
@@ -241,7 +354,37 @@ export default class ImgPreview{
         this.imgContainer.style.transform = `translateX(${ this.imgContainerMoveX }px)`
     }
     handleMoveEnlage( e: TouchEvent & MouseEvent ){
-        console.log('我放大了')
+        
+        const curItem: HTMLElement = this.imgItems[this.curIndex];
+        const curImg: HTMLImageElement = curItem.querySelector('img');
+
+        const curItemWidth: number = curItem.getBoundingClientRect().width;
+        const curItemHeihgt: number = curItem.getBoundingClientRect().height;
+
+        let curX: number = Math.round(e.touches[0].pageX);
+        let curY: number = Math.round(e.touches[0].pageY);
+
+        let offsetX: number  = curX - this.startX;
+        let offsetY: number  = curY - this.startY;
+
+        const curItemTop: number  = Number(curItem.dataset.top);
+        const curItemLeft: number  = Number(curItem.dataset.left);
+
+        
+
+        let curTop: number = curItemTop + offsetY;
+
+        curItem.style.cssText += `
+            top: ${curTop}px;
+            left: ${ curItemLeft + offsetX }px;
+        `
+        curItem.dataset.top = (curTop).toString();
+        curItem.dataset.left = (curItemLeft + offsetX).toString();
+        this.startX = curX;
+        this.startY = curY;
+
+        
+
     }
     animate(
         el: HTMLElement,
@@ -257,14 +400,27 @@ export default class ImgPreview{
         if( Math.abs(end - start) < Math.abs(step) ){
             step = end - start;
         }
-        el.style.transform = `translateX( ${start + step}px )`;
+        function processStyle(){
+            switch( prop ){
+                case 'transform':
+                        el.style.transform = `translateX( ${start + step}px )`;;
+                        break;
+                case 'top':
+                    el.style.top = `${start + step}px`;
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        processStyle();
         start += step;
         
         let move = () => {
             if( Math.abs(end - start) < Math.abs(step) ){
                 step = end - start;
             }
-            el.style.transform = `translateX( ${start + step}px )`;
+            processStyle();
             start += step;
             if( start !== end ){
                 requestAnimationFrame(move)
@@ -314,6 +470,7 @@ export default class ImgPreview{
                 width: 100%;
                 height: 100%;
                 background: rgba(0,0,0,1);
+                color:#fff;
                 transform: translate3d(0,0,0);
             }
             .${this.prefix}imagePreviewer .${this.prefix}close{
@@ -337,6 +494,8 @@ export default class ImgPreview{
                 display:inline-block;
                 width: 100%;
                 height: auto;
+                font-size: 14px;
+                white-space: normal;
                 transition: transform 0.5s;
             }
             .${this.prefix}item img{
