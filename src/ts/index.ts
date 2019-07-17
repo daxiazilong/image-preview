@@ -233,9 +233,13 @@ export default class ImgPreview{
         const centerX: number = ( this.curPoint1.x + this.curPoint2.x ) / 2;
         const centerY: number = ( this.curPoint1.y + this.curPoint2.y ) / 2;
        
+        this.curPoint1.x = e.touches[0].pageX;
+        this.curPoint1.y = e.touches[0].pageY;
+        this.curPoint2.x = e.touches[1].pageX;
+        this.curPoint2.x = e.touches[1].pageY;
+
         
         if( distaceBefore > distanceNow ){//缩小
-
 
         }else if( distaceBefore < distanceNow ){//放大
             curItem.dataset.isEnlargement = 'enlargement';
