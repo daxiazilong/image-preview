@@ -81,7 +81,6 @@ export default class ImgPreview{
         this.lastClick = (new Date()).getTime();
     }
     handleTwoStart(e: TouchEvent & MouseEvent ) :void{
-
         this.curPoint1 = {
             x: e.touches[0].pageX,
             y: e.touches[0].pageY
@@ -90,7 +89,6 @@ export default class ImgPreview{
             x: e.touches[1].pageX,
             y: e.touches[1].pageY
         };
-
     }
     handleClick(e:MouseEvent){
         console.log('click')
@@ -217,6 +215,17 @@ export default class ImgPreview{
         
     }
     handleZoom(e: TouchEvent & MouseEvent ) :void{
+        if( !this.curPoint1 && !this.curPoint2 ){
+            //双指开始滑动时 若起点还未初始化
+            this.curPoint1 = {
+                x: e.touches[0].pageX,
+                y: e.touches[0].pageY
+            };
+            this.curPoint2 = {
+                x: e.touches[1].pageX,
+                y: e.touches[1].pageY
+            };
+        }
         
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         const curImg: HTMLImageElement = curItem.querySelector('img');
@@ -253,23 +262,23 @@ export default class ImgPreview{
                     top: ${ curItem.dataset.top }px;
                     left: ${ curItem.dataset.left }px;
             `
-            let stat = document.getElementById('stat');
-            stat.innerText = `
-                width: ${curItemWidth*1.025}px;
-                height: ${curItemHeihgt*1.025}px;
-                top: ${ curItem.dataset.top }px;
-                left: ${ curItem.dataset.left }px;
-            `
+            
 
         }
 
 
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
-        if( this.isAnimating || e.changedTouches.length !== 1 ){//动画正在进行时，或者不是单指操作时一律不处理
+        if( this.isAnimating || e.touches.length !== 0 ){//动画正在进行时，或者不是单指操作时一律不处理
             return;
         } 
-
+        
+        if( e.changedTouches.length !== 1 ){
+            
+            return;
+        }
+        this.curPoint1 = undefined;
+        this.curPoint2 = undefined;
         const curItem: HTMLElement = this.imgItems[this.curIndex];
 
 
