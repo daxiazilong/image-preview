@@ -97,7 +97,6 @@ export default class ImgPreview{
         this.lastClick = (new Date()).getTime();
     }
     handleTwoStart(e: TouchEvent & MouseEvent ) :void{
-
         this.curPoint1 = {
             x: e.touches[0].pageX,
             y: e.touches[0].pageY
@@ -106,7 +105,6 @@ export default class ImgPreview{
             x: e.touches[1].pageX,
             y: e.touches[1].pageY
         };
-
     }
     handleClick(e:MouseEvent){
         console.log('click')
