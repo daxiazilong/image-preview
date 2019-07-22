@@ -15,9 +15,14 @@ export default class ImgPreview{
     public screenWidth: number ;//屏幕宽度
     public imgsNumber: number = 4;//图片数量
     public step: number = 10; //动画每帧的位移
+    public zoomScale: number = 0.025;//缩放比例
+    public isZooming: boolean = false; //是否在进行双指缩放
 
     public curPoint1: { x: number, y: number };//双指缩放时的第一个点
     public curPoint2: { x: number, y: number };//双指缩放的第二个点
+    
+    public curStartPoint1: { x: number, y: number };//双指缩放时的第一个起点
+    public curStartPoint2: { x: number, y: number };//双指缩放的第二个起点
 
     public maxMoveX: number; // 滑动时的最大距离
     public minMoveX: number; // 滑动时的最小距离
@@ -35,14 +40,25 @@ export default class ImgPreview{
         this.screenWidth = this.ref.getBoundingClientRect().width;
         this.threshold = this.screenWidth / 4;
         this.imgContainer = this.ref.querySelector(`.${this.prefix}imgContainer`);
-        this.imgItems = this.imgContainer.querySelectorAll(`.${this.prefix}item`)
+        this.imgItems = this.imgContainer.querySelectorAll(`.${this.prefix}item`);
 
+        this.reCordInitialData( this.imgItems );
         this.maxMoveX = this.screenWidth / 2;
         this.minMoveX = -this.screenWidth * (this.imgsNumber - 0.5);
         
         this.ref.addEventListener('touchstart',this.handleTouchStart.bind(this));
         this.ref.addEventListener('touchmove',this.handleMove.bind(this));
         this.ref.addEventListener('touchend',this.handleToucnEnd.bind(this));
+    }
+    reCordInitialData( els:  NodeListOf < HTMLElement > ){
+        
+        els.forEach( ( el,key,parent) => {
+            let styleObj: ClientRect = el.getBoundingClientRect();
+            el.dataset.initialWidth = styleObj.width.toString();
+            el.dataset.initialHeight =  styleObj.height.toString();
+
+        })
+
     }
     handleTouchStart(e: TouchEvent & MouseEvent){
         switch( e.touches.length ){
@@ -129,9 +145,7 @@ export default class ImgPreview{
             scaleX = maxWidth / curItemWidth;
             scaleY = maxHeight / curItemHeight;
        } ;
-        if( scaleX > 1 ){//如果是放大，就把初始值保存下来
-            curItem.dataset.initialWidth = curItemWidth.toString();
-            curItem.dataset.initialHeight = curItemHeight.toString();
+        if( scaleX > 1 ){//放大
 
             curItem.style.cssText = `;
                                  transform: scale3d(${ scaleX },${ scaleY },1);
@@ -190,13 +204,12 @@ export default class ImgPreview{
 
     }
     handleMove(e: TouchEvent & MouseEvent){
-
+        e.preventDefault();
         clearTimeout( this.performerClick )
         if( this.isAnimating ){
             return;
         } 
 
-        
         // 双指缩放时的处理
         if( e.touches.length == 2 ){
             
@@ -217,7 +230,17 @@ export default class ImgPreview{
         
     }
     handleZoom(e: TouchEvent & MouseEvent ) :void{
-        
+        if( !this.isZooming ){
+            this.curStartPoint1 = {
+                x: this.curPoint1.x,
+                y: this.curPoint1.y
+            }
+            this.curStartPoint2 = {
+                x: this.curPoint2.x,
+                y: this.curPoint2.y
+            }
+        }
+        this.isZooming = true;
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         const curImg: HTMLImageElement = curItem.querySelector('img');
 
@@ -230,45 +253,80 @@ export default class ImgPreview{
         const distanceNow: number = 
             Math.sqrt( Math.pow( e.touches[0].pageX - e.touches[1].pageX,2) + Math.pow( e.touches[0].pageY - e.touches[1].pageY,2) );
         
-        const centerX: number = ( this.curPoint1.x + this.curPoint2.x ) / 2;
-        const centerY: number = ( this.curPoint1.y + this.curPoint2.y ) / 2;
-       
+        let top: number = Number(curItem.dataset.top) || 0;
+        let left: number = Number(curItem.dataset.left) || 0;
+        
+        const centerX: number = ( this.curStartPoint1.x + this.curStartPoint2.x ) / 2 - left;
+        const centerY: number = ( this.curStartPoint1.y + this.curStartPoint2.y ) / 2 - top;
+        
         this.curPoint1.x = e.touches[0].pageX;
         this.curPoint1.y = e.touches[0].pageY;
         this.curPoint2.x = e.touches[1].pageX;
-        this.curPoint2.x = e.touches[1].pageY;
+        this.curPoint2.y = e.touches[1].pageY;
+        let stat = document.getElementById('stat');
+            stat.innerText = `
+            e.touches[0].pageX: ${e.touches[0].pageX}px;
+            e.touches[0].clientX: ${e.touches[0].clientX}px;
+            this.isZooming: ${this.isZooming}
+            `
 
-        
+        /**
+         * 踩坑记：
+         * 因为双指所确定的中心坐标 其参考起点始终是
+         * 相对于视口的，那么在图片不断放大之后 其所确定的中心坐标必然会较实际有所误差
+         * 所以这里在  放大的时候 同时需要在xy坐标加上其实际已经偏移的距离
+         * 因为放大之后偏移值必为负值，所以要减 负负得正嘛
+         */
         if( distaceBefore > distanceNow ){//缩小
+            const centerX: number = ( this.curStartPoint1.x + this.curStartPoint2.x ) / 2 - left;
+            const centerY: number = ( this.curStartPoint1.y + this.curStartPoint2.y ) / 2 - top;
+            
+            curItem.dataset.top = (top + (this.zoomScale)*centerY ).toString();
+            curItem.dataset.left = (left + (this.zoomScale)*centerX ).toString();
+            let width: number = curItemWidth * (1 - this.zoomScale);
+            let height: number = curItemHeihgt * (1 - this.zoomScale);
+            if( width <= Number(curItem.dataset.initialWidth) ){
+                width = Number(curItem.dataset.initialWidth);
+                height = Number(curItem.dataset.initialHeight)
+                curItem.dataset.top = '0';
+                curItem.dataset.left = '0';
+                curItem.dataset.isEnlargement = 'shrink';
+            }
+
+            curItem.style.cssText += `
+                    width: ${width}px;
+                    height: ${height}px;
+                    top: ${ curItem.dataset.top }px;
+                    left: ${ curItem.dataset.left }px;
+                `
 
         }else if( distaceBefore < distanceNow ){//放大
+            
             curItem.dataset.isEnlargement = 'enlargement';
-            let top: number = Number(curItem.dataset.top) || 0;
-            let left: number = Number(curItem.dataset.left) || 0;
-            curItem.dataset.top = (top - (0.025)*centerY ).toString();
-            curItem.dataset.left = (left - (0.025)*centerX ).toString();
+            
+            curItem.dataset.top = (top - (this.zoomScale)*centerY ).toString();
+            curItem.dataset.left = (left - (this.zoomScale)*centerX ).toString();
             curItem.style.cssText += `
-                    width: ${curItemWidth*1.025}px;
-                    height: ${curItemHeihgt*1.025}px;
+                    width: ${curItemWidth*(1+this.zoomScale)}px;
+                    height: ${curItemHeihgt*(1+this.zoomScale)}px;
                     top: ${ curItem.dataset.top }px;
                     left: ${ curItem.dataset.left }px;
             `
-            let stat = document.getElementById('stat');
-            stat.innerText = `
-                width: ${curItemWidth*1.025}px;
-                height: ${curItemHeihgt*1.025}px;
-                top: ${ curItem.dataset.top }px;
-                left: ${ curItem.dataset.left }px;
-            `
+            
 
         }
 
 
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
-        if( this.isAnimating || e.changedTouches.length !== 1 ){//动画正在进行时，或者不是单指操作时一律不处理
+        if( this.isAnimating || e.changedTouches.length !== 1  ){//动画正在进行时，或者不是单指操作时一律不处理
             return;
         } 
+
+        if( e.touches.length == 0 ){
+            // someOperate;
+            this.isZooming = false;
+        }
 
         const curItem: HTMLElement = this.imgItems[this.curIndex];
 
@@ -299,8 +357,8 @@ export default class ImgPreview{
         const curItemLeft: number  = Number(curItem.dataset.left);
 
         if( curItemTop > maxTop ){
-            this.animate( curItem, 'top', curItemTop, 0, -this.step )
-            curItem.dataset.top = "0"
+            this.animate( curItem, 'top', curItemTop, 0, -this.step );
+            curItem.dataset.top = "0";
         }
     }
     handleTEndEnNormal ( e: TouchEvent & MouseEvent) : void{
@@ -457,7 +515,9 @@ export default class ImgPreview{
     genFrame(){
         let html : string = `
             <div class="${this.prefix}imagePreviewer">
-                <svg class="${this.prefix}close" t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430"><path d="M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z" fill="#ffffff" p-id="5431"></path><path d="M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z" fill="#ffffff" p-id="5432"></path></svg>
+                <div class="${this.prefix}close">
+                    <svg t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430"><path d="M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z" fill="#ffffff" p-id="5431"></path><path d="M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z" fill="#ffffff" p-id="5432"></path></svg>
+                </div>
                 <div class="${this.prefix}imgContainer">
                     <div class="${this.prefix}item">
                         <img src="/testImage/main_body3.png">
@@ -491,6 +551,11 @@ export default class ImgPreview{
                 right:20px;
                 width: 22px;
                 height: 22px;
+                background: #000;
+            }
+            .${this.prefix}imagePreviewer .${this.prefix}close svg{
+                width: 100%;
+                height: 100%;
             }
             .${this.prefix}imagePreviewer ${this.prefix}.close.${this.prefix}scroll{
                 height: 0;
