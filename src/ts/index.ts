@@ -1,7 +1,7 @@
-import { stat } from "fs";
 
 export default class ImgPreview{
     // 上次点击时间和执行单击事件的计时器
+    [key:string]: any;
     public lastClick: number = -Infinity;
     public performerClick: any;
     public threshold: number;//阈值 手指移动超过这个值则切换下一屏幕
@@ -33,6 +33,12 @@ export default class ImgPreview{
     public ref: HTMLElement ;
     public imgContainer: HTMLElement;
     public imgItems: NodeListOf < HTMLElement >;
+
+    public operateMaps: {
+        [key: string]: string
+    } = {
+        rotateLeft: 'handleRotateLeft'
+    }
     
     constructor( options: Object ){
         this.genFrame();
@@ -75,9 +81,18 @@ export default class ImgPreview{
         
     }
     handleOneStart(e: TouchEvent & MouseEvent ) :void{
+        /**
+         * 这里把操作派发
+         */
+        const type : string = (<HTMLElement>(e.target)).dataset.type;
+    
+        if( this.operateMaps[type] ){
+            this[this.operateMaps[type]](e);
+            return
+        }
         this.touchStartX = this.startX = Math.round(e.touches[0].pageX);
         this.touchStartY = this.startY = Math.round(e.touches[0].pageY);
-
+        
         let now = (new Date()).getTime();
 
         if( now - this.lastClick < 500 ){
@@ -95,6 +110,9 @@ export default class ImgPreview{
             
         }
         this.lastClick = (new Date()).getTime();
+    }
+    handleRotateLeft(e: TouchEvent & MouseEvent ) :void{
+        console.log('明天写把')
     }
     handleTwoStart(e: TouchEvent & MouseEvent ) :void{
         this.curPoint1 = {
@@ -360,7 +378,6 @@ export default class ImgPreview{
         }
     }
     handleTEndEnNormal ( e: TouchEvent & MouseEvent) : void{
-        console.log(e)
         let endX: number = Math.round(e.changedTouches[0].pageX);
 
         if(  endX - this.touchStartX >= this.threshold ){//前一张
@@ -530,6 +547,14 @@ export default class ImgPreview{
                         <img src="/testImage/more20190627.png">
                     </div>
                 </div>
+                <div class="${this.prefix}bottom">
+                    <div class="${this.prefix}item ">
+                        <svg data-type="rotateLeft" t="1563884004339" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1099" width="200" height="200"><path d="M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z" p-id="1100" fill="#ffffff"></path></svg>
+                    </div>
+                    <div class="${this.prefix}item">
+                        <svg data-type="rotateRight" t="1563884064737" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1251" width="200" height="200"><path d="M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z" p-id="1252" fill="#ffffff"></path></svg>
+                    </div>
+                </div>
             </div>
         `;
         let style: string =`
@@ -573,9 +598,28 @@ export default class ImgPreview{
                 white-space: normal;
                 transition: transform 0.5s;
             }
-            .${this.prefix}item img{
+            .${this.prefix}imagePreviewer .${this.prefix}item img{
                 width: 100%;
                 height: auto;
+            }
+            .${this.prefix}imagePreviewer .${this.prefix}bottom{
+                position: absolute;
+                bottom: 0;
+                left: 20px;
+                right: 20px;
+                padding:10px;
+                text-align: center;
+                border-top: 1px solid rgba(255, 255, 255, .2);
+            }
+            .${this.prefix}imagePreviewer .${this.prefix}bottom .${this.prefix}item{
+                display:inline-block;
+                width: 20px;
+                height: 20px;
+                margin-right: 10px;
+            }
+            .${this.prefix}imagePreviewer .${this.prefix}bottom .${this.prefix}item svg{
+                width: 100%;
+                height: 100%;
             }
         `;
         this.ref = document.createElement('div');
