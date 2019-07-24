@@ -112,7 +112,22 @@ export default class ImgPreview{
         this.lastClick = (new Date()).getTime();
     }
     handleRotateLeft(e: TouchEvent & MouseEvent ) :void{
-        console.log('明天写把')
+        const curItem: HTMLElement = this.imgItems[this.curIndex];
+        let rotateDeg:number;
+
+        if( curItem.dataset.rotateDeg ){
+            rotateDeg = Number(curItem.dataset.rotateDeg)
+        }else{
+            rotateDeg = 0
+        }
+        rotateDeg -= 90;
+
+        curItem.style.cssText += `
+            transition: transform 0.5s;
+            transform: rotateZ( ${rotateDeg}deg );
+        `
+        curItem.dataset.rotateDeg = rotateDeg.toString();
+
     }
     handleTwoStart(e: TouchEvent & MouseEvent ) :void{
         this.curPoint1 = {
@@ -128,6 +143,8 @@ export default class ImgPreview{
         console.log('click')
     }
     handleDoubleClick(e: TouchEvent & MouseEvent){
+        if( this.isAnimating ) return;
+        this.isAnimating = true;
         let mouseX: number = e.touches[0].pageX;
         let mouseY: number = e.touches[0].pageY;
 
@@ -137,6 +154,7 @@ export default class ImgPreview{
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeight: number = curItem.getBoundingClientRect().height;
 
+        let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
 
         let maxWidth: number ;
         if( curImg.naturalWidth > curItemWidth ){
@@ -155,25 +173,52 @@ export default class ImgPreview{
         let scaleX: number ;
         let scaleY: number ;
        if(curItem.dataset.isEnlargement == 'enlargement'){
-            scaleX =  Number(curItem.dataset.initialWidth) / curItemWidth;
-            scaleY = Number(curItem.dataset.initialHeight) / curItemHeight;
+           switch( Math.abs(rotateDeg % 360) ){
+                case 0:
+                case 180:
+                    scaleX =  Number(curItem.dataset.initialWidth) / curItemWidth;
+                    scaleY = Number(curItem.dataset.initialHeight) / curItemHeight;
+                    break;
+                case 90:
+                case 270:
+                    scaleX =  Number(curItem.dataset.initialWidth) / curItemHeight;
+                    scaleY = Number(curItem.dataset.initialHeight) / curItemWidth;
+                    break;
+                default:
+                    break;
+            }
+            
        }else{
-            scaleX = maxWidth / curItemWidth;
-            scaleY = maxHeight / curItemHeight;
+           switch( Math.abs(rotateDeg % 360) ){
+                case 0:
+                case 180:
+                    scaleX = maxWidth / curItemWidth;
+                    scaleY = maxHeight / curItemHeight;
+                    break;
+                case 90:
+                case 270:
+                    scaleX = maxWidth / curItemHeight;
+                    scaleY = maxHeight / curItemWidth;
+                    break;
+                default:
+                    break;
+            }   
+            
        } ;
         if( scaleX > 1 ){//放大
-
+            
             curItem.style.cssText = `;
-                                 transform: scale3d(${ scaleX },${ scaleY },1);
-                                 transform-origin: ${ mouseX }px ${ mouseY }px;
-                                `
+                transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
+                transform-origin: ${ mouseX }px ${ mouseY }px;
+            `
+            
         }else{
             curItem.style.cssText = `;
                                  top:${curItem.dataset.top}px;
                                  left:${curItem.dataset.left}px;
                                  width: ${maxWidth}px;
                                  height: ${maxHeight}px;
-                                 transform: scale3d(${ scaleX },${ scaleY },1);
+                                 transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
                                  transform-origin: ${ mouseX - Number(curItem.dataset.left) }px ${ mouseY - Number(curItem.dataset.top) }px;
                                 `;
             curItem.dataset.top = '0';
@@ -189,28 +234,40 @@ export default class ImgPreview{
         if( scaleX > 1 ){
             curItem.dataset.isEnlargement = 'enlargement';
             // 放大之后 图片相对视口位置不变
-            let scaledX: number = mouseX * scaleX;
-            let scaledY: number = mouseY * scaleY;
-        
+
+            let scaledX: number ;
+            let scaledY: number ;
+            if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
+                scaledX = mouseX * scaleY;
+                scaledY = mouseY * scaleX;
+            }else{
+               scaledX = mouseX * scaleX;
+               scaledY = mouseY * scaleY;
+            }
+
             setTimeout(() => {
                 curItem.style.cssText = `;
+                                    transform: rotateZ(${rotateDeg}deg);
                                     width: ${ maxWidth }px;
                                     height: ${ maxHeight }px;
-                                    left: -${ scaledX -mouseX  }px;
+                                    left: -${ scaledX - mouseX  }px;
                                     top: -${ scaledY - mouseY  }px;
                                     transition: none;
                                     `;
                 curItem.dataset.top = `-${ scaledY - mouseY  }`;
                 curItem.dataset.left = `-${ scaledX -mouseX  }`;
+                this.isAnimating = false;
             },500)
         }else{
             curItem.dataset.isEnlargement = 'shrink';
             setTimeout(() => {
                 curItem.style.cssText = `;
-                                    transition: none;
+                                    transform: rotateZ(${rotateDeg}deg);
                                     width: ${curItem.dataset.initialWidth}px;
                                     height: ${curItem.dataset.initialHeight}px;
+                                    transition: none;
                                     `
+                this.isAnimating = false;
             },500)
         }
 
@@ -280,11 +337,14 @@ export default class ImgPreview{
         this.curPoint2.x = e.touches[1].pageX;
         this.curPoint2.y = e.touches[1].pageY;
         let stat = document.getElementById('stat');
-            stat.innerText = `
+        stat.innerText = `
             e.touches[0].pageX: ${e.touches[0].pageX}px;
             e.touches[0].clientX: ${e.touches[0].clientX}px;
             this.isZooming: ${this.isZooming}
-            `
+            curItem.dataset.rotateDeg: ${curItem.dataset.rotateDeg}
+        `;
+
+        let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0')
 
         /**
          * 踩坑记：
@@ -308,13 +368,35 @@ export default class ImgPreview{
                 curItem.dataset.left = '0';
                 curItem.dataset.isEnlargement = 'shrink';
             }
-
-            curItem.style.cssText += `
-                    width: ${width}px;
-                    height: ${height}px;
-                    top: ${ curItem.dataset.top }px;
-                    left: ${ curItem.dataset.left }px;
-                `
+            /**
+             * 采坑记：
+             * 旋转 90 270 这些体位的时候 ，width和height得交换下位置
+             * 下同
+             */
+            switch( Math.abs(rotateDeg % 360) ){
+                case 0:
+                case 180:
+                    curItem.style.cssText += `
+                            width: ${width}px;
+                            height: ${height}px;
+                            top: ${ curItem.dataset.top }px;
+                            left: ${ curItem.dataset.left }px;
+                    `
+                    break;
+                case 90:
+                case 270:
+                    curItem.style.cssText += `
+                            height: ${width}px;
+                            width: ${height}px;
+                            left: ${ curItem.dataset.top }px;
+                            top: ${ curItem.dataset.left }px;
+                    `
+                    ;
+                    break;
+                default:
+                    break;
+            }
+            
 
         }else if( distaceBefore < distanceNow ){//放大
             
@@ -322,12 +404,31 @@ export default class ImgPreview{
             
             curItem.dataset.top = (top - (this.zoomScale)*centerY ).toString();
             curItem.dataset.left = (left - (this.zoomScale)*centerX ).toString();
-            curItem.style.cssText += `
-                    width: ${curItemWidth*(1+this.zoomScale)}px;
-                    height: ${curItemHeihgt*(1+this.zoomScale)}px;
-                    top: ${ curItem.dataset.top }px;
-                    left: ${ curItem.dataset.left }px;
-            `
+
+            switch( Math.abs(rotateDeg % 360) ){
+                case 0:
+                case 180:
+                    curItem.style.cssText += `
+                            width: ${curItemWidth*(1+this.zoomScale)}px;
+                            height: ${curItemHeihgt*(1+this.zoomScale)}px;
+                            top: ${ curItem.dataset.top }px;
+                            left: ${ curItem.dataset.left }px;
+                    `
+                    break;
+                case 90:
+                case 270:
+                    curItem.style.cssText += `
+                            height: ${curItemWidth*(1+this.zoomScale)}px;
+                            width: ${curItemHeihgt*(1+this.zoomScale)}px;
+                            left: ${ curItem.dataset.top }px;
+                            top: ${ curItem.dataset.left }px;
+                    `
+                    ;
+                    break;
+                default:
+                    break;
+            }
+            
             
 
         }
@@ -616,6 +717,7 @@ export default class ImgPreview{
                 width: 20px;
                 height: 20px;
                 margin-right: 10px;
+                cursor:pointer;
             }
             .${this.prefix}imagePreviewer .${this.prefix}bottom .${this.prefix}item svg{
                 width: 100%;
