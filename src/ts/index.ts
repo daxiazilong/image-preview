@@ -206,11 +206,42 @@ export default class ImgPreview{
             
        } ;
         if( scaleX > 1 ){//放大
+
+            /**
+             * transform-origin 的参考点始终时对其初始位置来说的
+             */
             
-            curItem.style.cssText = `;
-                transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                transform-origin: ${ mouseX }px ${ mouseY }px;
-            `
+            switch( Math.abs(rotateDeg % 360) ){
+                case 0:
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
+                        transform-origin: ${ mouseX }px ${ mouseY }px;
+                    `;
+                    break;
+                case 180:
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
+                        transform-origin: ${ mouseX }px ${ mouseY }px;
+                    `;
+                    break;
+                case 90:
+                    let r:number = Math.sqrt( mouseX*mouseX + mouseY* mouseY);
+                    let initialX:number;
+                    let initialY:number;
+                    initialX = r * Math.cos(90);
+                    /**明日继续 */
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
+                        transform-origin: ${ mouseX }px ${ window.innerHeight - mouseY }px;
+                    `;
+                    break;
+                case 270:
+                    scaleX = maxWidth / curItemHeight;
+                    scaleY = maxHeight / curItemWidth;
+                    break;
+                default:
+                    break;
+            }   
             
         }else{
             curItem.style.cssText = `;
