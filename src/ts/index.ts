@@ -155,6 +155,7 @@ export default class ImgPreview{
         const curItemHeight: number = curItem.getBoundingClientRect().height;
 
         // 以下为旋转之后校正transform-origin时需要用到的参数
+        const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
         const curItemViewBottom: number = curItem.getBoundingClientRect().bottom;//当前元素距离视口的bottom
         const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
 
@@ -231,7 +232,7 @@ export default class ImgPreview{
                 case 90:
                     curItem.style.cssText = `;
                         transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                        transform-origin: ${ curItemViewBottom - mouseY }px ${ mouseX - curItemViewLeft }px;
+                        transform-origin: ${ curItemViewBottom - mouseY  }px ${ mouseX - curItemViewLeft  }px;
                     `;
                     break;
                 case 270:
