@@ -154,6 +154,10 @@ export default class ImgPreview{
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeight: number = curItem.getBoundingClientRect().height;
 
+        // 以下为旋转之后校正transform-origin时需要用到的参数
+        const curItemViewBottom: number = curItem.getBoundingClientRect().bottom;//当前元素距离视口的bottom
+        const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
+
         let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
 
         let maxWidth: number ;
@@ -225,14 +229,9 @@ export default class ImgPreview{
                     `;
                     break;
                 case 90:
-                    let r:number = Math.sqrt( mouseX*mouseX + mouseY* mouseY);
-                    let initialX:number;
-                    let initialY:number;
-                    initialX = r * Math.cos(90);
-                    /**明日继续 */
                     curItem.style.cssText = `;
                         transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                        transform-origin: ${ mouseX }px ${ window.innerHeight - mouseY }px;
+                        transform-origin: ${ curItemViewBottom - mouseY }px ${ mouseX - curItemViewLeft }px;
                     `;
                     break;
                 case 270:
@@ -666,7 +665,7 @@ export default class ImgPreview{
                     <svg t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430"><path d="M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z" fill="#ffffff" p-id="5431"></path><path d="M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z" fill="#ffffff" p-id="5432"></path></svg>
                 </div>
                 <div class="${this.prefix}imgContainer">
-                    <div class="${this.prefix}item">
+                    <div class="${this.prefix}item" id="test">
                         <img src="/testImage/main_body3.png">
                     </div>
                     <div class="${this.prefix}item">
