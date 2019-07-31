@@ -1,4 +1,5 @@
 
+
 export default class ImgPreview{
     // 上次点击时间和执行单击事件的计时器
     [key:string]: any;
@@ -158,6 +159,7 @@ export default class ImgPreview{
         const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
         const curItemViewBottom: number = curItem.getBoundingClientRect().bottom;//当前元素距离视口的bottom
         const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
+        const curItemViewRight: number = curItem.getBoundingClientRect().right;//当前元素距离视口的left
 
         let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
 
@@ -210,11 +212,27 @@ export default class ImgPreview{
             }   
             
        } ;
+       /**
+        * 移动端自己调试要显示的数据
+        */
+       let stat = document.getElementById('stat');
+
         if( scaleX > 1 ){//放大
 
             /**
              * transform-origin 的参考点始终时对其初始位置来说的
              */
+            let scaledX: number ;
+            let scaledY: number ;
+            if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
+                let originY: number =  (mouseX - curItemViewLeft);
+                let originX: number =  (curItemViewBottom - mouseY);
+                scaledX = originX * scaleY;
+                scaledY = originY * scaleX;
+            }else{
+               scaledX = mouseX * scaleX;
+               scaledY = mouseY * scaleY;
+            }
             
             switch( Math.abs(rotateDeg % 360) ){
                 case 0:
@@ -222,6 +240,7 @@ export default class ImgPreview{
                         transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
                         transform-origin: ${ mouseX }px ${ mouseY }px;
                     `;
+                    console.log ( mouseX, mouseY) 
                     break;
                 case 180:
                     curItem.style.cssText = `;
@@ -230,11 +249,21 @@ export default class ImgPreview{
                     `;
                     break;
                 case 90:
+                    //https://www.cnblogs.com/profession/p/8353428.html
                     curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                        transform-origin: ${ curItemViewBottom - mouseY  }px ${ mouseX - curItemViewLeft  }px;
+                        transform: 
+                            scale3d(${ scaleX },${ scaleY },1) 
+                            rotateZ(${rotateDeg}deg) 
+                            translate3d( ${ ( scaleY - 1 )* mouseY }px ,${ ( scaleX - 1 )* mouseX }px , 0)
+                        ;
+                        transform-origin: center  center;
                     `;
+                    console.log(`translate3d( -${ ( scaleX - 1 )* mouseX }px ,-${ ( scaleY - 1 )* mouseY }px , 0)` )
+                    console.log( mouseX,mouseY )
+
+                    return;
                     break;
+                    
                 case 270:
                     scaleX = maxWidth / curItemHeight;
                     scaleY = maxHeight / curItemWidth;
@@ -367,13 +396,7 @@ export default class ImgPreview{
         this.curPoint1.y = e.touches[0].pageY;
         this.curPoint2.x = e.touches[1].pageX;
         this.curPoint2.y = e.touches[1].pageY;
-        let stat = document.getElementById('stat');
-        stat.innerText = `
-            e.touches[0].pageX: ${e.touches[0].pageX}px;
-            e.touches[0].clientX: ${e.touches[0].clientX}px;
-            this.isZooming: ${this.isZooming}
-            curItem.dataset.rotateDeg: ${curItem.dataset.rotateDeg}
-        `;
+        
 
         let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0')
 
