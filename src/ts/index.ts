@@ -227,8 +227,8 @@ export default class ImgPreview{
             if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
                 let originY: number =  (mouseX - curItemViewLeft);
                 let originX: number =  (curItemViewBottom - mouseY);
-                scaledX = originX * scaleY;
-                scaledY = originY * scaleX;
+                scaledX = originX * scaleX;
+                scaledY = originY * scaleY;
             }else{
                scaledX = mouseX * scaleX;
                scaledY = mouseY * scaleY;
@@ -249,19 +249,19 @@ export default class ImgPreview{
                     `;
                     break;
                 case 90:
-                    //https://www.cnblogs.com/profession/p/8353428.html
-                    curItem.style.cssText = `;
-                        transform: 
-                            scale3d(${ scaleX },${ scaleY },1) 
-                            rotateZ(${rotateDeg}deg) 
-                            translate3d( ${ ( scaleY - 1 )* mouseY }px ,${ ( scaleX - 1 )* mouseX }px , 0)
-                        ;
-                        transform-origin: center  center;
-                    `;
-                    console.log(`translate3d( -${ ( scaleX - 1 )* mouseX }px ,-${ ( scaleY - 1 )* mouseY }px , 0)` )
-                    console.log( mouseX,mouseY )
+                    const centerX: number =  curItemHeight / 2;
+                    const centerY: number = curItemWidth / 2;
 
-                    return;
+                    curItem.style.cssText = `;
+                        transform-origin: ${ centerX }px ${ centerY }px ; 
+                        transform: 
+                            rotateZ(${rotateDeg}deg) 
+                            scale3d(${ scaleX },${ scaleY },1) 
+                            translate3d( ${ (mouseY - centerY) / scaleY  }px,${ -(mouseX - centerX) / scaleX }px,0)
+                        ;
+                        
+                    `;
+            
                     break;
                     
                 case 270:
@@ -752,6 +752,7 @@ export default class ImgPreview{
                 font-size: 14px;
                 white-space: normal;
                 transition: transform 0.5s;
+                border: 1px solid red;
             }
             .${this.prefix}imagePreviewer .${this.prefix}item img{
                 width: 100%;
