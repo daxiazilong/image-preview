@@ -221,12 +221,14 @@ export default class ImgPreview{
 
             /**
              * transform-origin 的参考点始终时对其初始位置来说的
+             * scale之后的元素, translate 的位移等于 位移 * scale
              */
             let scaledX: number ;
             let scaledY: number ;
+            let originY: number =  (mouseX - curItemViewLeft);
+            let originX: number =  (curItemViewBottom - mouseY);
             if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-                let originY: number =  (mouseX - curItemViewLeft);
-                let originX: number =  (curItemViewBottom - mouseY);
+                
                 scaledX = originX * scaleY;
                 scaledY = originY * scaleX;
             }else{
@@ -254,13 +256,13 @@ export default class ImgPreview{
                         transform: 
                             scale3d(${ scaleX },${ scaleY },1) 
                             rotateZ(${rotateDeg}deg) 
-                            translate3d( ${ ( scaleY - 1 )* mouseY }px ,${ ( scaleX - 1 )* mouseX }px , 0)
                         ;
+                        top: ${ (( scaleY - 1 )*mouseY)/scaleY }px ;
+                        left:${ ((scaleX - 1 )*mouseX) /scaleX}px;
                         transform-origin: center  center;
                     `;
                     console.log(`translate3d( -${ ( scaleX - 1 )* mouseX }px ,-${ ( scaleY - 1 )* mouseY }px , 0)` )
                     console.log( mouseX,mouseY )
-
                     return;
                     break;
                     
