@@ -163,19 +163,36 @@ export default class ImgPreview{
 
         let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
 
-        let maxWidth: number ;
-        if( curImg.naturalWidth > curItemWidth ){
-            maxWidth = curImg.naturalWidth
-        }else{
-             maxWidth = curItemWidth
-        }
+        let toWidth: number ;
+        let toHeight: number ;
 
-        let maxHeight: number ;
-        if( curImg.naturalHeight > curItemHeight ){
-            maxHeight = curImg.naturalHeight;
+        if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
+            if( curImg.naturalWidth > curItemHeight ){
+                toWidth = curImg.naturalHeight
+            }else{
+                toWidth = curItemHeight
+            }
+            if( curImg.naturalHeight > curItemWidth ){
+                toHeight = curImg.naturalWidth;
+            }else{
+                toHeight = curItemWidth;
+            }
         }else{
-            maxHeight = curItemHeight;
+            if( curImg.naturalWidth > curItemWidth ){
+                toWidth = curImg.naturalWidth
+            }else{
+                toWidth = curItemWidth
+            }
+            if( curImg.naturalHeight > curItemHeight ){
+                toHeight = curImg.naturalHeight;
+            }else{
+                toHeight = curItemHeight;
+            }
         }
+        
+
+        
+        
 
         let scaleX: number ;
         let scaleY: number ;
@@ -195,21 +212,11 @@ export default class ImgPreview{
                     break;
             }
             
+            
        }else{
-           switch( Math.abs(rotateDeg % 360) ){
-                case 0:
-                case 180:
-                    scaleX = maxWidth / curItemWidth;
-                    scaleY = maxHeight / curItemHeight;
-                    break;
-                case 90:
-                case 270:
-                    scaleX = maxWidth / curItemHeight;
-                    scaleY = maxHeight / curItemWidth;
-                    break;
-                default:
-                    break;
-            }   
+
+            scaleX = toWidth / curItemWidth;
+            scaleY = toHeight / curItemHeight; 
             
        } ;
        /**
@@ -223,18 +230,6 @@ export default class ImgPreview{
              * transform-origin 的参考点始终时对其初始位置来说的
              * scale之后的元素, translate 的位移等于 位移 * scale
              */
-            let scaledX: number ;
-            let scaledY: number ;
-            let originY: number =  (mouseX - curItemViewLeft);
-            let originX: number =  (curItemViewBottom - mouseY);
-            if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-                
-                scaledX = originX * scaleY;
-                scaledY = originY * scaleX;
-            }else{
-               scaledX = mouseX * scaleX;
-               scaledY = mouseY * scaleY;
-            }
             
             switch( Math.abs(rotateDeg % 360) ){
                 case 0:
@@ -251,38 +246,76 @@ export default class ImgPreview{
                     `;
                     break;
                 case 90:
-                    //https://www.cnblogs.com/profession/p/8353428.html
+                    const centerX: number =  curItemHeight / 2;
+                    const centerY: number = curItemWidth / 2;
+
                     curItem.style.cssText = `;
+                        transform-origin: ${ centerX }px ${ centerY }px ; 
                         transform: 
-                            scale3d(${ scaleX },${ scaleY },1) 
                             rotateZ(${rotateDeg}deg) 
+                            scale3d(${ scaleX },${ scaleY },1) 
+                            translate3d( ${ (mouseY - centerY) / scaleY  }px,${ -(mouseX - centerX) / scaleX }px,0)
                         ;
-                        top: ${ (( scaleY - 1 )*mouseY)/scaleY }px ;
-                        left:${ ((scaleX - 1 )*mouseX) /scaleX}px;
-                        transform-origin: center  center;
+                        
                     `;
-                    console.log(`translate3d( -${ ( scaleX - 1 )* mouseX }px ,-${ ( scaleY - 1 )* mouseY }px , 0)` )
-                    console.log( mouseX,mouseY )
-                    return;
+            
                     break;
                     
                 case 270:
-                    scaleX = maxWidth / curItemHeight;
-                    scaleY = maxHeight / curItemWidth;
+                    scaleX = toWidth / curItemHeight;
+                    scaleY = toHeight / curItemWidth;
                     break;
                 default:
                     break;
             }   
             
         }else{
-            curItem.style.cssText = `;
-                                 top:${curItem.dataset.top}px;
-                                 left:${curItem.dataset.left}px;
-                                 width: ${maxWidth}px;
-                                 height: ${maxHeight}px;
-                                 transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                                 transform-origin: ${ mouseX - Number(curItem.dataset.left) }px ${ mouseY - Number(curItem.dataset.top) }px;
-                                `;
+
+            switch( Math.abs(rotateDeg % 360) ){
+                case 0:
+                    curItem.style.cssText = `;
+                        top:${curItem.dataset.top}px;
+                        left:${curItem.dataset.left}px;
+                        width: ${toWidth}px;
+                        height: ${toHeight}px;
+                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
+                        transform-origin: ${ mouseX - Number(curItem.dataset.left) }px ${ mouseY - Number(curItem.dataset.top) }px;
+                    `;
+                    break;
+                case 180:
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
+                        transform-origin: ${ mouseX }px ${ mouseY }px;
+                    `;
+                    break;
+                case 90:
+                    const centerX: number =  curItemHeight / 2;
+                    const centerY: number = curItemWidth / 2;
+
+                    let top: number = Number(curItem.dataset.top);
+                    let left: number = Number(curItem.dataset.left);
+                    curItem.style.cssText = `;
+                        top:${top}px;
+                        left:${left}px;
+                        width: ${toWidth}px;
+                        height: ${toHeight}px;
+                        transform-origin: center;
+                        transform: 
+                            rotateZ(${rotateDeg}deg) 
+                            scale3d(${ scaleX },${ scaleY },1) 
+                        ;
+
+                    `;
+                    return;
+                    break;
+                    
+                case 270:
+                    scaleX = toWidth / curItemHeight;
+                    scaleY = toHeight / curItemWidth;
+                    break;
+                default:
+                    break;
+            }  
             curItem.dataset.top = '0';
             curItem.dataset.left = '0';
         }
@@ -308,14 +341,26 @@ export default class ImgPreview{
             }
 
             setTimeout(() => {
-                curItem.style.cssText = `;
-                                    transform: rotateZ(${rotateDeg}deg);
-                                    width: ${ maxWidth }px;
-                                    height: ${ maxHeight }px;
-                                    left: -${ scaledX - mouseX  }px;
-                                    top: -${ scaledY - mouseY  }px;
-                                    transition: none;
-                                    `;
+                if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg);
+                        width: ${ toHeight }px;
+                        height: ${ toWidth }px;
+                        left: -${ scaledX - mouseX  }px;
+                        top: -${ scaledY - mouseY  }px;
+                        transition: none;
+                    `;
+                }else{
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg);
+                        width: ${ toWidth }px;
+                        height: ${ toHeight }px;
+                        left: -${ scaledX - mouseX  }px;
+                        top: -${ scaledY - mouseY  }px;
+                        transition: none;
+                    `;
+                }
+                
                 curItem.dataset.top = `-${ scaledY - mouseY  }`;
                 curItem.dataset.left = `-${ scaledX -mouseX  }`;
                 this.isAnimating = false;
@@ -747,6 +792,7 @@ export default class ImgPreview{
                 white-space: nowrap;
             }
             .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item{
+                box-sizing:border-box;
                 position: relative;
                 display:inline-block;
                 width: 100%;
@@ -754,6 +800,7 @@ export default class ImgPreview{
                 font-size: 14px;
                 white-space: normal;
                 transition: transform 0.5s;
+                border: 1px solid red;
             }
             .${this.prefix}imagePreviewer .${this.prefix}item img{
                 width: 100%;
