@@ -215,25 +215,14 @@ export default class ImgPreview{
        /**
         * 移动端自己调试要显示的数据
         */
-       let stat = document.getElementById('stat');
-
+        let stat = document.getElementById('stat');
+        const centerX: number =  Number(curItem.dataset.initialWidth) / 2;
+        const centerY: number = Number(curItem.dataset.initialHeight) / 2;
         if( scaleX > 1 ){//放大
 
             /**
              * transform-origin 的参考点始终时对其初始位置来说的
-             */
-            let scaledX: number ;
-            let scaledY: number ;
-            if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-                let originY: number =  (mouseX - curItemViewLeft);
-                let originX: number =  (curItemViewBottom - mouseY);
-                scaledX = originX * scaleX;
-                scaledY = originY * scaleY;
-            }else{
-               scaledX = mouseX * scaleX;
-               scaledY = mouseY * scaleY;
-            }
-            
+             */      
             switch( Math.abs(rotateDeg % 360) ){
                 case 0:
                     curItem.style.cssText = `;
@@ -249,8 +238,7 @@ export default class ImgPreview{
                     `;
                     break;
                 case 90:
-                    const centerX: number =  curItemHeight / 2;
-                    const centerY: number = curItemWidth / 2;
+                        console.log(centerX,centerY);
 
                     curItem.style.cssText = `;
                         transform-origin: ${ centerX }px ${ centerY }px ; 
@@ -273,16 +261,53 @@ export default class ImgPreview{
             }   
             
         }else{
-            curItem.style.cssText = `;
-                                 top:${curItem.dataset.top}px;
-                                 left:${curItem.dataset.left}px;
-                                 width: ${maxWidth}px;
-                                 height: ${maxHeight}px;
-                                 transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                                 transform-origin: ${ mouseX - Number(curItem.dataset.left) }px ${ mouseY - Number(curItem.dataset.top) }px;
-                                `;
-            curItem.dataset.top = '0';
-            curItem.dataset.left = '0';
+
+            switch( Math.abs(rotateDeg % 360) ){
+                case 0:
+                        curItem.style.cssText = `;
+                            top:${curItem.dataset.top}px;
+                            left:${curItem.dataset.left}px;
+                            width: ${maxWidth}px;
+                            height: ${maxHeight}px;
+                            transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
+                            transform-origin: ${ mouseX - Number(curItem.dataset.left) }px ${ mouseY - Number(curItem.dataset.top) }px;
+                       `;
+                        curItem.dataset.top = '0';
+                        curItem.dataset.left = '0';
+                    break;
+                case 180:
+                    scaleX = maxWidth / curItemWidth;
+                    scaleY = maxHeight / curItemHeight;
+                    break;
+                case 90:
+                        let top:number = Number(curItem.dataset.top);
+                        let left:number = Number(curItem.dataset.left);
+
+                        const centerX: number =  curItemHeight / 2;
+                        const centerY: number = curItemWidth / 2;
+                        curItem.style.cssText = `;
+                            transform-origin: center; 
+                            top:${top}px;
+                            left:${left}px;
+                            width: ${maxWidth}px;
+                            height: ${maxHeight}px;
+                            transform: 
+                                rotateZ(${rotateDeg}deg) 
+                                scale3d(${ scaleX },${ scaleY },1) 
+                                translate3d( ${ -( top)*scaleY}px,${(left)*scaleX}px,0 )
+                    `;
+                    curItem.dataset.top = '0';
+                    curItem.dataset.left = '0';
+                
+                    break;
+                case 270:
+                    scaleX = maxWidth / curItemHeight;
+                    scaleY = maxHeight / curItemWidth;
+                    break;
+                default:
+                    break;
+            }   
+            
         }
 
         
