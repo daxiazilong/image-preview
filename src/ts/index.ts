@@ -300,6 +300,8 @@ export default class ImgPreview{
 
                     let top: number = Number(curItem.dataset.top);
                     let left: number = Number(curItem.dataset.left);
+
+                    console.log( curItemViewTop)
                     curItem.style.cssText = `;
                         top:${top}px;
                         left:${left}px;
@@ -309,8 +311,7 @@ export default class ImgPreview{
                         transform: 
                             rotateZ(${rotateDeg}deg) 
                             scale3d(${ scaleX },${ scaleY },1) 
-                            translateX(${ (  top ) + viewTop }px) 
-                            translateY( ${ left + viewLeft }px )
+                            translateX(${ (  top )/scaleY }px) 
                         ;
 
                     `;
