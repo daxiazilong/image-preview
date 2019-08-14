@@ -238,19 +238,21 @@ export default class ImgPreview{
                         transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
                         transform-origin: ${ mouseX }px ${ mouseY }px;
                     `;
-                    console.log ( mouseX, mouseY) 
                     break;
                 case 180:
                     curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                        transform-origin: ${ mouseX }px ${ mouseY }px;
+                        transform-origin: ${ centerX }px ${ centerY }px;
+                        transform: 
+                            rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1) 
+                            translate3d( ${ (mouseX - centerX) / scaleX }px,${(mouseY - centerY) / scaleY  }px,0) 
+                        ;
                     `;
                     break;
                 case 90:
 
 
-                    curItem.dataset.viewTop = curItemViewTop.toString();
-                    curItem.dataset.viewLeft = curItemViewLeft.toString();
+                    curItem.dataset.viewTopInitial = curItemViewTop.toString();
+                    curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
                     /**
                      * mouseY - centerY 恰好是顶部得偏移距离加上放大点到
                      * 中心位置得距离
@@ -289,45 +291,76 @@ export default class ImgPreview{
                     `;
                     break;
                 case 180:
-                    curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                        transform-origin: ${ mouseX }px ${ mouseY }px;
-                    `;
+                    {
+                        const centerX: number =  curItemWidth / 2;
+                        const centerY: number = curItemHeight / 2;
+
+                        const viewTopInitial:number =  Number(curItem.dataset.viewTopInitial) || 0;
+                        const viewLeftInitial:number = Number(curItem.dataset.viewLeftInitial) || 0;
+
+                        let top: number = Number(curItem.dataset.top);
+                        let left: number = Number(curItem.dataset.left) || 0;
+
+                        let disteanceY: number =  curItemViewTop  + ( centerY )*scaleY - top - viewTopInitial;
+                        let distanceX:number = curItemViewLeft + (centerX)*scaleX - left - viewLeftInitial;
+                        
+                        curItem.style.cssText = `;
+                            top:${top}px;
+                            left:${left}px;
+                            width: ${toWidth}px;
+                            height: ${toHeight}px;
+                            transform-origin: ${ centerX }px ${ centerY }px;
+                            transform: 
+                                rotateZ(${rotateDeg}deg) 
+                                scale3d(${ scaleX },${ scaleY },1) 
+                                translateX(${ (left + distanceX) / scaleX  }px) 
+                                translateY(${ (  top + disteanceY )/scaleY }px)
+                            ;
+                        `;
+                        console.log(`transform: 
+                        rotateZ(${rotateDeg}deg) 
+                        scale3d(${ scaleX },${ scaleY },1) 
+                        translateX(${ -(left + distanceX) / scaleX  }px) 
+                        translateY(${ (  top + disteanceY )/scaleY }px)
+                    ;`)
+                    }
                     break;
                 case 90:
-                    const centerX: number =  curItemHeight / 2;
-                    const centerY: number = curItemWidth / 2;
+                    {
+                        const centerX: number =  curItemHeight / 2;
+                        const centerY: number = curItemWidth / 2;
 
-                    const viewTop:number =  Number(curItem.dataset.viewTop);
-                    const viewLeft:number = Number(curItem.dataset.viewLeft);
+                        const viewTopInitial:number =  Number(curItem.dataset.viewTopInitial);
+                        const viewLeftInitial:number = Number(curItem.dataset.viewLeftInitial);
 
-                    let top: number = Number(curItem.dataset.top);
-                    let left: number = Number(curItem.dataset.left);
+                        let top: number = Number(curItem.dataset.top);
+                        let left: number = Number(curItem.dataset.left);
 
-                    /**
-                     * 缩小的时候要时的图像的位置向原始位置靠近
-                     * 以y轴得位移举例
-                     * 放大之后 再缩小时 图像顶部移动的距离 等于 当前高度值得一半*scaleY(这是缩放前后产生的位移距离)，
-                     * 减去top（这是使用translate抵消top时产生的y轴位移，使其位置和top等于0时的位置一样）
-                     * 这个时候就能得到缩小之后图像距离视口顶部的距离，然后再减去原始的高度（变形前的高度）
-                     * 就得到了我们最终需要使其在y轴上偏移的距离
-                     */
-                    let disteanceY: number =  curItemViewTop  + ( centerX )*scaleY - top - viewTop;
-                    let distanceX:number = curItemViewLeft + (centerY)*scaleX - left - viewLeft;
-                    curItem.style.cssText = `;
-                        top:${top}px;
-                        left:${left}px;
-                        width: ${toWidth}px;
-                        height: ${toHeight}px;
-                        transform-origin: ${centerX}px ${centerY}px 0;
-                        transform: 
-                            rotateZ(${rotateDeg}deg) 
-                            scale3d(${ scaleX },${ scaleY },1) 
-                            translateX(${ (  top + disteanceY )/scaleY }px) 
-                            translateY(${ -(left + distanceX) / scaleX  }px)
-                        ;
+                        /**
+                         * 缩小的时候要时的图像的位置向原始位置靠近
+                         * 以y轴得位移举例
+                         * 放大之后 再缩小时 图像顶部移动的距离 等于 当前高度值得一半*scaleY(这是缩放前后产生的位移距离)，
+                         * 减去top（这是使用translate抵消top时产生的y轴位移，使其位置和top等于0时的位置一样）
+                         * 这个时候就能得到缩小之后图像距离视口顶部的距离，然后再减去原始的高度（变形前的高度）
+                         * 就得到了我们最终需要使其在y轴上偏移的距离
+                         */
+                        let disteanceY: number =  curItemViewTop  + ( centerX )*scaleY - top - viewTopInitial;
+                        let distanceX:number = curItemViewLeft + (centerY)*scaleX - left - viewLeftInitial;
+                        curItem.style.cssText = `;
+                            top:${top}px;
+                            left:${left}px;
+                            width: ${toWidth}px;
+                            height: ${toHeight}px;
+                            transform-origin: ${centerX}px ${centerY}px 0;
+                            transform: 
+                                rotateZ(${rotateDeg}deg) 
+                                scale3d(${ scaleX },${ scaleY },1) 
+                                translateX(${ (  top + disteanceY )/scaleY }px) 
+                                translateY(${ -(left + distanceX) / scaleX  }px)
+                            ;
 
-                    `;
+                        `;
+                        }
                     break;
                     
                 case 270:
