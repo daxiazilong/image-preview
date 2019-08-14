@@ -247,11 +247,14 @@ export default class ImgPreview{
                     `;
                     break;
                 case 90:
-                        console.log(centerX,centerY);
 
 
                     curItem.dataset.viewTop = curItemViewTop.toString();
                     curItem.dataset.viewLeft = curItemViewLeft.toString();
+                    /**
+                     * mouseY - centerY 恰好是顶部得偏移距离加上放大点到
+                     * 中心位置得距离
+                     */
                     curItem.style.cssText = `;
                         transform-origin: ${ centerX }px ${ centerY }px ; 
                         transform: 
@@ -301,7 +304,16 @@ export default class ImgPreview{
                     let top: number = Number(curItem.dataset.top);
                     let left: number = Number(curItem.dataset.left);
 
-                    console.log( curItemViewTop)
+                    /**
+                     * 缩小的时候要时的图像的位置向原始位置靠近
+                     * 以y轴得位移举例
+                     * 放大之后 再缩小时 图像顶部移动的距离 等于 当前高度值得一半*scaleY(这是缩放前后产生的位移距离)，
+                     * 减去top（这是使用translate抵消top时产生的y轴位移，使其位置和top等于0时的位置一样）
+                     * 这个时候就能得到缩小之后图像距离视口顶部的距离，然后再减去原始的高度（变形前的高度）
+                     * 就得到了我们最终需要使其在y轴上偏移的距离
+                     */
+                    let disteanceY: number =  curItemViewTop  + ( centerX )*scaleY - top - viewTop;
+                    let distanceX:number = curItemViewLeft + (centerY)*scaleX - left - viewLeft;
                     curItem.style.cssText = `;
                         top:${top}px;
                         left:${left}px;
@@ -311,11 +323,11 @@ export default class ImgPreview{
                         transform: 
                             rotateZ(${rotateDeg}deg) 
                             scale3d(${ scaleX },${ scaleY },1) 
-                            translateX(${ (  top )/scaleY }px) 
+                            translateX(${ (  top + disteanceY )/scaleY }px) 
+                            translateY(${ -(left + distanceX) / scaleX  }px)
                         ;
 
                     `;
-                    return;
                     break;
                     
                 case 270:
