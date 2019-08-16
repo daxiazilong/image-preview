@@ -38,7 +38,8 @@ export default class ImgPreview{
     public operateMaps: {
         [key: string]: string
     } = {
-        rotateLeft: 'handleRotateLeft'
+        rotateLeft: 'handleRotateLeft',
+        rotateRight: 'handleRotateRight'
     }
     
     constructor( options: Object ){
@@ -122,6 +123,24 @@ export default class ImgPreview{
             rotateDeg = 0
         }
         rotateDeg -= 90;
+
+        curItem.style.cssText += `
+            transition: transform 0.5s;
+            transform: rotateZ( ${rotateDeg}deg );
+        `
+        curItem.dataset.rotateDeg = rotateDeg.toString();
+
+    }
+    handleRotateRight(e: TouchEvent & MouseEvent ) :void{
+        const curItem: HTMLElement = this.imgItems[this.curIndex];
+        let rotateDeg:number;
+
+        if( curItem.dataset.rotateDeg ){
+            rotateDeg = Number(curItem.dataset.rotateDeg)
+        }else{
+            rotateDeg = 0
+        }
+        rotateDeg += 90;
 
         curItem.style.cssText += `
             transition: transform 0.5s;
@@ -232,13 +251,14 @@ export default class ImgPreview{
              * scale之后的元素, translate 的位移等于 位移 * scale
              */
             
-            switch( Math.abs(rotateDeg % 360) ){
+            switch( rotateDeg % 360 ){
                 case 0:
                     curItem.style.cssText = `;
                         transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
                         transform-origin: ${ mouseX }px ${ mouseY }px;
                     `;
                     break;
+                case -180:
                 case 180:
                     curItem.style.cssText = `;
                         transform-origin: ${ centerX }px ${ centerY }px;
@@ -248,8 +268,8 @@ export default class ImgPreview{
                         ;
                     `;
                     break;
-                case 90:
-
+                case -90:
+                case 270:
 
                     curItem.dataset.viewTopInitial = curItemViewTop.toString();
                     curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
@@ -257,21 +277,47 @@ export default class ImgPreview{
                      * mouseY - centerY 恰好是顶部得偏移距离加上放大点到
                      * 中心位置得距离
                      */
+                    console.log( curItemViewTop )
                     curItem.style.cssText = `;
                         transform-origin: ${ centerX }px ${ centerY }px ; 
                         transform: 
                             rotateZ(${rotateDeg}deg) 
                             scale3d(${ scaleX },${ scaleY },1) 
-                            translate3d( ${ (mouseY - centerY) / scaleY  }px,${ -(mouseX - centerX) / scaleX }px,0)
+                            translate3d( ${ (mouseY - centerX - curItemViewTop ) / scaleX  }px,${ -(mouseX - centerY - curItemViewLeft ) / scaleY }px,0)
                         ;
                         
                     `;
+                
+                    stat.innerHTML = `
+                        window.innerWidth: ${window.innerWidth} <br>
+                        window.innerHeight: ${window.innerHeight} <br>
+                        transform-origin: ${ centerX }px ${ centerY }px ;<br> 
+                        transform: <br>
+                            rotateZ(${rotateDeg}deg) <br>
+                            scale3d(${ scaleX },${ scaleY },1) <br>
+                            translate3d( ${ (mouseY - centerY) / scaleY  }px,${ -(mouseX - centerX) / scaleX }px,0)
+                        ;
+                    `
             
                     break;
                     
-                case 270:
-                    scaleX = toWidth / curItemHeight;
-                    scaleY = toHeight / curItemWidth;
+                case -270:
+                case 90:
+                        curItem.dataset.viewTopInitial = curItemViewTop.toString();
+                        curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
+                        /**
+                         * mouseY - centerY 恰好是顶部得偏移距离加上放大点到
+                         * 中心位置得距离
+                         */
+                        curItem.style.cssText = `;
+                            transform-origin: ${ centerX }px ${ centerY }px ; 
+                            transform: 
+                                rotateZ(${rotateDeg}deg) 
+                                scale3d(${ scaleX },${ scaleY },1) 
+                                translate3d( ${ -(mouseY - centerY) / scaleY  }px,${ (mouseX - centerX) / scaleX }px,0)
+                            ;
+                            
+                        `;
                     break;
                 default:
                     break;
@@ -279,7 +325,7 @@ export default class ImgPreview{
             
         }else{
 
-            switch( Math.abs(rotateDeg % 360) ){
+            switch( rotateDeg % 360 ){
                 case 0:
                     curItem.style.cssText = `;
                         top:${curItem.dataset.top}px;
@@ -291,6 +337,7 @@ export default class ImgPreview{
                     `;
                     break;
                 case 180:
+                case -180:
                     {
                         const centerX: number =  curItemWidth / 2;
                         const centerY: number = curItemHeight / 2;
@@ -317,16 +364,11 @@ export default class ImgPreview{
                                 translateY(${ (  top + disteanceY )/scaleY }px)
                             ;
                         `;
-                        console.log(`transform: 
-                        rotateZ(${rotateDeg}deg) 
-                        scale3d(${ scaleX },${ scaleY },1) 
-                        translateX(${ -(left + distanceX) / scaleX  }px) 
-                        translateY(${ (  top + disteanceY )/scaleY }px)
-                    ;`)
                     }
                     break;
-                case 90:
-                    {
+                case -90:
+                case 270:
+                    {  
                         const centerX: number =  curItemHeight / 2;
                         const centerY: number = curItemWidth / 2;
 
@@ -362,10 +404,35 @@ export default class ImgPreview{
                         `;
                         }
                     break;
-                    
-                case 270:
-                    scaleX = toWidth / curItemHeight;
-                    scaleY = toHeight / curItemWidth;
+                case 90:   
+                case -270:
+                    {
+                        const centerX: number =  curItemHeight / 2;
+                        const centerY: number = curItemWidth / 2;
+
+                        const viewTopInitial:number =  Number(curItem.dataset.viewTopInitial);
+                        const viewLeftInitial:number = Number(curItem.dataset.viewLeftInitial);
+
+                        let top: number = Number(curItem.dataset.top);
+                        let left: number = Number(curItem.dataset.left);
+
+                        let disteanceY: number =  curItemViewTop  + ( centerX )*scaleY - top - viewTopInitial;
+                        let distanceX:number = curItemViewLeft + (centerY)*scaleX - left - viewLeftInitial;
+                        curItem.style.cssText = `;
+                            top:${top}px;
+                            left:${left}px;
+                            width: ${toWidth}px;
+                            height: ${toHeight}px;
+                            transform-origin: ${centerX}px ${centerY}px 0;
+                            transform: 
+                                rotateZ(${rotateDeg}deg) 
+                                scale3d(${ scaleX },${ scaleY },1) 
+                                translateX(${ -(  top + disteanceY )/scaleY }px) 
+                                translateY(${ (left + distanceX) / scaleX  }px)
+                            ;
+
+                        `;
+                    }
                     break;
                 default:
                     break;
@@ -393,7 +460,7 @@ export default class ImgPreview{
                scaledX = mouseX * scaleX;
                scaledY = mouseY * scaleY;
             }
-
+                
             setTimeout(() => {
                 if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
                     curItem.style.cssText = `;
@@ -418,7 +485,7 @@ export default class ImgPreview{
                 curItem.dataset.top = `-${ scaledY - mouseY  }`;
                 curItem.dataset.left = `-${ scaledX -mouseX  }`;
                 this.isAnimating = false;
-            },500)
+            },550)
         }else{
             curItem.dataset.isEnlargement = 'shrink';
             setTimeout(() => {
@@ -429,7 +496,7 @@ export default class ImgPreview{
                                     transition: none;
                                     `
                 this.isAnimating = false;
-            },500)
+            },550)
         }
 
         
@@ -790,17 +857,25 @@ export default class ImgPreview{
                     <svg t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430"><path d="M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z" fill="#ffffff" p-id="5431"></path><path d="M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z" fill="#ffffff" p-id="5432"></path></svg>
                 </div>
                 <div class="${this.prefix}imgContainer">
-                    <div class="${this.prefix}item" id="test">
-                        <img src="/testImage/main_body3.png">
+                    <div class="${this.prefix}itemWraper">
+                        <div class="${this.prefix}item" id="test">
+                            <img src="/testImage/main_body3.png">
+                        </div>
                     </div>
-                    <div class="${this.prefix}item">
-                        <img src="/testImage/main_body3.png">
+                    <div class="${this.prefix}itemWraper">
+                        <div class="${this.prefix}item">
+                            <img src="/testImage/main_body3.png">
+                        </div>
                     </div>
-                    <div class="${this.prefix}item">
-                        <img src="/testImage/main_body3.png">
+                    <div class="${this.prefix}itemWraper">
+                        <div class="${this.prefix}item">
+                            <img src="/testImage/main_body3.png">
+                        </div>
                     </div>
-                    <div class="${this.prefix}item">
-                        <img src="/testImage/more20190627.png">
+                    <div class="${this.prefix}itemWraper">
+                        <div class="${this.prefix}item">
+                            <img src="/testImage/main_body3.png">
+                        </div>
                     </div>
                 </div>
                 <div class="${this.prefix}bottom">
@@ -844,6 +919,14 @@ export default class ImgPreview{
                 height: 100%;
                 font-size: 0;
                 white-space: nowrap;
+            }
+            .${this.prefix}imagePreviewer .${this.prefix}itemWraper{
+                box-sizing:border-box;
+                position: relative;
+                display:inline-block;
+                width: 100%;
+                height: 100%;
+                overflow:hidden;
             }
             .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item{
                 box-sizing:border-box;
