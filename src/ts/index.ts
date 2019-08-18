@@ -92,8 +92,8 @@ export default class ImgPreview{
             this[this.operateMaps[type]](e);
             return
         }
-        this.touchStartX = this.startX = Math.round(e.touches[0].pageX);
-        this.touchStartY = this.startY = Math.round(e.touches[0].pageY);
+        this.touchStartX = this.startX = Math.round(e.touches[0].clientX);
+        this.touchStartY = this.startY = Math.round(e.touches[0].clientY);
         
         let now = (new Date()).getTime();
 
@@ -151,12 +151,12 @@ export default class ImgPreview{
     }
     handleTwoStart(e: TouchEvent & MouseEvent ) :void{
         this.curPoint1 = {
-            x: e.touches[0].pageX,
-            y: e.touches[0].pageY
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
         };
         this.curPoint2 = {
-            x: e.touches[1].pageX,
-            y: e.touches[1].pageY
+            x: e.touches[1].clientX,
+            y: e.touches[1].clientY
         };
     }
     handleClick(e:MouseEvent){
@@ -165,8 +165,8 @@ export default class ImgPreview{
     handleDoubleClick(e: TouchEvent & MouseEvent){
         if( this.isAnimating ) return;
         this.isAnimating = true;
-        let mouseX: number = e.touches[0].pageX;
-        let mouseY: number = e.touches[0].pageY;
+        let mouseX: number = e.touches[0].clientX;
+        let mouseY: number = e.touches[0].clientY;
 
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         const curImg: HTMLImageElement = curItem.querySelector('img');
@@ -174,11 +174,9 @@ export default class ImgPreview{
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeight: number = curItem.getBoundingClientRect().height;
 
-        // 以下为旋转之后校正transform-origin时需要用到的参数
+        // 以下为旋转之后缩放时需要用到的参数
         const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
-        const curItemViewBottom: number = curItem.getBoundingClientRect().bottom;//当前元素距离视口的bottom
         const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
-        const curItemViewRight: number = curItem.getBoundingClientRect().right;//当前元素距离视口的left
 
         let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
 
@@ -209,131 +207,68 @@ export default class ImgPreview{
             }
         }
         
-
-        
-        
-
         let scaleX: number ;
         let scaleY: number ;
-       if(curItem.dataset.isEnlargement == 'enlargement'){
-           switch( Math.abs(rotateDeg % 360) ){
-                case 0:
-                case 180:
-                    scaleX =  Number(curItem.dataset.initialWidth) / curItemWidth;
-                    scaleY = Number(curItem.dataset.initialHeight) / curItemHeight;
-                    break;
-                case 90:
-                case 270:
-                    scaleX =  Number(curItem.dataset.initialWidth) / curItemHeight;
-                    scaleY = Number(curItem.dataset.initialHeight) / curItemWidth;
-                    break;
-                default:
-                    break;
-            }
-            
+
+        let isBigSize = curItem.dataset.isEnlargement == "enlargement";
+
+       if( isBigSize ){//大尺寸时执行缩小操作，小尺寸执行放大操作
+        switch( Math.abs(rotateDeg % 360) ){
+            case 0:
+            case 180:
+                scaleX =  Number(curItem.dataset.initialWidth) / curItemWidth;
+                scaleY = Number(curItem.dataset.initialHeight) / curItemHeight;
+                break;
+            case 90:
+            case 270:
+                scaleX =  Number(curItem.dataset.initialWidth) / curItemHeight;
+                scaleY = Number(curItem.dataset.initialHeight) / curItemWidth;
+                break;
+            default:
+                break;
+        }
             
        }else{
 
-            scaleX = toWidth / curItemWidth;
-            scaleY = toHeight / curItemHeight; 
+        scaleX = toWidth / curItemWidth;
+        scaleY = toHeight / curItemHeight;  
             
        } ;
-       /**
-        * 移动端自己调试要显示的数据
-        */
-        let stat = document.getElementById('stat');
+       
+
         const centerX: number =  Number(curItem.dataset.initialWidth) / 2;
         const centerY: number = Number(curItem.dataset.initialHeight) / 2;
         if( scaleX > 1 ){//放大
 
-            /**
-             * transform-origin 的参考点始终时对其初始位置来说的
-             * scale之后的元素, translate 的位移等于 位移 * scale
-             */
-            
-            switch( rotateDeg % 360 ){
-                case 0:
-                    curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                        transform-origin: ${ mouseX }px ${ mouseY }px;
-                    `;
-                    break;
-                case -180:
-                case 180:
-                    curItem.style.cssText = `;
-                        transform-origin: ${ centerX }px ${ centerY }px;
-                        transform: 
-                            rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1) 
-                            translate3d( ${ (mouseX - centerX) / scaleX }px,${(mouseY - centerY) / scaleY  }px,0) 
-                        ;
-                    `;
-                    break;
-                case -90:
-                case 270:
-
-                    curItem.dataset.viewTopInitial = curItemViewTop.toString();
-                    curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
-                    /**
-                     * mouseY - centerY 恰好是顶部得偏移距离加上放大点到
-                     * 中心位置得距离
-                     */
-                    console.log( curItemViewTop )
-                    curItem.style.cssText = `;
-                        transform-origin: ${ centerX }px ${ centerY }px ; 
-                        transform: 
-                            rotateZ(${rotateDeg}deg) 
-                            scale3d(${ scaleX },${ scaleY },1) 
-                            translate3d( ${ (mouseY - centerX - curItemViewTop ) / scaleX  }px,${ -(mouseX - centerY - curItemViewLeft ) / scaleY }px,0)
-                        ;
-                        
-                    `;
-                
-                    stat.innerHTML = `
-                        window.innerWidth: ${window.innerWidth} <br>
-                        window.innerHeight: ${window.innerHeight} <br>
-                        transform-origin: ${ centerX }px ${ centerY }px ;<br> 
-                        transform: <br>
-                            rotateZ(${rotateDeg}deg) <br>
-                            scale3d(${ scaleX },${ scaleY },1) <br>
-                            translate3d( ${ (mouseY - centerY) / scaleY  }px,${ -(mouseX - centerX) / scaleX }px,0)
-                        ;
-                    `
-            
-                    break;
-                    
-                case -270:
-                case 90:
-                        curItem.dataset.viewTopInitial = curItemViewTop.toString();
-                        curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
-                        /**
-                         * mouseY - centerY 恰好是顶部得偏移距离加上放大点到
-                         * 中心位置得距离
-                         */
-                        curItem.style.cssText = `;
-                            transform-origin: ${ centerX }px ${ centerY }px ; 
-                            transform: 
-                                rotateZ(${rotateDeg}deg) 
-                                scale3d(${ scaleX },${ scaleY },1) 
-                                translate3d( ${ -(mouseY - centerY) / scaleY  }px,${ (mouseX - centerX) / scaleX }px,0)
-                            ;
-                            
-                        `;
-                    break;
-                default:
-                    break;
-            }   
+            this.setToNaturalImgSize( scaleX,scaleY,e);  
             
         }else{
 
             switch( rotateDeg % 360 ){
                 case 0:
+                    const centerX: number =  curItemWidth / 2;
+                    const centerY: number = curItemHeight / 2;
+
+                    const viewTopInitial:number =   0;
+                    const viewLeftInitial:number =  0;
+
+                    let top: number = Number(curItem.dataset.top);
+                    let left: number = Number(curItem.dataset.left) || 0;
+
+                    let disteanceY: number =  curItemViewTop  + ( centerY )*(1 - scaleY) - top - viewTopInitial;
+                    let distanceX:number = curItemViewLeft + (centerX)*( 1 - scaleX)  - left - viewLeftInitial;
                     curItem.style.cssText = `;
                         top:${curItem.dataset.top}px;
                         left:${curItem.dataset.left}px;
                         width: ${toWidth}px;
                         height: ${toHeight}px;
-                        transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                        transform-origin: ${ mouseX - Number(curItem.dataset.left) }px ${ mouseY - Number(curItem.dataset.top) }px;
+                        transform-origin: ${ centerX }px ${ centerY }px;
+                        transform: 
+                            rotateZ(${rotateDeg}deg) 
+                            scale3d(${ scaleX },${ scaleY },1) 
+                            translateX(${ -(left + distanceX) / scaleX  }px) 
+                            translateY(${ -(  top + disteanceY )/scaleY }px)
+                        ;
                     `;
                     break;
                 case 180:
@@ -342,14 +277,14 @@ export default class ImgPreview{
                         const centerX: number =  curItemWidth / 2;
                         const centerY: number = curItemHeight / 2;
 
-                        const viewTopInitial:number =  Number(curItem.dataset.viewTopInitial) || 0;
-                        const viewLeftInitial:number = Number(curItem.dataset.viewLeftInitial) || 0;
+                        const viewTopInitial:number =   0;
+                        const viewLeftInitial:number =  0;
 
                         let top: number = Number(curItem.dataset.top);
                         let left: number = Number(curItem.dataset.left) || 0;
 
-                        let disteanceY: number =  curItemViewTop  + ( centerY )*scaleY - top - viewTopInitial;
-                        let distanceX:number = curItemViewLeft + (centerX)*scaleX - left - viewLeftInitial;
+                        let disteanceY: number =  curItemViewTop  + ( centerY )*(1 - scaleY) - top - viewTopInitial;
+                        let distanceX:number = curItemViewLeft + (centerX)*( 1 - scaleX)  - left - viewLeftInitial;
                         
                         curItem.style.cssText = `;
                             top:${top}px;
@@ -381,13 +316,15 @@ export default class ImgPreview{
                         /**
                          * 缩小的时候要时的图像的位置向原始位置靠近
                          * 以y轴得位移举例
-                         * 放大之后 再缩小时 图像顶部移动的距离 等于 当前高度值得一半*scaleY(这是缩放前后产生的位移距离)，
+                         * 放大之后 再缩小时 图像顶部移动的距离 等于 当前高度值得一半 centerX*(1-scaleY)
+                         *  这个式子是这么推导而来的  Math.abs(centerX* scaleY - centerX)
+                         * (这是缩放前后产生的位移距离)，
                          * 减去top（这是使用translate抵消top时产生的y轴位移，使其位置和top等于0时的位置一样）
                          * 这个时候就能得到缩小之后图像距离视口顶部的距离，然后再减去原始的高度（变形前的高度）
                          * 就得到了我们最终需要使其在y轴上偏移的距离
                          */
-                        let disteanceY: number =  curItemViewTop  + ( centerX )*scaleY - top - viewTopInitial;
-                        let distanceX:number = curItemViewLeft + (centerY)*scaleX - left - viewLeftInitial;
+                        let disteanceY: number =  curItemViewTop  + ( centerX )* (1 -scaleY )  - top - viewTopInitial;
+                        let distanceX:number = curItemViewLeft + (centerY)*(1-scaleX) - left - viewLeftInitial;
                         curItem.style.cssText = `;
                             top:${top}px;
                             left:${left}px;
@@ -416,8 +353,8 @@ export default class ImgPreview{
                         let top: number = Number(curItem.dataset.top);
                         let left: number = Number(curItem.dataset.left);
 
-                        let disteanceY: number =  curItemViewTop  + ( centerX )*scaleY - top - viewTopInitial;
-                        let distanceX:number = curItemViewLeft + (centerY)*scaleX - left - viewLeftInitial;
+                        let disteanceY: number =  curItemViewTop  + ( centerX )*( 1 - scaleY ) - top - viewTopInitial;
+                        let distanceX:number = curItemViewLeft + (centerY)*( 1 -scaleX ) - left - viewLeftInitial;
                         curItem.style.cssText = `;
                             top:${top}px;
                             left:${left}px;
@@ -448,44 +385,6 @@ export default class ImgPreview{
          * 当前放大的元素会与其他元素重叠
          */
         if( scaleX > 1 ){
-            curItem.dataset.isEnlargement = 'enlargement';
-            // 放大之后 图片相对视口位置不变
-
-            let scaledX: number ;
-            let scaledY: number ;
-            if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-                scaledX = mouseX * scaleY;
-                scaledY = mouseY * scaleX;
-            }else{
-               scaledX = mouseX * scaleX;
-               scaledY = mouseY * scaleY;
-            }
-                
-            setTimeout(() => {
-                if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-                    curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg);
-                        width: ${ toHeight }px;
-                        height: ${ toWidth }px;
-                        left: -${ scaledX - mouseX  }px;
-                        top: -${ scaledY - mouseY  }px;
-                        transition: none;
-                    `;
-                }else{
-                    curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg);
-                        width: ${ toWidth }px;
-                        height: ${ toHeight }px;
-                        left: -${ scaledX - mouseX  }px;
-                        top: -${ scaledY - mouseY  }px;
-                        transition: none;
-                    `;
-                }
-                
-                curItem.dataset.top = `-${ scaledY - mouseY  }`;
-                curItem.dataset.left = `-${ scaledX -mouseX  }`;
-                this.isAnimating = false;
-            },550)
         }else{
             curItem.dataset.isEnlargement = 'shrink';
             setTimeout(() => {
@@ -498,10 +397,162 @@ export default class ImgPreview{
                 this.isAnimating = false;
             },550)
         }
+    }
+    setToNaturalImgSize( scaleX: number , scaleY: number,e: TouchEvent & MouseEvent) :void{
+        /**
+         * 踩坑记
+         * transform-origin 的参考点始终时对其初始位置来说的
+         * scale之后的元素, translate 的位移等于 位移 * scale
+         */
+        let mouseX: number = e.touches[0].clientX;
+        let mouseY: number = e.touches[0].clientY;
 
+        const curItem: HTMLElement = this.imgItems[this.curIndex];
+        const curImg: HTMLImageElement = curItem.querySelector('img');
+
+        const curItemWidth: number = curItem.getBoundingClientRect().width;
+        const curItemHeight: number = curItem.getBoundingClientRect().height;
+
+        // 以下为旋转之后缩放时需要用到的参数
+        const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
+        const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
+
+        let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
+
+        const centerX: number =  Number(curItem.dataset.initialWidth) / 2;
+        const centerY: number = Number(curItem.dataset.initialHeight) / 2;
+
+        let toWidth: number ;
+        let toHeight: number ;
+
+        if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
+                toWidth = curImg.naturalHeight
+                toHeight = curImg.naturalWidth;
+        }else{
+            toWidth = curImg.naturalWidth
+            toHeight = curImg.naturalHeight;
+        }
+
+        switch( rotateDeg % 360 ){
+            case 0:
+                curItem.style.cssText = `;
+                    transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
+                    transform-origin: ${ mouseX }px ${ mouseY }px;
+                `;
+                break;
+            case -180:
+            case 180:
+                curItem.style.cssText = `;
+                    transform-origin: ${ centerX }px ${ centerY }px;
+                    transform: 
+                        rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1) 
+                        translateY(${ ( (mouseY  - centerY) * (scaleY -1 ) ) / scaleY   }px) 
+                        translateX(${ ( (mouseX - centerX) * (scaleX-1 ) ) / scaleX   }px) 
+                    ;
+                `;
+                break;
+            case -90:
+            case 270:
+
+                curItem.dataset.viewTopInitial = curItemViewTop.toString();
+                curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
+                /**
+                 * 笔记：
+                 * 以 y轴偏移距离，因为旋转 -90或270度之后，
+                 * y轴的位移实际又translateX控制，所以需要translateX控制其偏移
+                 * (mouseY - curItemViewTop - centerX) * (scaleX -1 ) 是一个点缩放前后产生的位移偏差
+                 * 再除以scaleX是因为啥呢，是因为上边可能讲过 translate x px 实际效果是 x * scaleX 的大小
+                 */
+                curItem.style.cssText = `;
+                    transform-origin: ${ centerX }px ${ centerY }px ; 
+                    transform: 
+                        rotateZ(${rotateDeg}deg) 
+                        scale3d(${ scaleX },${ scaleY },1) 
+                        translateX(${ ( (mouseY - curItemViewTop - centerX) * (scaleX -1 ) ) / scaleX   }px) 
+                        translateY(${ ( -(mouseX - curItemViewLeft- centerY) * (scaleY -1 ) ) / scaleY   }px) 
+                    ;
+                    
+                `;
+                /**
+                * 移动端自己调试要显示的数据
+                */
+                let stat = document.getElementById('stat');
+                if(0)
+                stat.innerHTML = `
+                    window.innerWidth: ${window.innerWidth} <br>
+                    window.innerHeight: ${window.innerHeight} <br>
+                    transform-origin: ${ centerX }px ${ centerY }px ;<br> 
+                    transform: <br>
+                        rotateZ(${rotateDeg}deg) <br>
+                        scale3d(${ scaleX },${ scaleY },1) <br>
+                        translate3d( ${ (mouseY - centerY) / scaleY  }px,${ -(mouseX - centerX) / scaleX }px,0)
+                    ;
+                `
         
-        
-        
+                break;
+                
+            case -270:
+            case 90:
+                    curItem.dataset.viewTopInitial = curItemViewTop.toString();
+                    curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
+                    /**
+                     * mouseY - centerY 恰好是顶部得偏移距离加上放大点到
+                     * 中心位置得距离
+                     */
+                    curItem.style.cssText = `;
+                        transform-origin: ${ centerX }px ${ centerY }px ; 
+                        transform: 
+                            rotateZ(${rotateDeg}deg) 
+                            scale3d(${ scaleX },${ scaleY },1) 
+                            translateX(${ ( -(mouseY - curItemViewTop - centerX) * (scaleX -1 ) ) / scaleX   }px) 
+                            translateY(${ ( (mouseX - curItemViewLeft- centerY) * (scaleY -1 ) ) / scaleY   }px) 
+                        ;
+                        
+                    `;
+                break;
+            default:
+                break;
+        } 
+        curItem.dataset.isEnlargement = 'enlargement';
+        // 放大之后 图片相对视口位置不变
+
+        let scaledX: number ;
+        let scaledY: number ;
+        if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
+            scaledX = mouseX * scaleY;
+            scaledY = mouseY * scaleX;
+        }else{
+            scaledX = mouseX * scaleX;
+            scaledY = mouseY * scaleY;
+        }
+            
+        setTimeout(() => {
+            if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
+                curItem.style.cssText = `;
+                    transform: rotateZ(${rotateDeg}deg);
+                    width: ${ toHeight }px;
+                    height: ${ toWidth }px;
+                    left: -${ scaledX - mouseX  }px;
+                    top: -${ scaledY - mouseY  }px;
+                    transition: none;
+                `;
+            }else{
+                curItem.style.cssText = `;
+                    transform: rotateZ(${rotateDeg}deg);
+                    width: ${ toWidth }px;
+                    height: ${ toHeight }px;
+                    left: -${ scaledX - mouseX  }px;
+                    top: -${ scaledY - mouseY  }px;
+                    transition: none;
+                `;
+            }
+            
+            curItem.dataset.top = `-${ scaledY - mouseY  }`;
+            curItem.dataset.left = `-${ scaledX -mouseX  }`;
+            this.isAnimating = false;
+        },550)
+    }
+    setToInitialSize(){
 
     }
     handleMove(e: TouchEvent & MouseEvent){
@@ -552,7 +603,7 @@ export default class ImgPreview{
             Math.sqrt( Math.pow( this.curPoint1.x - this.curPoint2.x,2) + Math.pow( this.curPoint1.y - this.curPoint2.y,2) );
 
         const distanceNow: number = 
-            Math.sqrt( Math.pow( e.touches[0].pageX - e.touches[1].pageX,2) + Math.pow( e.touches[0].pageY - e.touches[1].pageY,2) );
+            Math.sqrt( Math.pow( e.touches[0].clientX - e.touches[1].clientX,2) + Math.pow( e.touches[0].clientY - e.touches[1].clientY,2) );
         
         let top: number = Number(curItem.dataset.top) || 0;
         let left: number = Number(curItem.dataset.left) || 0;
@@ -560,10 +611,10 @@ export default class ImgPreview{
         const centerX: number = ( this.curStartPoint1.x + this.curStartPoint2.x ) / 2 - left;
         const centerY: number = ( this.curStartPoint1.y + this.curStartPoint2.y ) / 2 - top;
         
-        this.curPoint1.x = e.touches[0].pageX;
-        this.curPoint1.y = e.touches[0].pageY;
-        this.curPoint2.x = e.touches[1].pageX;
-        this.curPoint2.y = e.touches[1].pageY;
+        this.curPoint1.x = e.touches[0].clientX;
+        this.curPoint1.y = e.touches[0].clientY;
+        this.curPoint2.x = e.touches[1].clientX;
+        this.curPoint2.y = e.touches[1].clientY;
         
 
         let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0')
@@ -701,7 +752,7 @@ export default class ImgPreview{
         }
     }
     handleTEndEnNormal ( e: TouchEvent & MouseEvent) : void{
-        let endX: number = Math.round(e.changedTouches[0].pageX);
+        let endX: number = Math.round(e.changedTouches[0].clientX);
 
         if(  endX - this.touchStartX >= this.threshold ){//前一张
             if( this.curIndex == 0){//第一张
@@ -748,7 +799,7 @@ export default class ImgPreview{
         
     }
     handleMoveNormal( e: TouchEvent & MouseEvent ){
-        let curX: number = Math.round(e.touches[0].pageX);
+        let curX: number = Math.round(e.touches[0].clientX);
 
         let offset = curX - this.startX;
         this.imgContainerMoveX += offset;
@@ -769,8 +820,8 @@ export default class ImgPreview{
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
 
-        let curX: number = Math.round(e.touches[0].pageX);
-        let curY: number = Math.round(e.touches[0].pageY);
+        let curX: number = Math.round(e.touches[0].clientX);
+        let curY: number = Math.round(e.touches[0].clientY);
 
         let offsetX: number  = curX - this.startX;
         let offsetY: number  = curY - this.startY;
