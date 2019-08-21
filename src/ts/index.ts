@@ -59,11 +59,22 @@ export default class ImgPreview{
         this.ref.addEventListener('touchend',this.handleToucnEnd.bind(this));
     }
     reCordInitialData( els:  NodeListOf < HTMLElement > ){
-        
+        /**
+         * 记录并设置初始top值
+         */
+        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+        let imgContainerHeight: number = imgContainerRect.height;
+    
         els.forEach( ( el,key,parent) => {
             let styleObj: ClientRect = el.getBoundingClientRect();
+
+            let top: number = (imgContainerHeight - styleObj.height) / 2;
+
             el.dataset.initialWidth = styleObj.width.toString();
             el.dataset.initialHeight =  styleObj.height.toString();
+            el.dataset.top = top.toString();
+
+            el.style.top = `${top}px`;
 
         })
 
@@ -254,6 +265,9 @@ export default class ImgPreview{
         const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
         const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
 
+        const curItemTop: number = Number(curItem.dataset.top) || 0;
+        const curItemLeft: number = Number(curItem.dataset.left) || 0;
+
         let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
 
         const centerX: number =  Number(curItem.dataset.initialWidth) / 2;
@@ -276,8 +290,14 @@ export default class ImgPreview{
         switch( rotateDeg % 360 ){
             case 0:
                 curItem.style.cssText = `;
-                    transform: rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1);
-                    transform-origin: ${ mouseX }px ${ mouseY }px;
+                    top:${curItemTop}px;
+                    transform-origin: ${ centerX }px ${ centerY }px;
+                    transform: 
+                        rotateZ(${rotateDeg}deg) 
+                        scale3d(${ scaleX },${ scaleY },1) 
+                        translateY(${ ( -(mouseY - curItemViewTop - centerY) * (scaleY -1 ) ) / scaleY }px) 
+                        translateX(${ ( -(mouseX - centerX) * (scaleX-1 ) ) / scaleX   }px) 
+                    ;
                 `;
                 break;
             case -180:
@@ -339,14 +359,19 @@ export default class ImgPreview{
 
         let scaledX: number ;
         let scaledY: number ;
+
+        
+
         if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
             scaledX = mouseX * scaleY;
-            scaledY = mouseY * scaleX;
+            scaledY = ( mouseY - curItemTop ) * scaleX;
         }else{
             scaledX = mouseX * scaleX;
-            scaledY = mouseY * scaleY;
-        }
+            scaledY =( mouseY - curItemTop  ) * scaleY;
             
+        }
+        let top: number;
+        top =  curItemTop + (mouseY - curItemViewTop - centerY )*( scaleY - 1 ) 
         setTimeout(() => {
             if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
                 curItem.style.cssText = `;
@@ -363,7 +388,7 @@ export default class ImgPreview{
                     width: ${ toWidth }px;
                     height: ${ toHeight }px;
                     left: -${ scaledX - mouseX  }px;
-                    top: -${ scaledY - mouseY  }px;
+                    top: ${ top  }px;
                     transition: none;
                 `;
             }
