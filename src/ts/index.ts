@@ -247,7 +247,6 @@ export default class ImgPreview{
                     `;
                     break;
                 case 90:
-                        console.log(centerX,centerY);
 
 
                     curItem.dataset.viewTop = curItemViewTop.toString();
@@ -301,7 +300,9 @@ export default class ImgPreview{
                     let top: number = Number(curItem.dataset.top);
                     let left: number = Number(curItem.dataset.left);
 
-                    console.log( curItemViewTop)
+                    console.log('centerX',centerX)
+                    console.log('viewTop',viewTop)
+                    console.log( (curItemViewTop + (centerX + top - curItemViewTop)*scaleY ) - top)
                     curItem.style.cssText = `;
                         top:${top}px;
                         left:${left}px;
@@ -311,7 +312,7 @@ export default class ImgPreview{
                         transform: 
                             rotateZ(${rotateDeg}deg) 
                             scale3d(${ scaleX },${ scaleY },1) 
-                            translateX(${ (  top )/scaleY }px) 
+                            translateX(${ (  top + 0)/scaleY }px) 
                         ;
 
                     `;
