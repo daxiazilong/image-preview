@@ -99,6 +99,25 @@ export default class ImgPreview{
                     }
                     
                 })(el).bind(this)
+                img.onerror=(function(el){
+                    return function(e: Event ){
+                        console.log(el)
+                        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+                        let imgContainerHeight: number = imgContainerRect.height;
+                        const styleObj: ClientRect = el.getBoundingClientRect();
+
+                        const top: number = (imgContainerHeight - styleObj.height) / 2;
+
+                        el.dataset.initialWidth = styleObj.width.toString();
+                        el.dataset.initialHeight =  styleObj.height.toString();
+                        el.dataset.top = top.toString();
+                        el.dataset.initialTop = top.toString();
+
+                        el.style.top = `${top}px`;
+                      
+                        (<HTMLImageElement>(e.currentTarget)).alt = "图片加载错误"
+                    }
+                })(el).bind(this)
             }
             
             
