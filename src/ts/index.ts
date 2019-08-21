@@ -66,16 +66,41 @@ export default class ImgPreview{
         let imgContainerHeight: number = imgContainerRect.height;
     
         els.forEach( ( el,key,parent) => {
-            let styleObj: ClientRect = el.getBoundingClientRect();
+            const img: HTMLImageElement = el.querySelector('img');
+            if( img.complete ){
+                const styleObj: ClientRect = el.getBoundingClientRect();
 
-            let top: number = (imgContainerHeight - styleObj.height) / 2;
+                const top: number = (imgContainerHeight - styleObj.height) / 2;
 
-            el.dataset.initialWidth = styleObj.width.toString();
-            el.dataset.initialHeight =  styleObj.height.toString();
-            el.dataset.top = top.toString();
-            el.dataset.initialTop = top.toString();
+                el.dataset.initialWidth = styleObj.width.toString();
+                el.dataset.initialHeight =  styleObj.height.toString();
+                el.dataset.top = top.toString();
+                el.dataset.initialTop = top.toString();
 
-            el.style.top = `${top}px`;
+                el.style.top = `${top}px`;
+            }else{
+                img.onload = (function(el){
+                    
+                    return function(){
+                        console.log(el)
+                        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+                        let imgContainerHeight: number = imgContainerRect.height;
+                        const styleObj: ClientRect = el.getBoundingClientRect();
+
+                        const top: number = (imgContainerHeight - styleObj.height) / 2;
+
+                        el.dataset.initialWidth = styleObj.width.toString();
+                        el.dataset.initialHeight =  styleObj.height.toString();
+                        el.dataset.top = top.toString();
+                        el.dataset.initialTop = top.toString();
+
+                        el.style.top = `${top}px`;
+
+                    }
+                    
+                })(el).bind(this)
+            }
+            
             
 
         })
@@ -378,8 +403,8 @@ export default class ImgPreview{
                     transform: rotateZ(${rotateDeg}deg);
                     width: ${ toHeight }px;
                     height: ${ toWidth }px;
-                    left: -${ scaledX - mouseX  }px;
-                    top: -${ scaledY - mouseY  }px;
+                    left: ${ -(scaledX - mouseX)  }px;
+                    top: ${ -(scaledY - mouseY)  }px;
                     transition: none;
                 `;
             }else{
@@ -387,14 +412,14 @@ export default class ImgPreview{
                     transform: rotateZ(${rotateDeg}deg);
                     width: ${ toWidth }px;
                     height: ${ toHeight }px;
-                    left: -${ scaledX - mouseX  }px;
-                    top: -${ scaledY - mouseY  }px;
+                    left: ${ -(scaledX - mouseX)  }px;
+                    top: ${ -(scaledY - mouseY)  }px;
                     transition: none;
                 `;
             }
             
-            curItem.dataset.top = `-${ scaledY - mouseY  }`;
-            curItem.dataset.left = `-${ scaledX -mouseX  }`;
+            curItem.dataset.top = `${ -(scaledY - mouseY)  }`;
+            curItem.dataset.left = `${ -(scaledX -mouseX)  }`;
             this.isAnimating = false;
         },550)
     }
@@ -682,12 +707,6 @@ export default class ImgPreview{
                 default:
                     break;
             }
-            showDebugger(`
-                            height: ${width}px;
-                            width: ${height}px;
-                            left: ${ curItem.dataset.left }px;
-                            top: ${ curItem.dataset.top }px;
-                    `);
             
 
         }else if( distaceBefore < distanceNow ){//放大
@@ -756,6 +775,10 @@ export default class ImgPreview{
         
     }
     handleTEndEnlarge ( e: TouchEvent & MouseEvent) : void{
+        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
+        const conWidth: number = imgContainerRect.width;
+        const conHeight: number = imgContainerRect.height;
+
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         const curImg: HTMLImageElement = curItem.querySelector('img');
 
@@ -763,17 +786,28 @@ export default class ImgPreview{
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
 
         const maxTop: number = 0;
-        const maxBottom: number = window.innerHeight - curItemHeihgt;
+        const minTop: number = conHeight - curItemHeihgt;
         const maxLeft: number = 0;
-        const MaxRight: number = window.innerWidth - curItemWidth;
+        const minLeft: number = conWidth - curItemWidth;
 
         const curItemTop: number  = Number(curItem.dataset.top);
         const curItemLeft: number  = Number(curItem.dataset.left);
 
+        /**
+         * 1s 60 次 
+         * 我需要在0.3s 完成这项操作
+         * 
+         */
+        
+
         if( curItemTop > maxTop ){
-            this.animate( curItem, 'top', curItemTop, 0, -this.step );
+            const vy: number = curItemTop / 300;
+            const stepY: number = vy * (1000 / 60);
+            this.animate( curItem, 'top', curItemTop, 0, -stepY );
             curItem.dataset.top = "0";
         }
+        
+
     }
     handleTEndEnNormal ( e: TouchEvent & MouseEvent) : void{
         let endX: number = Math.round(e.changedTouches[0].clientX);
@@ -934,7 +968,7 @@ export default class ImgPreview{
                 <div class="${this.prefix}imgContainer">
                     <div class="${this.prefix}itemWraper">
                         <div class="${this.prefix}item" id="test">
-                            <img src="/testImage/main_body3.png">
+                            <img src="/testImage/test1.jpg">
                         </div>
                     </div>
                     <div class="${this.prefix}itemWraper">
@@ -1005,8 +1039,7 @@ export default class ImgPreview{
             }
             .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item{
                 box-sizing:border-box;
-                position: relative;
-                display:inline-block;
+                position: absolute;
                 width: 100%;
                 height: auto;
                 font-size: 14px;
@@ -1067,6 +1100,6 @@ export default class ImgPreview{
 function showDebugger(msg: string) : void{
     
     let stat = document.getElementById('stat');
-    stat.innerHTML = msg ;
+    stat.innerHTML = `<pre>${msg}</pre>` ;
                
 }
