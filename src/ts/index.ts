@@ -867,7 +867,6 @@ export default class ImgPreview{
         }
 
         if( recoverX && recoverY ){
-            this.animate( curItem, 'left,top', startX, endX, -stepX );
             this.animateMultiValue(curItem,[
                 {
                     prop: 'top',
@@ -881,6 +880,8 @@ export default class ImgPreview{
                     step: -stepY
                 }
             ])
+            curItem.dataset.left = `${endX}`;
+            curItem.dataset.top = `${endY}`;
         }else if( recoverX ){
             this.animate( curItem, 'left', startX, endX, -stepX );
             curItem.dataset.left = `${endX}`;
@@ -1030,7 +1031,9 @@ export default class ImgPreview{
             if( start !== end ){
                 requestAnimationFrame(move)
             }else{
-               
+                if( prop == 'transform'){
+                    this.imgContainerMoveX = end;
+                }
                 this.isAnimating = false;
             }
         }
@@ -1040,7 +1043,9 @@ export default class ImgPreview{
         if( start !== end ){
                 requestAnimationFrame(move)
         }else{
-            this.imgContainerMoveX = end;
+            if( prop == 'transform'){
+                this.imgContainerMoveX = end;
+            }
             this.isAnimating = false;
         }
 
@@ -1063,6 +1068,26 @@ export default class ImgPreview{
         for( let i = 0, L = options.length; i < L ;i++ ){
             let item = options[i];
         }
+        let processStyle = () => {
+            let isFullFilled: boolean = true;
+            for( let i = 0, L = options.length; i < L ;i++ ){
+                let item = options[i];
+                if( Math.abs( item.start - item.end ) < Math.abs( item.step ) ){
+                    item.step = item.end - item.start;
+                }
+                item.start += item.step;
+                el.style[item.prop] = `${item.start}px`;
+                if( item.start !== item.end ){
+                    isFullFilled = false;
+                }
+            }
+            if(isFullFilled){
+                this.isAnimating = false;
+            }else{
+                requestAnimationFrame(processStyle)
+            }
+        }
+        processStyle();
     }
     genFrame(){
         let html : string = `
