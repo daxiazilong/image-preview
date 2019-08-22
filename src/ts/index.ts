@@ -44,7 +44,8 @@ export default class ImgPreview{
     
     constructor( options: Object ){
         this.genFrame();
-        
+        this.handleReausetAnimate();//requestAnimationFrame兼容性
+
         this.screenWidth = this.ref.getBoundingClientRect().width;
         this.threshold = this.screenWidth / 4;
         this.imgContainer = this.ref.querySelector(`.${this.prefix}imgContainer`);
@@ -818,13 +819,78 @@ export default class ImgPreview{
          * 
          */
         
+        let recoverY: boolean = false;
+        let recoverX: boolean = false;
+
+        let vy: number;
+        let stepY: number;
+
+        let vx: number;
+        let stepX: number;
+
+        let startX: number;
+        let endX: number;
+
+        let startY: number;
+        let endY:number;
+
+        if( curItemLeft > maxLeft ){
+            vx =  curItemLeft / 300;
+            stepX = vx * (1000 / 60);
+            startX = curItemLeft;
+            endX = maxLeft;
+
+            recoverX = true;
+        }else if( curItemLeft < minLeft ){
+            vx =  curItemLeft / 300;
+            stepX = vx * (1000 / 60);
+            startX = curItemLeft;
+            endX = minLeft;
+            
+            recoverX = true;
+        }
 
         if( curItemTop > maxTop ){
-            const vy: number = curItemTop / 300;
-            const stepY: number = vy * (1000 / 60);
-            this.animate( curItem, 'top', curItemTop, 0, -stepY );
-            curItem.dataset.top = "0";
+            vy =  curItemTop / 300;
+            stepY = vy * (1000 / 60);
+
+            startY = curItemTop;
+            endY = maxTop;
+            recoverY = true;
+        }else if( curItemTop < minTop ){
+            vy =  curItemTop / 300;
+            stepY = vy * (1000 / 60);
+
+            startY = curItemTop;
+            endY = minTop;
+            recoverY = true;
         }
+
+        if( recoverX && recoverY ){
+            this.animate( curItem, 'left,top', startX, endX, -stepX );
+            this.animateMultiValue(curItem,[
+                {
+                    prop: 'top',
+                    start: startX,
+                    end: endX,
+                    step: -stepX
+                },{
+                    prop:'left',
+                    start: startY,
+                    end: endY,
+                    step: -stepY
+                }
+            ])
+        }else if( recoverX ){
+            this.animate( curItem, 'left', startX, endX, -stepX );
+            curItem.dataset.left = `${endX}`;
+        }else if( recoverY ){
+            this.animate( curItem, 'top', startY, endY, -stepY );
+            curItem.dataset.top = `${endY}`;
+        }
+
+        
+
         
 
     }
@@ -944,6 +1010,9 @@ export default class ImgPreview{
                 case 'top':
                     el.style.top = `${start + step}px`;
                     break;
+                case 'left':
+                    el.style.left = `${start + step}px`;
+                    break;
                 default:
                     break;
             }
@@ -961,12 +1030,12 @@ export default class ImgPreview{
             if( start !== end ){
                 requestAnimationFrame(move)
             }else{
-                this.imgContainerMoveX = end;
+               
                 this.isAnimating = false;
             }
         }
 
-        this.handleReausetAnimate();//requestAnimationFrame兼容性
+        
 
         if( start !== end ){
                 requestAnimationFrame(move)
@@ -977,6 +1046,23 @@ export default class ImgPreview{
 
         
 
+    }
+    animateMultiValue(
+        el: HTMLElement,
+        options: Array<{
+            prop: string,
+            start: number,
+            end: number,
+            step: number
+        }>
+    ){
+        if( this.isAnimating ){
+            return;
+        }
+        this.isAnimating = true;
+        for( let i = 0, L = options.length; i < L ;i++ ){
+            let item = options[i];
+        }
     }
     genFrame(){
         let html : string = `
