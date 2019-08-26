@@ -5,7 +5,7 @@ export default class ImgPreview{
     [key:string]: any;
     public lastClick: number = -Infinity;
     public performerClick: any;
-    public threshold: number;//阈值 手指移动超过这个值则切换下一屏幕
+    public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
     public startX: number;//手指移动时的x起始坐标
     public touchStartX: number;//手指第一次点击时的x起点坐标
     public startY: number;//手指移动时的y起始坐标
@@ -29,6 +29,7 @@ export default class ImgPreview{
     public minMoveX: number; // 滑动时的最小距离
 
     public isAnimating: boolean = false; // 是否在动画中
+    public isMotionless: boolean = true;// 是否没有产生位移
 
     public prefix:string = "__"
     public ref: HTMLElement ;
@@ -140,6 +141,16 @@ export default class ImgPreview{
         }
         
     }
+    handleTwoStart(e: TouchEvent & MouseEvent ) :void{
+        this.curPoint1 = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        };
+        this.curPoint2 = {
+            x: e.touches[1].clientX,
+            y: e.touches[1].clientY
+        };
+    }
     handleOneStart(e: TouchEvent & MouseEvent ) :void{
         /**
          * 这里把操作派发
@@ -207,16 +218,7 @@ export default class ImgPreview{
         curItem.dataset.rotateDeg = rotateDeg.toString();
 
     }
-    handleTwoStart(e: TouchEvent & MouseEvent ) :void{
-        this.curPoint1 = {
-            x: e.touches[0].clientX,
-            y: e.touches[0].clientY
-        };
-        this.curPoint2 = {
-            x: e.touches[1].clientX,
-            y: e.touches[1].clientY
-        };
-    }
+    
     handleClick(e:TouchEvent & MouseEvent){
         console.log('click')
     }
@@ -629,6 +631,7 @@ export default class ImgPreview{
 
         const curItem: HTMLElement = this.imgItems[this.curIndex];
 
+        this.isMotionless = false;
         if( curItem.dataset.isEnlargement == 'enlargement' ){
             // 放大的时候的移动是查看放大后的图片
             this.handleMoveEnlage(e);
@@ -638,6 +641,53 @@ export default class ImgPreview{
         }
         
         
+    }
+    handleMoveNormal( e: TouchEvent & MouseEvent ){
+        let curX: number = Math.round(e.touches[0].clientX);
+
+        let offset = curX - this.startX;
+        this.imgContainerMoveX += offset;
+        if( this.imgContainerMoveX > this.maxMoveX  ){
+            this.imgContainerMoveX = this.maxMoveX;
+        }else if( this.imgContainerMoveX < this.minMoveX ){
+            this.imgContainerMoveX = this.minMoveX;
+        }
+        this.startX = curX;
+
+        this.imgContainer.style.transform = `translateX(${ this.imgContainerMoveX }px)`
+    }
+    handleMoveEnlage( e: TouchEvent & MouseEvent ){
+        
+        const curItem: HTMLElement = this.imgItems[this.curIndex];
+        const curImg: HTMLImageElement = curItem.querySelector('img');
+
+        const curItemWidth: number = curItem.getBoundingClientRect().width;
+        const curItemHeihgt: number = curItem.getBoundingClientRect().height;
+
+        let curX: number = Math.round(e.touches[0].clientX);
+        let curY: number = Math.round(e.touches[0].clientY);
+
+        let offsetX: number  = curX - this.startX;
+        let offsetY: number  = curY - this.startY;
+
+        const curItemTop: number  = Number(curItem.dataset.top);
+        const curItemLeft: number  = Number(curItem.dataset.left);
+
+        
+
+        let curTop: number = curItemTop + offsetY;
+
+        curItem.style.cssText += `
+            top: ${curTop}px;
+            left: ${ curItemLeft + offsetX }px;
+        `
+        curItem.dataset.top = (curTop).toString();
+        curItem.dataset.left = (curItemLeft + offsetX).toString();
+        this.startX = curX;
+        this.startY = curY;
+
+        
+
     }
     handleZoom(e: TouchEvent & MouseEvent ) :void{
         if( !this.isZooming ){
@@ -767,7 +817,7 @@ export default class ImgPreview{
 
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
-        if( this.isAnimating || e.changedTouches.length !== 1  ){//动画正在进行时，或者不是单指操作时一律不处理
+        if( this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless ){//动画正在进行时，或者不是单指操作时一律不处理
             return;
         } 
         const type : string = (<HTMLElement>(e.target)).dataset.type;
@@ -783,7 +833,7 @@ export default class ImgPreview{
 
         const curItem: HTMLElement = this.imgItems[this.curIndex];
 
-
+        this.isMotionless = true;
         if( curItem.dataset.isEnlargement == 'enlargement' ){
             // 放大的时候
             this.handleTEndEnlarge(e);
@@ -804,11 +854,39 @@ export default class ImgPreview{
 
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
+        /**
+         * 旋转后会产生偏移值
+         */
+        let offsetX: number = 0;
+        let offsetY:number = 0;
 
-        const maxTop: number = 0;
-        const minTop: number = conHeight - curItemHeihgt;
-        const maxLeft: number = 0;
-        const minLeft: number = conWidth - curItemWidth;
+        let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
+
+        switch( Math.abs(rotateDeg % 360) ){
+            case 0:
+                break;
+            case 90:
+                /**
+                 * 以x轴为例子
+                 * curItemWidth / 2,为中心点的坐标，
+                 * curitemHeight / 2,是顶部距离中心点的坐标
+                 * 二者的差值即为x轴的偏移
+                 */
+                offsetX = (curItemWidth - curItemHeihgt )/ 2 ;
+                offsetY = (curItemHeihgt - curItemWidth) / 2;
+                break;
+            case 180:
+                break;
+            case 270:
+                break;
+            default: 
+                break;
+        }
+
+        const maxTop: number = offsetY;
+        const minTop: number = conHeight - curItemHeihgt + offsetY;
+        const maxLeft: number = offsetX;
+        const minLeft: number = conWidth - curItemWidth + offsetX;
 
         const curItemTop: number  = Number(curItem.dataset.top);
         const curItemLeft: number  = Number(curItem.dataset.left);
@@ -842,6 +920,7 @@ export default class ImgPreview{
 
             recoverX = true;
         }else if( curItemLeft < minLeft ){
+    
             vx =  curItemLeft / 300;
             stepX = vx * (1000 / 60);
             startX = curItemLeft;
@@ -851,14 +930,14 @@ export default class ImgPreview{
         }
 
         if( curItemTop > maxTop ){
-            vy =  curItemTop / 300;
+            vy =  ( curItemTop - maxTop) / 300;
             stepY = vy * (1000 / 60);
 
             startY = curItemTop;
             endY = maxTop;
             recoverY = true;
         }else if( curItemTop < minTop ){
-            vy =  curItemTop / 300;
+            vy =  (curItemTop - minTop) / 300;
             stepY = vy * (1000 / 60);
 
             startY = curItemTop;
@@ -869,12 +948,12 @@ export default class ImgPreview{
         if( recoverX && recoverY ){
             this.animateMultiValue(curItem,[
                 {
-                    prop: 'top',
+                    prop: 'left',
                     start: startX,
                     end: endX,
                     step: -stepX
                 },{
-                    prop:'left',
+                    prop:'top',
                     start: startY,
                     end: endY,
                     step: -stepY
@@ -942,53 +1021,7 @@ export default class ImgPreview{
         }
         
     }
-    handleMoveNormal( e: TouchEvent & MouseEvent ){
-        let curX: number = Math.round(e.touches[0].clientX);
-
-        let offset = curX - this.startX;
-        this.imgContainerMoveX += offset;
-        if( this.imgContainerMoveX > this.maxMoveX  ){
-            this.imgContainerMoveX = this.maxMoveX;
-        }else if( this.imgContainerMoveX < this.minMoveX ){
-            this.imgContainerMoveX = this.minMoveX;
-        }
-        this.startX = curX;
-
-        this.imgContainer.style.transform = `translateX(${ this.imgContainerMoveX }px)`
-    }
-    handleMoveEnlage( e: TouchEvent & MouseEvent ){
-        
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
-        const curImg: HTMLImageElement = curItem.querySelector('img');
-
-        const curItemWidth: number = curItem.getBoundingClientRect().width;
-        const curItemHeihgt: number = curItem.getBoundingClientRect().height;
-
-        let curX: number = Math.round(e.touches[0].clientX);
-        let curY: number = Math.round(e.touches[0].clientY);
-
-        let offsetX: number  = curX - this.startX;
-        let offsetY: number  = curY - this.startY;
-
-        const curItemTop: number  = Number(curItem.dataset.top);
-        const curItemLeft: number  = Number(curItem.dataset.left);
-
-        
-
-        let curTop: number = curItemTop + offsetY;
-
-        curItem.style.cssText += `
-            top: ${curTop}px;
-            left: ${ curItemLeft + offsetX }px;
-        `
-        curItem.dataset.top = (curTop).toString();
-        curItem.dataset.left = (curItemLeft + offsetX).toString();
-        this.startX = curX;
-        this.startY = curY;
-
-        
-
-    }
+    
     animate(
         el: HTMLElement,
         prop: string,
@@ -1026,6 +1059,7 @@ export default class ImgPreview{
             if( Math.abs(end - start) < Math.abs(step) ){
                 step = end - start;
             }
+            console.log(start,end)
             processStyle();
             start += step;
             if( start !== end ){
@@ -1039,7 +1073,7 @@ export default class ImgPreview{
         }
 
         
-
+        
         if( start !== end ){
                 requestAnimationFrame(move)
         }else{
@@ -1101,7 +1135,7 @@ export default class ImgPreview{
                             <img src="/testImage/test1.jpg">
                         </div>
                     </div>
-                    <div class="${this.prefix}itemWraper">
+                    <div class="${this.prefix}itemWraper" id="test1">
                         <div class="${this.prefix}item">
                             <img src="/testImage/main_body3.png">
                         </div>
