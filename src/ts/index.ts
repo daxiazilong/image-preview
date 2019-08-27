@@ -984,9 +984,6 @@ export default class ImgPreview{
             }else if( endX == minLeft ){
                 curItem.dataset.toLeft = 'false';
                 curItem.dataset.toRight = 'true';
-            }else{
-                curItem.dataset.toLeft = 'false';
-                curItem.dataset.toRight = 'false';
             }
 
             if( endY == maxTop ){
@@ -995,9 +992,6 @@ export default class ImgPreview{
             }else if( endY == minTop ){
                 curItem.dataset.toTop = 'false';
                 curItem.dataset.toBottom = 'true';
-            }else{
-                curItem.dataset.toTop = 'false';
-                curItem.dataset.toBottom = 'false';
             }
         }else if( recoverX ){
             this.animate( curItem, 'left', startX, endX, -stepX );
