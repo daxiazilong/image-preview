@@ -633,12 +633,12 @@ export default class ImgPreview{
      
         let isBoundaryLeft: boolean = curItem.dataset.toLeft == 'true';
         let isBoundaryRight: boolean = curItem.dataset.toRight == 'true'
-        let direction: string = e.touches[0].clientX - this.startX < 0 ? 'right':'left';
+        let direction: string = e.touches[0].clientX - this.startX > 0 ? 'right':'left';
         this.isMotionless = false;
         if( curItem.dataset.isEnlargement == 'enlargement' ){
             // 放大的时候的移动是查看放大后的图片
             // 放大的时候,如果到达边界还是进行正常的切屏操作
-            if( (isBoundaryLeft && direction == 'left') || (isBoundaryRight && direction == 'right') ){
+            if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') ){
                 this.handleMoveNormal(e)
             }else{
                 this.handleMoveEnlage(e);
@@ -665,7 +665,10 @@ export default class ImgPreview{
         this.imgContainer.style.transform = `translateX(${ this.imgContainerMoveX }px)`
     }
     handleMoveEnlage( e: TouchEvent & MouseEvent ){
-        
+
+        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
+        const conWidth: number = imgContainerRect.width;
+        const conHeight: number = imgContainerRect.height;
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         const curImg: HTMLImageElement = curItem.querySelector('img');
 
@@ -683,14 +686,27 @@ export default class ImgPreview{
 
         
 
-        let curTop: number = curItemTop + offsetY;
+        let curTop: number ;
+        let curLeft: number;
+        // 如果容器内能完整展示图片就不需要移动
+        if( curItemWidth > conWidth ){
+            curLeft = curItemLeft + offsetX;
+        }else{
+            curLeft = curItemLeft
+        }
+
+        if( curItemHeihgt > conHeight ){
+            curTop = curItemTop + offsetY
+        }else{
+            curTop = curItemTop
+        }
 
         curItem.style.cssText += `
             top: ${curTop}px;
-            left: ${ curItemLeft + offsetX }px;
+            left: ${ curLeft }px;
         `
         curItem.dataset.top = (curTop).toString();
-        curItem.dataset.left = (curItemLeft + offsetX).toString();
+        curItem.dataset.left = (curLeft).toString();
         this.startX = curX;
         this.startY = curY;
 
@@ -844,11 +860,15 @@ export default class ImgPreview{
         this.isMotionless = true;
 
         let isBoundary: boolean = curItem.dataset.toLeft == 'true' || curItem.dataset.toRight == 'true';
+  
 
         if( curItem.dataset.isEnlargement == 'enlargement' ){
             // 放大的时候,如果到达边界还是进行正常的切屏操作
             if( isBoundary ){
-                this.handleTEndEnNormal(e)
+                this.handleTEndEnNormal(e);
+                // 重置是否已到达边界的变量
+                curItem.dataset.toLeft = 'false';
+                curItem.dataset.toRight = 'false';
             }else{
                 this.handleTEndEnlarge(e);
             }
@@ -958,6 +978,18 @@ export default class ImgPreview{
             endY = minTop;
             recoverY = true;
             
+        }
+
+        // 如果容器内能完整展示图片就不需要移动至边界
+        if( curItemWidth <= conWidth ){
+            recoverX = false;
+            curItem.dataset.toLeft = 'true';
+            curItem.dataset.toRight = 'true';
+        }
+        if( curItemHeihgt <= conHeight){
+            recoverY = false;
+            curItem.dataset.toTop = 'true';
+            curItem.dataset.toBottom = 'true';
         }
 
         if( recoverX && recoverY ){
