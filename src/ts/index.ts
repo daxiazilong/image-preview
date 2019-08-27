@@ -630,11 +630,19 @@ export default class ImgPreview{
         }
 
         const curItem: HTMLElement = this.imgItems[this.curIndex];
-
+     
+        let isBoundaryLeft: boolean = curItem.dataset.toLeft == 'true';
+        let isBoundaryRight: boolean = curItem.dataset.toRight == 'true'
+        let direction: string = e.touches[0].clientX - this.startX < 0 ? 'right':'left';
         this.isMotionless = false;
         if( curItem.dataset.isEnlargement == 'enlargement' ){
             // 放大的时候的移动是查看放大后的图片
-            this.handleMoveEnlage(e);
+            // 放大的时候,如果到达边界还是进行正常的切屏操作
+            if( (isBoundaryLeft && direction == 'left') || (isBoundaryRight && direction == 'right') ){
+                this.handleMoveNormal(e)
+            }else{
+                this.handleMoveEnlage(e);
+            }
         }else{
             //正常情况下的移动是图片左右切换
             this.handleMoveNormal(e)
@@ -834,9 +842,17 @@ export default class ImgPreview{
         const curItem: HTMLElement = this.imgItems[this.curIndex];
 
         this.isMotionless = true;
+
+        let isBoundary: boolean = curItem.dataset.toLeft == 'true' || curItem.dataset.toRight == 'true';
+
         if( curItem.dataset.isEnlargement == 'enlargement' ){
-            // 放大的时候
-            this.handleTEndEnlarge(e);
+            // 放大的时候,如果到达边界还是进行正常的切屏操作
+            if( isBoundary ){
+                this.handleTEndEnNormal(e)
+            }else{
+                this.handleTEndEnlarge(e);
+            }
+            
         }else{
             //正常情况下的
             this.handleTEndEnNormal(e)
@@ -863,9 +879,8 @@ export default class ImgPreview{
         let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
 
         switch( Math.abs(rotateDeg % 360) ){
-            case 0:
-                break;
             case 90:
+            case 270:
                 /**
                  * 以x轴为例子
                  * curItemWidth / 2,为中心点的坐标，
@@ -874,10 +889,6 @@ export default class ImgPreview{
                  */
                 offsetX = (curItemWidth - curItemHeihgt )/ 2 ;
                 offsetY = (curItemHeihgt - curItemWidth) / 2;
-                break;
-            case 180:
-                break;
-            case 270:
                 break;
             default: 
                 break;
@@ -919,6 +930,7 @@ export default class ImgPreview{
             endX = maxLeft;
 
             recoverX = true;
+            
         }else if( curItemLeft < minLeft ){
     
             vx =  curItemLeft / 300;
@@ -927,6 +939,7 @@ export default class ImgPreview{
             endX = minLeft;
             
             recoverX = true;
+            
         }
 
         if( curItemTop > maxTop ){
@@ -936,6 +949,7 @@ export default class ImgPreview{
             startY = curItemTop;
             endY = maxTop;
             recoverY = true;
+           
         }else if( curItemTop < minTop ){
             vy =  (curItemTop - minTop) / 300;
             stepY = vy * (1000 / 60);
@@ -943,6 +957,7 @@ export default class ImgPreview{
             startY = curItemTop;
             endY = minTop;
             recoverY = true;
+            
         }
 
         if( recoverX && recoverY ){
@@ -961,12 +976,57 @@ export default class ImgPreview{
             ])
             curItem.dataset.left = `${endX}`;
             curItem.dataset.top = `${endY}`;
+            if( endX == maxLeft ){
+                //toLeft 即为到达左边界的意思下同
+                curItem.dataset.toLeft = 'true';
+                curItem.dataset.toRight = 'false';
+                
+            }else if( endX == minLeft ){
+                curItem.dataset.toLeft = 'false';
+                curItem.dataset.toRight = 'true';
+            }else{
+                curItem.dataset.toLeft = 'false';
+                curItem.dataset.toRight = 'false';
+            }
+
+            if( endY == maxTop ){
+                curItem.dataset.toTop = 'true';
+                curItem.dataset.toBottom = 'false';
+            }else if( endY == minTop ){
+                curItem.dataset.toTop = 'false';
+                curItem.dataset.toBottom = 'true';
+            }else{
+                curItem.dataset.toTop = 'false';
+                curItem.dataset.toBottom = 'false';
+            }
         }else if( recoverX ){
             this.animate( curItem, 'left', startX, endX, -stepX );
             curItem.dataset.left = `${endX}`;
+
+            if( endX == maxLeft ){
+                //toLeft 即为到达左边界的意思下同
+                curItem.dataset.toLeft = 'true';
+                curItem.dataset.toRight = 'false';
+                
+            }else if( endX == minLeft ){
+                curItem.dataset.toLeft = 'false';
+                curItem.dataset.toRight = 'true';
+            }
         }else if( recoverY ){
             this.animate( curItem, 'top', startY, endY, -stepY );
             curItem.dataset.top = `${endY}`;
+            if( endY == maxTop ){
+                curItem.dataset.toTop = 'true';
+                curItem.dataset.toBottom = 'false';
+            }else if( endY == minTop ){
+                curItem.dataset.toTop = 'false';
+                curItem.dataset.toBottom = 'true';
+            }
+        }else{
+            curItem.dataset.toLeft = 'false';
+            curItem.dataset.toRight = 'false';
+            curItem.dataset.toTop = 'false';
+            curItem.dataset.toBottom = 'false';
         }
 
         
@@ -1059,7 +1119,6 @@ export default class ImgPreview{
             if( Math.abs(end - start) < Math.abs(step) ){
                 step = end - start;
             }
-            console.log(start,end)
             processStyle();
             start += step;
             if( start !== end ){
