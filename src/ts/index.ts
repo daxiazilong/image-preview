@@ -725,6 +725,7 @@ export default class ImgPreview{
             }
         }
         this.isZooming = true;
+        this.isAnimating = true;
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         const curImg: HTMLImageElement = curItem.querySelector('img');
 
@@ -767,8 +768,19 @@ export default class ImgPreview{
             let width: number = curItemWidth * (1 - this.zoomScale);
             let height: number = curItemHeihgt * (1 - this.zoomScale);
             if( width <= Number(curItem.dataset.initialWidth) ){
-                width = Number(curItem.dataset.initialWidth);
-                height = Number(curItem.dataset.initialHeight)
+                switch( Math.abs(rotateDeg % 360) ){
+                    case 0:
+                    case 180:
+                        width = Number(curItem.dataset.initialWidth);
+                        height = Number(curItem.dataset.initialHeight)
+                        break;
+                    case 90:
+                    case 270:
+                        width = Number(curItem.dataset.initialHeight);
+                        height = Number(curItem.dataset.initialWidth)
+                        break;
+                }
+                
                 curItem.dataset.top = curItem.dataset.initialTop;
                 curItem.dataset.left = '0';
                 curItem.dataset.isEnlargement = 'shrink';
@@ -778,10 +790,12 @@ export default class ImgPreview{
              * 旋转 90 270 这些体位的时候 ，width和height得交换下位置
              * 下同
              */
+            
             switch( Math.abs(rotateDeg % 360) ){
                 case 0:
                 case 180:
-                    curItem.style.cssText += `
+                    curItem.style.cssText = `
+                            transform: rotateZ(${rotateDeg}deg); 
                             width: ${width}px;
                             height: ${height}px;
                             top: ${ curItem.dataset.top }px;
@@ -790,7 +804,8 @@ export default class ImgPreview{
                     break;
                 case 90:
                 case 270:
-                    curItem.style.cssText += `
+                    curItem.style.cssText = `
+                            transform: rotateZ(${rotateDeg}deg); 
                             height: ${width}px;
                             width: ${height}px;
                             left: ${ curItem.dataset.left }px;
@@ -838,7 +853,7 @@ export default class ImgPreview{
 
         }
 
-
+        this.isAnimating = false;
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
         if( this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless ){//动画正在进行时，或者不是单指操作时一律不处理
