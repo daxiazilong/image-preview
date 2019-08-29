@@ -302,7 +302,7 @@ export default class ImgPreview{
         /**
          * 踩坑记
          * transform-origin 的参考点始终时对其初始位置来说的
-         * scale之后的元素, translate 的位移等于 位移 * scale
+         * scale之后的元素, 实际的偏移路径等于 translate 的位移等于 位移 * scale
          */
         let mouseX: number = e.touches[0].clientX;
         let mouseY: number = e.touches[0].clientY;
@@ -416,7 +416,12 @@ export default class ImgPreview{
         }else{
             scaledX = mouseX * scaleX;
             scaledY =( mouseY - curItemTop ) * scaleY;
-            
+            // 以y轴偏移的计算为例，以下是setTimout 计算时公式的推导
+            //- ( mouseY - curItemTop ) * (scaleY - 1) - curItemTop)
+            // = curItemTop -  (mouseY - curItemTop)  * (scaleY - 1)   ;
+            // = curItemTop - ( mouseY- curItemTop)*scaleY + (mouseY - curItemTop)   
+            // = mouseY - ( mouseY- curItemTop)*scaleY
+            //  = - (scaledY - mouseY)
         }
 
         setTimeout(() => {
@@ -767,24 +772,35 @@ export default class ImgPreview{
             curItem.dataset.left = (left + (this.zoomScale)*centerX ).toString();
             let width: number = curItemWidth * (1 - this.zoomScale);
             let height: number = curItemHeihgt * (1 - this.zoomScale);
-            if( width <= Number(curItem.dataset.initialWidth) ){
-                switch( Math.abs(rotateDeg % 360) ){
-                    case 0:
-                    case 180:
-                        width = Number(curItem.dataset.initialWidth);
-                        height = Number(curItem.dataset.initialHeight)
-                        break;
-                    case 90:
-                    case 270:
-                        width = Number(curItem.dataset.initialHeight);
-                        height = Number(curItem.dataset.initialWidth)
-                        break;
-                }
-                
-                curItem.dataset.top = curItem.dataset.initialTop;
-                curItem.dataset.left = '0';
-                curItem.dataset.isEnlargement = 'shrink';
+            
+            
+            switch( Math.abs(rotateDeg % 360) ){
+                case 0:
+                case 180:
+                        if( width <= Number(curItem.dataset.initialWidth) ){
+                            width = Number(curItem.dataset.initialWidth);
+                            height = Number(curItem.dataset.initialHeight)
+                            curItem.dataset.top = curItem.dataset.initialTop;
+                                curItem.dataset.left = '0';
+                                curItem.dataset.isEnlargement = 'shrink';
+                        }
+                    
+                    break;
+                case 90:
+                case 270:
+                        if( height <= Number(curItem.dataset.initialWidth) ){
+                            width = Number(curItem.dataset.initialHeight);
+                            height = Number(curItem.dataset.initialWidth);
+                            curItem.dataset.top = curItem.dataset.initialTop;
+                            curItem.dataset.left = '0';
+                            curItem.dataset.isEnlargement = 'shrink';
+                        }
+                    
+                    break;
             }
+            
+            
+            
             /**
              * 采坑记：
              * 旋转 90 270 这些体位的时候 ，width和height得交换下位置
