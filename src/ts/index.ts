@@ -15,8 +15,8 @@ export default class ImgPreview{
     public imgContainerMoveY: number = 0;//图片容器y轴的移动距离
     public screenWidth: number ;//屏幕宽度
     public imgsNumber: number = 4;//图片数量
-    public step: number = 10; //动画每帧的位移
-    public zoomScale: number = 0.025;//缩放比例
+    public slideTime: number = 300; //切换至下一屏幕时需要的时间
+    public zoomScale: number = 0.05;//缩放比例
     public isZooming: boolean = false; //是否在进行双指缩放
 
     public curPoint1: { x: number, y: number };//双指缩放时的第一个点
@@ -975,8 +975,8 @@ export default class ImgPreview{
         let endY:number;
 
         if( curItemLeft > maxLeft ){
-            vx =  curItemLeft / 300;
-            stepX = vx * (1000 / 60);
+           
+            stepX = this.computeStep( curItemLeft - maxLeft, this.slideTime);
             startX = curItemLeft;
             endX = maxLeft;
 
@@ -984,8 +984,7 @@ export default class ImgPreview{
             
         }else if( curItemLeft < minLeft ){
     
-            vx =  curItemLeft / 300;
-            stepX = vx * (1000 / 60);
+            stepX = this.computeStep( curItemLeft - minLeft, this.slideTime);
             startX = curItemLeft;
             endX = minLeft;
             
@@ -994,16 +993,16 @@ export default class ImgPreview{
         }
 
         if( curItemTop > maxTop ){
-            vy =  ( curItemTop - maxTop) / 300;
-            stepY = vy * (1000 / 60);
+         
+            stepY = this.computeStep( ( curItemTop - maxTop),this.slideTime );
 
             startY = curItemTop;
             endY = maxTop;
             recoverY = true;
            
         }else if( curItemTop < minTop ){
-            vy =  (curItemTop - minTop) / 300;
-            stepY = vy * (1000 / 60);
+            
+            stepY = this.computeStep( ( curItemTop - minTop),this.slideTime );
 
             startY = curItemTop;
             endY = minTop;
@@ -1118,7 +1117,8 @@ export default class ImgPreview{
             endX = -(this.screenWidth * this.imgsNumber - 1);
             this.curIndex = this.imgsNumber -1 ;
         }
-        this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, -this.step )
+        let step: number = this.computeStep( Math.abs( endX - this.imgContainerMoveX ),this.slideTime )
+        this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, -step )
     }
     slidePrev(){
         let endX = -(this.curIndex * this.screenWidth);
@@ -1126,15 +1126,18 @@ export default class ImgPreview{
             endX = 0;
             this.curIndex = 0;
         }
-        this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, this.step )
+        let step: number = this.computeStep( Math.abs( endX - this.imgContainerMoveX ),this.slideTime )
+        this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, step )
     }
     slideSelf(){
  
         let endX = -(this.curIndex * this.screenWidth);
         if( endX < this.imgContainerMoveX ){
-            this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, -this.step )
+            let step: number = this.computeStep( Math.abs( endX - this.imgContainerMoveX ),this.slideTime )
+            this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, -step )
         }else{
-            this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, this.step )
+            let step: number = this.computeStep( Math.abs( endX - this.imgContainerMoveX ),this.slideTime )
+            this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, step )
         }
         
     }
@@ -1238,6 +1241,12 @@ export default class ImgPreview{
             }
         }
         processStyle();
+    }
+    computeStep( displacement:number,time: number ): number{
+        let v: number = displacement / time;
+        let frequency: number = 1000 / 60;
+
+        return v * frequency;
     }
     genFrame(){
         let html : string = `
