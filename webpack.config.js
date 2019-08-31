@@ -3,21 +3,29 @@
   const HtmlWebpackPlugin = require('html-webpack-plugin');
 
   const dev = (process.argv[2].split('=')[1]) == "development";
-  const compilePath = dev ? './src/ts/test.ts' :'./src/ts/index.ts';
+  let compilePath = {
+    imgPreview: './src/ts/index.ts'
+  };
   const output = dev ? 'dist' : 'release';
 
-  function getIp(){
-    var interfaces = require('os').networkInterfaces();
-    for(var devName in interfaces){
-        var iface = interfaces[devName];
-        for(var i=0;i<iface.length;i++){
-            var alias = iface[i];
-            if(alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal){
-                return alias.address;
-            }
-        }
+  var plugins = [];
+ console.log( path.resolve(__dirname, output) )
+  if(dev){
+    compilePath = {
+        imgPreview: './src/ts/index.ts',
+        test: './src/ts/test.ts'
     }
+    plugins = [
+        new webpack.HotModuleReplacementPlugin({
+            
+        }),
+        new HtmlWebpackPlugin({
+          title: 'this is dev mode!',
+          template:'./dist/template.html'
+      }),
+    ]
   }
+ 
   module.exports = {
       entry: compilePath,
       module: {
@@ -31,7 +39,7 @@
           extensions: ['.ts', '.js']
       },
       output: {
-          filename: 'bundle.js',
+          filename: '[name].js',
           path: path.resolve(__dirname, output)
       },
       devServer:{
@@ -39,13 +47,17 @@
           hot: true,
           host: getIp()
       },
-      plugins:[
-          new webpack.HotModuleReplacementPlugin({
-              
-          }),
-          new HtmlWebpackPlugin({
-            title: 'this is dev mode!',
-            template:'./dist/template.html'
-        }),
-      ]
+      plugins:plugins
   };
+  function getIp(){
+    var interfaces = require('os').networkInterfaces();
+    for(var devName in interfaces){
+        var iface = interfaces[devName];
+        for(var i=0;i<iface.length;i++){
+            var alias = iface[i];
+            if(alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal){
+                return alias.address;
+            }
+        }
+    }
+  }

@@ -1,9 +1,10 @@
-
-
 export default class ImgPreview{
-    // 上次点击时间和执行单击事件的计时器
+    options: {
+        curImg: string,
+        imgs: Array<string>
+    }; //调用插件的时候的配置
     [key:string]: any;
-    public lastClick: number = -Infinity;
+    public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
     public performerClick: any;
     public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
     public startX: number;//手指移动时的x起始坐标
@@ -13,8 +14,8 @@ export default class ImgPreview{
     public curIndex: number = 0;//当前第几个图片
     public imgContainerMoveX: number = 0;//图片容器x轴的移动距离
     public imgContainerMoveY: number = 0;//图片容器y轴的移动距离
-    public screenWidth: number ;//屏幕宽度
-    public imgsNumber: number = 4;//图片数量
+    public screenWidth: number = window.innerWidth;//屏幕宽度
+    public imgsNumber: number ;//图片数量
     public slideTime: number = 300; //切换至下一屏幕时需要的时间
     public zoomScale: number = 0.05;//缩放比例
     public isZooming: boolean = false; //是否在进行双指缩放
@@ -43,11 +44,14 @@ export default class ImgPreview{
         rotateRight: 'handleRotateRight'
     }
     
-    constructor( options: Object ){
+    constructor( options: {
+        curImg: string,
+        imgs:Array<string>
+    }){
+        this.options = options;
         this.genFrame();
         this.handleReausetAnimate();//requestAnimationFrame兼容性
 
-        this.screenWidth = this.ref.getBoundingClientRect().width;
         this.threshold = this.screenWidth / 4;
         this.imgContainer = this.ref.querySelector(`.${this.prefix}imgContainer`);
         this.imgItems = this.imgContainer.querySelectorAll(`.${this.prefix}item`);
@@ -81,10 +85,11 @@ export default class ImgPreview{
 
                 el.style.top = `${top}px`;
             }else{
+                el.dataset.loaded = "false";
                 img.onload = (function(el){
                     
                     return function(){
-                        console.log(el)
+                        
                         let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
                         let imgContainerHeight: number = imgContainerRect.height;
                         const styleObj: ClientRect = el.getBoundingClientRect();
@@ -95,6 +100,7 @@ export default class ImgPreview{
                         el.dataset.initialHeight =  styleObj.height.toString();
                         el.dataset.top = top.toString();
                         el.dataset.initialTop = top.toString();
+                        el.dataset.loaded = "true";
 
                         el.style.top = `${top}px`;
 
@@ -103,7 +109,7 @@ export default class ImgPreview{
                 })(el).bind(this)
                 img.onerror=(function(el){
                     return function(e: Event ){
-                        console.log(el)
+                        
                         let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
                         let imgContainerHeight: number = imgContainerRect.height;
                         const styleObj: ClientRect = el.getBoundingClientRect();
@@ -114,6 +120,7 @@ export default class ImgPreview{
                         el.dataset.initialHeight =  styleObj.height.toString();
                         el.dataset.top = top.toString();
                         el.dataset.initialTop = top.toString();
+                        el.dataset.loaded = "false";
 
                         el.style.top = `${top}px`;
                       
@@ -166,7 +173,7 @@ export default class ImgPreview{
         
         let now = (new Date()).getTime();
 
-        if( now - this.lastClick < 500 ){
+        if( now - this.lastClick < 300 ){
             /*
                 启动一个定时器，如果双击事件发生后就
                 取消单击事件的执行
@@ -177,7 +184,7 @@ export default class ImgPreview{
         }else{
             this.performerClick = setTimeout(() => {
                 this.handleClick(e);
-            },500)
+            },300)
             
         }
         this.lastClick = (new Date()).getTime();
@@ -185,7 +192,10 @@ export default class ImgPreview{
     handleRotateLeft(e: TouchEvent & MouseEvent ) :void{
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         let rotateDeg:number;
-
+        if( curItem.dataset.loaded == 'false'){
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            return;
+        }
         if( curItem.dataset.rotateDeg ){
             rotateDeg = Number(curItem.dataset.rotateDeg)
         }else{
@@ -203,6 +213,11 @@ export default class ImgPreview{
     handleRotateRight(e: TouchEvent & MouseEvent ) :void{
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         let rotateDeg:number;
+
+        if( curItem.dataset.loaded == 'false'){
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            return;
+        }
 
         if( curItem.dataset.rotateDeg ){
             rotateDeg = Number(curItem.dataset.rotateDeg)
@@ -228,6 +243,12 @@ export default class ImgPreview{
 
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         const curImg: HTMLImageElement = curItem.querySelector('img');
+
+        if( curItem.dataset.loaded == 'false'){
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            this.isAnimating = false;
+            return;
+        }
 
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeight: number = curItem.getBoundingClientRect().height;
@@ -675,7 +696,11 @@ export default class ImgPreview{
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
         const curItem: HTMLElement = this.imgItems[this.curIndex];
-        const curImg: HTMLImageElement = curItem.querySelector('img');
+
+        if( curItem.dataset.loaded == 'false'){
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            return;
+        }
 
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
@@ -732,7 +757,12 @@ export default class ImgPreview{
         this.isZooming = true;
         this.isAnimating = true;
         const curItem: HTMLElement = this.imgItems[this.curIndex];
-        const curImg: HTMLImageElement = curItem.querySelector('img');
+
+        if( curItem.dataset.loaded == 'false'){
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            this.isAnimating = false;
+            return;
+        }
 
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
@@ -1249,32 +1279,38 @@ export default class ImgPreview{
         return v * frequency;
     }
     genFrame(){
+        let curImg: string = this.options.curImg;
+        let images: Array<string> = this.options.imgs;
+        
+        if( !images || !images.length ){
+            console.error("没图，玩你麻痹");
+            return;
+        }
+
+        this.imgsNumber = images.length;
+        let index: number = images.indexOf(curImg);
+        let imagesHtml: string = '';
+        if( index == -1 ){
+            index = 0;
+        }
+        this.curIndex = index;
+        this.imgContainerMoveX = -(index * this.screenWidth);
+        images.forEach( src => {
+            imagesHtml += `
+            <div class="${this.prefix}itemWraper">
+                <div class="${this.prefix}item">
+                    <img src="${src}">
+                </div>
+            </div>
+            `
+        } )
         let html : string = `
             <div class="${this.prefix}imagePreviewer">
                 <div class="${this.prefix}close">
                     <svg t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430"><path d="M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z" fill="#ffffff" p-id="5431"></path><path d="M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z" fill="#ffffff" p-id="5432"></path></svg>
                 </div>
                 <div class="${this.prefix}imgContainer">
-                    <div class="${this.prefix}itemWraper">
-                        <div class="${this.prefix}item" id="test">
-                            <img src="/testImage/test1.jpg">
-                        </div>
-                    </div>
-                    <div class="${this.prefix}itemWraper" id="test1">
-                        <div class="${this.prefix}item">
-                            <img src="/testImage/main_body3.png">
-                        </div>
-                    </div>
-                    <div class="${this.prefix}itemWraper">
-                        <div class="${this.prefix}item">
-                            <img src="/testImage/main_body3.png">
-                        </div>
-                    </div>
-                    <div class="${this.prefix}itemWraper">
-                        <div class="${this.prefix}item">
-                            <img src="/testImage/main_body3.png">
-                        </div>
-                    </div>
+                    ${imagesHtml}
                 </div>
                 <div class="${this.prefix}bottom">
                     <div class="${this.prefix}item ">
@@ -1314,6 +1350,7 @@ export default class ImgPreview{
             }
             .${this.prefix}imagePreviewer .${this.prefix}imgContainer{
                 position: relative;
+                transform: translateX( ${this.imgContainerMoveX}px );
                 height: 100%;
                 font-size: 0;
                 white-space: nowrap;
@@ -1351,8 +1388,8 @@ export default class ImgPreview{
             }
             .${this.prefix}imagePreviewer .${this.prefix}bottom .${this.prefix}item{
                 display:inline-block;
-                width: 20px;
-                height: 20px;
+                width: 22px;
+                height: 22px;
                 margin-right: 10px;
                 cursor:pointer;
             }
