@@ -1,10 +1,10 @@
   const path = require('path');
   const webpack = require('webpack');
   const HtmlWebpackPlugin = require('html-webpack-plugin');
-
+  const version = '1.0.0';
   const dev = (process.argv[2].split('=')[1]) == "development";
   let compilePath = {
-    imgPreview: './src/ts/index.ts'
+    imagePreview: './src/ts/index.ts'
   };
   const output = dev ? 'debug' : 'release';
 
@@ -12,7 +12,7 @@
 
   if(dev){
     compilePath = {
-        imgPreview: './src/ts/index.ts',
+        imagePreview: './src/ts/index.ts',
         test: './src/ts/test.ts'
     }
     plugins = [
@@ -39,7 +39,7 @@
           extensions: ['.ts', '.js']
       },
       output: {
-          filename: '[name].js',
+          filename: `[name]${version}.js`,
           path: path.resolve(__dirname, output)
       },
       devServer:{

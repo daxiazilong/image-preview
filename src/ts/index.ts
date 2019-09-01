@@ -1,3 +1,9 @@
+/**
+ * image-preview 1.0.0
+ * author:zilong
+ * https://github.com/daxiazilong
+ * Released under the ISC License
+ */
 export default class ImagePreview{
     options: {
         curImg: string,
@@ -44,10 +50,10 @@ export default class ImagePreview{
         rotateRight: 'handleRotateRight'
     }
     
-    constructor( options: {
+    constructor( options ?: {
         curImg: string,
-        imgs:Array<string>
-    }){
+        imgs:Array<string>,
+    },selector ?: string){
         this.options = options;
         this.genFrame();
         this.handleReausetAnimate();//requestAnimationFrame兼容性
@@ -866,7 +872,7 @@ export default class ImagePreview{
                             width = Number(curItem.dataset.initialWidth);
                             height = Number(curItem.dataset.initialHeight)
                             curItem.dataset.top = curItem.dataset.initialTop;
-                            curItem.dataset.left = '0';
+                            curItem.dataset.left = curItem.dataset.initialLeft;
                             curItem.dataset.isEnlargement = 'shrink';
                         }
                     
@@ -877,7 +883,7 @@ export default class ImagePreview{
                             width = Number(curItem.dataset.initialHeight);
                             height = Number(curItem.dataset.initialWidth);
                             curItem.dataset.top = curItem.dataset.initialTop;
-                            curItem.dataset.left = '0';
+                            curItem.dataset.left = curItem.dataset.initialLeft;
                             curItem.dataset.isEnlargement = 'shrink';
                         }
                     
