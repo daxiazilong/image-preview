@@ -6,10 +6,10 @@
   let compilePath = {
     imgPreview: './src/ts/index.ts'
   };
-  const output = dev ? 'dist' : 'release';
+  const output = dev ? 'debug' : 'release';
 
   var plugins = [];
- console.log( path.resolve(__dirname, output) )
+
   if(dev){
     compilePath = {
         imgPreview: './src/ts/index.ts',
@@ -21,7 +21,7 @@
         }),
         new HtmlWebpackPlugin({
           title: 'this is dev mode!',
-          template:'./dist/template.html'
+          template:'./debug/template.html'
       }),
     ]
   }
@@ -43,7 +43,7 @@
           path: path.resolve(__dirname, output)
       },
       devServer:{
-          contentBase: './dist',
+          contentBase: './debug',
           hot: true,
           host: getIp()
       },

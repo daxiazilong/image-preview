@@ -1,4 +1,4 @@
-export default class ImgPreview{
+export default class ImagePreview{
     options: {
         curImg: string,
         imgs: Array<string>
@@ -66,24 +66,44 @@ export default class ImgPreview{
     }
     reCordInitialData( els:  NodeListOf < HTMLElement > ){
         /**
-         * 记录并设置初始top值
+         * 记录并设置初始top，left值
          */
         let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
         let imgContainerHeight: number = imgContainerRect.height;
     
         els.forEach( ( el,key,parent) => {
             const img: HTMLImageElement = el.querySelector('img');
+            const imgRect: ClientRect = img.getBoundingClientRect();
             if( img.complete ){
-                const styleObj: ClientRect = el.getBoundingClientRect();
-
+                let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+                let imgContainerHeight: number = imgContainerRect.height;
+                let imgContainerWidth: number = imgContainerRect.width;
+                let styleObj: ClientRect = el.getBoundingClientRect();
+                if( imgContainerHeight < styleObj.height ){
+                    el.style.cssText = `
+                        height: 100%;
+                        width: auto;
+                    `;
+                    img.style.cssText = `
+                        height: 100%;
+                        width: auto;
+                    `;
+                }
+                
+                styleObj = el.getBoundingClientRect();
                 const top: number = (imgContainerHeight - styleObj.height) / 2;
+                const left: number = (imgContainerWidth - styleObj.width) / 2;
 
                 el.dataset.initialWidth = styleObj.width.toString();
                 el.dataset.initialHeight =  styleObj.height.toString();
                 el.dataset.top = top.toString();
                 el.dataset.initialTop = top.toString();
+                el.dataset.left = left.toString();
+                el.dataset.initialLeft = left.toString();
+                el.dataset.loaded = "true";
 
                 el.style.top = `${top}px`;
+                el.style.left=`${left}px`;
             }else{
                 el.dataset.loaded = "false";
                 img.onload = (function(el){
@@ -92,17 +112,33 @@ export default class ImgPreview{
                         
                         let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
                         let imgContainerHeight: number = imgContainerRect.height;
-                        const styleObj: ClientRect = el.getBoundingClientRect();
-
+                        let imgContainerWidth: number = imgContainerRect.width;
+                        let styleObj: ClientRect = el.getBoundingClientRect();
+                        if( imgContainerHeight < styleObj.height ){
+                            el.style.cssText = `
+                                height: 100%;
+                                width: auto;
+                            `;
+                            img.style.cssText = `
+                                height: 100%;
+                                width: auto;
+                            `;
+                        }
+                        
+                        styleObj = el.getBoundingClientRect();
                         const top: number = (imgContainerHeight - styleObj.height) / 2;
+                        const left: number = (imgContainerWidth - styleObj.width) / 2;
 
                         el.dataset.initialWidth = styleObj.width.toString();
                         el.dataset.initialHeight =  styleObj.height.toString();
                         el.dataset.top = top.toString();
                         el.dataset.initialTop = top.toString();
+                        el.dataset.left = left.toString();
+                        el.dataset.initialLeft = left.toString();
                         el.dataset.loaded = "true";
 
                         el.style.top = `${top}px`;
+                        el.style.left=`${left}px`;
 
                     }
                     
@@ -120,6 +156,7 @@ export default class ImgPreview{
                         el.dataset.initialHeight =  styleObj.height.toString();
                         el.dataset.top = top.toString();
                         el.dataset.initialTop = top.toString();
+                        
                         el.dataset.loaded = "false";
 
                         el.style.top = `${top}px`;
@@ -202,12 +239,16 @@ export default class ImgPreview{
             rotateDeg = 0
         }
         rotateDeg -= 90;
-
+        this.isAnimating = true;
         curItem.style.cssText += `
             transition: transform 0.5s;
             transform: rotateZ( ${rotateDeg}deg );
-        `
+        `;
+        
         curItem.dataset.rotateDeg = rotateDeg.toString();
+        setTimeout(()=>{
+            this.isAnimating = false;
+        },550)
 
     }
     handleRotateRight(e: TouchEvent & MouseEvent ) :void{
@@ -225,13 +266,15 @@ export default class ImgPreview{
             rotateDeg = 0
         }
         rotateDeg += 90;
-
+        this.isAnimating = true;
         curItem.style.cssText += `
             transition: transform 0.5s;
             transform: rotateZ( ${rotateDeg}deg );
         `
         curItem.dataset.rotateDeg = rotateDeg.toString();
-
+        setTimeout(()=>{
+            this.isAnimating = false;
+        },550)
     }
     
     handleClick(e:TouchEvent & MouseEvent){
@@ -361,12 +404,13 @@ export default class ImgPreview{
             case 0:
                 curItem.style.cssText = `;
                     top:${curItemTop}px;
+                    left:${curItemLeft}px;
                     transform-origin: ${ centerX }px ${ centerY }px;
                     transform: 
                         rotateZ(${rotateDeg}deg) 
                         scale3d(${ scaleX },${ scaleY },1) 
                         translateY(${ ( -(mouseY - curItemViewTop - centerY) * (scaleY -1 ) ) / scaleY }px) 
-                        translateX(${ ( -(mouseX - centerX) * (scaleX-1 ) ) / scaleX   }px) 
+                        translateX(${ ( -(mouseX - curItemViewLeft- centerX) * (scaleX-1 ) ) / scaleX   }px) 
                     ;
                 `;
                 break;
@@ -374,11 +418,12 @@ export default class ImgPreview{
             case 180:
                 curItem.style.cssText = `;
                     top:${curItemTop}px;
+                    left: ${curItemLeft}px;
                     transform-origin: ${ centerX }px ${ centerY }px;
                     transform: 
                         rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1) 
                         translateY(${ ( (mouseY - curItemViewTop  - centerY) * (scaleY -1 ) ) / scaleY   }px) 
-                        translateX(${ ( (mouseX - centerX) * (scaleX-1 ) ) / scaleX   }px) 
+                        translateX(${ ( (mouseX - curItemViewLeft -  centerX) * (scaleX-1 ) ) / scaleX   }px) 
                     ;
                 `;
                 break;
@@ -393,6 +438,7 @@ export default class ImgPreview{
                  */
                 curItem.style.cssText = `;
                     top: ${curItemTop}px;
+                    left: ${curItemLeft}px;
                     transform-origin: ${ centerX }px ${ centerY }px ; 
                     transform: 
                         rotateZ(${rotateDeg}deg) 
@@ -410,6 +456,7 @@ export default class ImgPreview{
             case 90:
                     curItem.style.cssText = `;
                         top: ${curItemTop}px;
+                        left: ${curItemLeft}px;
                         transform-origin: ${ centerX }px ${ centerY }px ; 
                         transform: 
                             rotateZ(${rotateDeg}deg) 
@@ -432,10 +479,10 @@ export default class ImgPreview{
         
 
         if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-            scaledX = mouseX * scaleY;
+            scaledX = (mouseX - curItemLeft) * scaleY;
             scaledY = ( mouseY - curItemTop ) * scaleX;
         }else{
-            scaledX = mouseX * scaleX;
+            scaledX = (mouseX - curItemLeft )* scaleX;
             scaledY =( mouseY - curItemTop ) * scaleY;
             // 以y轴偏移的计算为例，以下是setTimout 计算时公式的推导
             //- ( mouseY - curItemTop ) * (scaleY - 1) - curItemTop)
@@ -505,7 +552,7 @@ export default class ImgPreview{
                 let left: number = Number(curItem.dataset.left) || 0;
 
                 const viewTopInitial:number =   Number(curItem.dataset.initialTop);
-                const viewLeftInitial:number =  0;
+                const viewLeftInitial:number =  Number(curItem.dataset.initialLeft);
 
                 let disteanceY: number =  curItemViewTop  + ( centerY )*(1 - scaleY) - top - viewTopInitial;
                 let distanceX:number = curItemViewLeft + (centerX)*( 1 - scaleX)  - left - viewLeftInitial;
@@ -529,8 +576,8 @@ export default class ImgPreview{
                     const centerX: number =  curItemWidth / 2;
                     const centerY: number = curItemHeight / 2;
 
-                    const viewTopInitial:number =   Number(curItem.dataset.initialTop);
-                    const viewLeftInitial:number =  0;
+                    const viewTopInitial:number = Number(curItem.dataset.initialTop);
+                    const viewLeftInitial:number = Number(curItem.dataset.initialLeft);
 
                     let top: number = Number(curItem.dataset.top);
                     let left: number = Number(curItem.dataset.left) || 0;
@@ -568,7 +615,7 @@ export default class ImgPreview{
                     /**
                      * 缩小的时候要时的图像的位置向原始位置靠近
                      * 以y轴得位移举例
-                     * 放大之后 再缩小时 图像顶部移动的距离 等于 当前高度值得一半 centerX*(1-scaleY)
+                     * 放大之后 再缩小时 图像顶部移动的距离  centerX*(1-scaleY)
                      *  这个式子是这么推导而来的  Math.abs(centerX* scaleY - centerX)
                      * (这是缩放前后产生的位移距离)，
                      * 减去top（这是使用translate抵消top时产生的y轴位移，使其位置和top等于0时的位置一样）
@@ -627,13 +674,14 @@ export default class ImgPreview{
                 break;
         }  
         curItem.dataset.top = curItem.dataset.initialTop;
-        curItem.dataset.left = '0';
+        curItem.dataset.left =  curItem.dataset.initialLeft;
 
         curItem.dataset.isEnlargement = 'shrink';
         setTimeout(() => {
             curItem.style.cssText = `;
                                 transform: rotateZ(${rotateDeg}deg);
                                 top:${Number(curItem.dataset.initialTop)}px;
+                                left: ${Number(curItem.dataset.initialLeft)}px;
                                 width: ${curItem.dataset.initialWidth}px;
                                 height: ${curItem.dataset.initialHeight}px;
                                 transition: none;
@@ -764,6 +812,13 @@ export default class ImgPreview{
             return;
         }
 
+        if( curItem.dataset.isEnlargement !== 'enlargement' ){
+            // 以下为旋转之后缩放时需要用到的参数
+            const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
+            const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
+            curItem.dataset.viewTopInitial = curItemViewTop.toString();
+            curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
+        }
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
 
@@ -811,8 +866,8 @@ export default class ImgPreview{
                             width = Number(curItem.dataset.initialWidth);
                             height = Number(curItem.dataset.initialHeight)
                             curItem.dataset.top = curItem.dataset.initialTop;
-                                curItem.dataset.left = '0';
-                                curItem.dataset.isEnlargement = 'shrink';
+                            curItem.dataset.left = '0';
+                            curItem.dataset.isEnlargement = 'shrink';
                         }
                     
                     break;
@@ -1307,7 +1362,10 @@ export default class ImgPreview{
         let html : string = `
             <div class="${this.prefix}imagePreviewer">
                 <div class="${this.prefix}close">
-                    <svg t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430"><path d="M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z" fill="#ffffff" p-id="5431"></path><path d="M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z" fill="#ffffff" p-id="5432"></path></svg>
+                    <svg t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430">
+                        <path d="M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z" fill="#ffffff" p-id="5431"></path><path d="M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z" fill="#ffffff" p-id="5432">
+                        </path>
+                    </svg>
                 </div>
                 <div class="${this.prefix}imgContainer">
                     ${imagesHtml}
@@ -1335,16 +1393,26 @@ export default class ImgPreview{
             }
             .${this.prefix}imagePreviewer .${this.prefix}close{
                 position: absolute;
-                top:20px;
-                right:20px;
+                top: 20px;
+                right: 20px;
+                z-index: 1;
+                box-sizing: border-box;
                 width: 22px;
                 height: 22px;
-                background: #000;
+                cursor:pointer;
             }
             .${this.prefix}imagePreviewer .${this.prefix}close svg{
                 width: 100%;
-                height: 100%;
+                height: 100%;             
             }
+            .${this.prefix}imagePreviewer svg{
+                overflow:visible;
+            }
+            .${this.prefix}imagePreviewer svg path{
+                stroke: #948888;
+                stroke-width: 30px;
+            }
+            
             .${this.prefix}imagePreviewer ${this.prefix}.close.${this.prefix}scroll{
                 height: 0;
             }

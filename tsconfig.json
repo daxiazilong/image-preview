@@ -1,6 +1,6 @@
   {
       "compilerOptions": {
-          "outDir": "./dist/",
+          "outDir": "debug",
           "noImplicitAny": true,
           "target": "es5",
           "suppressImplicitAnyIndexErrors":true,
