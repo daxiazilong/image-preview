@@ -5,10 +5,6 @@
  * Released under the ISC License
  */
 export default class ImagePreview{
-    options: {
-        curImg: string,
-        imgs: Array<string>
-    }; //调用插件的时候的配置
     [key:string]: any;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
     public performerClick: any;
@@ -50,11 +46,16 @@ export default class ImagePreview{
         rotateRight: 'handleRotateRight'
     }
     
-    constructor( options ?: {
-        curImg: string,
-        imgs:Array<string>,
-    },selector ?: string){
-        this.options = options;
+    constructor( 
+        public options: {
+            curImg?: string,
+            imgs?:Array<string>,
+            selector ?: string
+        }
+    ){
+        if( options.selector ){
+            this.bindTrigger();
+        }
         this.genFrame();
         this.handleReausetAnimate();//requestAnimationFrame兼容性
 
@@ -69,6 +70,30 @@ export default class ImagePreview{
         this.ref.addEventListener('touchstart',this.handleTouchStart.bind(this));
         this.ref.addEventListener('touchmove',this.handleMove.bind(this));
         this.ref.addEventListener('touchend',this.handleToucnEnd.bind(this));
+        this.ref.querySelector(`.${this.prefix}close`).addEventListener('touchstart',this.close.bind(this))
+        
+    }
+    bindTrigger(){
+        let images: Array<string> = [];
+        let triggerItems: NodeListOf < HTMLElement > = document.querySelectorAll( this.options.selector )
+        if( !triggerItems.length ){
+            // some operate
+        }
+        triggerItems.forEach( (element,index) => {
+            images.push( element.dataset.src );
+        })
+
+        this.options.curImg = images[0];
+        this.options.imgs = images;
+
+        let imgPreviewer = this;
+        triggerItems.forEach( (element,index) => {
+            
+            element.addEventListener('click',function(e){
+                imgPreviewer.show(index)
+            })
+        })
+        
     }
     reCordInitialData( els:  NodeListOf < HTMLElement > ){
         /**
@@ -1492,6 +1517,17 @@ export default class ImagePreview{
             })();
         }
         
+    }
+    close(e: MouseEvent & TouchEvent){
+        e.stopImmediatePropagation();
+        this.ref.style.display = 'none'
+    }
+    show( index: number ){
+        this.curIndex = index;
+        this.imgContainerMoveX = -index * this.screenWidth;
+
+        this.imgContainer.style.transform = `translateX( ${this.imgContainerMoveX}px )`;
+        this.ref.style.display = 'block';
     }
 }
 /**
