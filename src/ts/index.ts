@@ -385,12 +385,14 @@ export default class ImagePreview{
        } ;
        
 
-        if( scaleX > 1 ){//放大
+        if( scaleX > 1 && scaleY > 1 ){//放大
 
             this.setToNaturalImgSize( scaleX,scaleY,e);  
             
-        }else{
+        }else if( scaleX < 1 && scaleY < 1 ){ 
             this.setToInitialSize( scaleX,scaleY,e);
+        }else{
+            this.isAnimating = false;
         }
     }
     setToNaturalImgSize( scaleX: number , scaleY: number,e: TouchEvent & MouseEvent) :void{
@@ -427,7 +429,7 @@ export default class ImagePreview{
             toWidth = curImg.naturalWidth
             toHeight = curImg.naturalHeight;
         }
-
+       
         curItem.dataset.viewTopInitial = curItemViewTop.toString();
         curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
 
