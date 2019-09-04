@@ -22,6 +22,10 @@
         background: rgba(255,255,255,0.5);
         border-radius: 5px;
     }
+    #el img{
+        width: 100px;
+        height: auto;
+    }
 </style>
 </head>
 
@@ -32,6 +36,11 @@
     <img data-src="/testImage/more20190627.png" src="/testImage/more20190627.png">
     <img data-src="/testImage/phone20190626.png" src="/testImage/phone20190626.png">
     <img data-src="/testImage/share_success_20190619.png" src="/testImage/share_success_20190619.png">
+</div>
+<div id="el" v-image-preivew>
+    <div v-for=" ( img, index ) in imgs ">
+        <img :src="img">
+    </div>
 </div>
 <div id="stat">
 

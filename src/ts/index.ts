@@ -64,6 +64,12 @@ export default class ImagePreview{
         this.imgItems = this.imgContainer.querySelectorAll(`.${this.prefix}item`);
 
         this.reCordInitialData( this.imgItems );
+        if( this.options.selector ){
+            this.ref.style.cssText = `
+                top: 100% ;
+                left: 100%;
+            `;
+        }
         this.maxMoveX = this.screenWidth / 2;
         this.minMoveX = -this.screenWidth * (this.imgsNumber - 0.5);
         
@@ -1393,7 +1399,6 @@ export default class ImagePreview{
             `
         } )
         let html : string = `
-            <div class="${this.prefix}imagePreviewer">
                 <div class="${this.prefix}close">
                     <svg t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430">
                         <path d="M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z" fill="#ffffff" p-id="5431"></path><path d="M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z" fill="#ffffff" p-id="5432">
@@ -1411,7 +1416,6 @@ export default class ImagePreview{
                         <svg data-type="rotateRight" t="1563884064737" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1251" width="200" height="200"><path d="M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z" p-id="1252" fill="#ffffff"></path></svg>
                     </div>
                 </div>
-            </div>
         `;
         let style: string =`
             .${this.prefix}imagePreviewer{
@@ -1423,6 +1427,8 @@ export default class ImagePreview{
                 background: rgba(0,0,0,1);
                 color:#fff;
                 transform: translate3d(0,0,0);
+                transition: left 0.5s;
+                overflow:hidden;
             }
             .${this.prefix}imagePreviewer .${this.prefix}close{
                 position: absolute;
@@ -1500,6 +1506,9 @@ export default class ImagePreview{
             }
         `;
         this.ref = document.createElement('div');
+        this.ref.className = `${this.prefix}imagePreviewer`;
+
+        
         this.ref.innerHTML = html;
 
         let styleElem = document.createElement('style');
@@ -1522,14 +1531,19 @@ export default class ImagePreview{
     }
     close(e: MouseEvent & TouchEvent){
         e.stopImmediatePropagation();
-        this.ref.style.display = 'none'
+        this.ref.style.cssText = `
+            left: 100%;
+        `;
     }
     show( index: number ){
         this.curIndex = index;
         this.imgContainerMoveX = -index * this.screenWidth;
 
         this.imgContainer.style.transform = `translateX( ${this.imgContainerMoveX}px )`;
-        this.ref.style.display = 'block';
+        this.ref.style.cssText = `
+            top: 0%;
+            left: 0%;
+        `;
     }
 }
 /**

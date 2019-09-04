@@ -35,9 +35,6 @@
               exclude: /node_modules/
           }]
       },
-      resolve: {
-          extensions: ['.ts', '.js']
-      },
       output: {
           filename: `[name]${version}.js`,
           path: path.resolve(__dirname, output)
@@ -47,7 +44,13 @@
           hot: true,
           host: getIp()
       },
-      plugins:plugins
+      plugins:plugins,
+      resolve: {
+        alias: {
+            vue: 'vue/dist/vue.js'
+        },
+        extensions: ['.ts', '.js']
+    }
   };
   function getIp(){
     var interfaces = require('os').networkInterfaces();
