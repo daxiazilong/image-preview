@@ -11,7 +11,7 @@
     "url": "https://github.com/daxiazilong/image-preview"
   },
   "author": "zilong",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {},
   "devDependencies": {
     "html-webpack-plugin": "^3.2.0",

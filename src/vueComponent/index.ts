@@ -8,8 +8,7 @@ export default{
         return{}
     },
     mounted:function(){
-        
-        
+
         let childNodes = this.$refs.imgs.childNodes;
         childNodes = Array.prototype.filter.call(childNodes,( item => item.nodeType === 1))
         let imgPreview = new ImgPreview({
@@ -25,14 +24,9 @@ export default{
         }
 
     },
-    methods:{
-        test:function(E){
-            console.log(E)
-        }
-    },
     template: `
         <div ref="imgs">
-            <slot @click="test"></slot>  
+            <slot></slot>  
         </div>     
     `
 }

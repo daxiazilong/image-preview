@@ -2,10 +2,11 @@
  * image-preview 1.0.0
  * author:zilong
  * https://github.com/daxiazilong
- * Released under the ISC License
+ * Released under the MIT License
  */
 export default class ImagePreview{
     [key:string]: any;
+    public showTools: boolean  = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
     public performerClick: any;
     public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
@@ -310,7 +311,17 @@ export default class ImagePreview{
     }
     
     handleClick(e:TouchEvent & MouseEvent){
-        console.log('click')
+        let close: HTMLElement = <HTMLElement> (this.ref.querySelector(`.${this.prefix}close`));
+        let bottom: HTMLElement = <HTMLElement>(this.ref.querySelector(`.${this.prefix}bottom`));
+        this.showTools = !this.showTools
+
+        if( this.showTools ){
+            close.style.display = 'block';
+            bottom.style.display = 'block';
+        }else{
+            close.style.display = 'none';
+            bottom.style.display = 'none';
+        }
     }
     handleDoubleClick(e: TouchEvent & MouseEvent){
         if( this.isAnimating ) return;
@@ -1526,8 +1537,11 @@ export default class ImagePreview{
     }
     close(e: MouseEvent & TouchEvent){
         e.stopImmediatePropagation();
+        clearTimeout(this.performerClick)
+
         this.ref.style.cssText = `
             left: 100%;
+            top:0%;
         `;
     }
     show( index: number ){
