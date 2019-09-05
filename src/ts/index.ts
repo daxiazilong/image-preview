@@ -64,19 +64,14 @@ export default class ImagePreview{
         this.imgItems = this.imgContainer.querySelectorAll(`.${this.prefix}item`);
 
         this.reCordInitialData( this.imgItems );
-        if( this.options.selector ){
-            this.ref.style.cssText = `
-                top: 100% ;
-                left: 100%;
-            `;
-        }
+        
         this.maxMoveX = this.screenWidth / 2;
         this.minMoveX = -this.screenWidth * (this.imgsNumber - 0.5);
         
         this.ref.addEventListener('touchstart',this.handleTouchStart.bind(this));
         this.ref.addEventListener('touchmove',this.handleMove.bind(this));
         this.ref.addEventListener('touchend',this.handleToucnEnd.bind(this));
-        this.ref.querySelector(`.${this.prefix}close`).addEventListener('touchstart',this.close.bind(this))
+        this.ref.querySelector(`.${this.prefix}close`).addEventListener('click',this.close.bind(this))
         
     }
     bindTrigger(){
@@ -1420,8 +1415,8 @@ export default class ImagePreview{
         let style: string =`
             .${this.prefix}imagePreviewer{
                 position: fixed;
-                top: 0;
-                left: 0;
+                top: 100% ;
+                left: 100%;
                 width: 100%;
                 height: 100%;
                 background: rgba(0,0,0,1);

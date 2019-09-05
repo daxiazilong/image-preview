@@ -25,7 +25,6 @@ export let imagePreview = {
 
         this.installed = true;
         Vue.component('image-preivew', this.imagePreview ) 
-        Vue.directive('image-preivew',this.imagePreview )
     },
 
     imagePreview: component
