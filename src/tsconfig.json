@@ -1,0 +1,9 @@
+  {
+      "compilerOptions": {
+          "noImplicitAny": false,
+          "target": "es5",
+          "suppressImplicitAnyIndexErrors":true,
+          "removeComments":true,
+          "outDir":"../release"
+      }
+  }

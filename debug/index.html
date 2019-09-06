@@ -1,0 +1,49 @@
+<head>
+    <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <style>
+    *{
+        margin:0;
+        padding:0;
+    }
+    .imageWraper img{
+        
+        width: 50px;
+        height: 50px;
+    }
+
+    #stat{
+        position: fixed;
+        left: 20px;
+        top: 20px;
+        z-index: 10;
+        color:black;
+        font-size: 14px;
+        padding: 5px;
+        background: rgba(255,255,255,0.5);
+        border-radius: 5px;
+    }
+    #el img{
+        width: 100px;
+        height: auto;
+    }
+</style>
+</head>
+
+
+<div class="imageWraper">
+    <img data-src="/testImage/main_body3.png" src="/testImage/main_body3.png">
+    <img data-src="/testImage/phone20190624.png" src="/testImage/phone20190624.png">
+    <img data-src="/testImage/more20190627.png" src="/testImage/more20190627.png">
+    <img data-src="/testImage/phone20190626.png" src="/testImage/phone20190626.png">
+    <img data-src="/testImage/share_success_20190619.png" src="/testImage/share_success_20190619.png">
+</div>
+<div id="el">
+    <image-preivew :images="imgs">
+        <div v-for=" ( img, index ) in imgs ">
+            <img :src="img">
+        </div>
+    </image-preivew>
+</div>
+<div id="stat">
+
+</div><script type="text/javascript" src="imagePreview1.0.0.js"></script><script type="text/javascript" src="test1.0.0.js"></script>
