@@ -278,8 +278,10 @@ export default class ImagePreview{
             transform: rotateZ( ${rotateDeg}deg );
         `;
         
-        curItem.dataset.rotateDeg = rotateDeg.toString();
+        
         setTimeout(()=>{
+            curItem.dataset.rotateDeg = rotateDeg.toString();
+
             this.isAnimating = false;
         },550)
 
@@ -300,17 +302,18 @@ export default class ImagePreview{
         }
         rotateDeg += 90;
         this.isAnimating = true;
+
         curItem.style.cssText += `
             transition: transform 0.5s;
             transform: rotateZ( ${rotateDeg}deg );
         `
-        curItem.dataset.rotateDeg = rotateDeg.toString();
         setTimeout(()=>{
+            curItem.dataset.rotateDeg = rotateDeg.toString();
             this.isAnimating = false;
         },550)
     }
     
-    handleClick(e:TouchEvent & MouseEvent){
+    handleClick(e ? :TouchEvent & MouseEvent){
         let close: HTMLElement = <HTMLElement> (this.ref.querySelector(`.${this.prefix}close`));
         let bottom: HTMLElement = <HTMLElement>(this.ref.querySelector(`.${this.prefix}bottom`));
         this.showTools = !this.showTools
@@ -335,7 +338,7 @@ export default class ImagePreview{
             this.isAnimating = false;
             return;
         }
-
+        
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeight: number = curItem.getBoundingClientRect().height;
 
@@ -515,7 +518,6 @@ export default class ImagePreview{
             default:
                 break;
         } 
-        curItem.dataset.isEnlargement = 'enlargement';
         // 放大之后 图片相对视口位置不变
 
         let scaledX: number ;
@@ -560,6 +562,8 @@ export default class ImagePreview{
             
             curItem.dataset.top = `${ -(scaledY - mouseY)  }`;
             curItem.dataset.left = `${ -(scaledX -mouseX)  }`;
+            curItem.dataset.isEnlargement = 'enlargement';
+            
             this.isAnimating = false;
         },550)
     }
@@ -699,6 +703,7 @@ export default class ImagePreview{
 
                     let disteanceY: number =  curItemViewTop  + ( centerX )*( 1 - scaleY ) - top - viewTopInitial;
                     let distanceX:number = curItemViewLeft + (centerY)*( 1 -scaleX ) - left - viewLeftInitial;
+
                     curItem.style.cssText = `;
                         top:${top}px;
                         left:${left}px;
@@ -721,7 +726,7 @@ export default class ImagePreview{
         curItem.dataset.top = curItem.dataset.initialTop;
         curItem.dataset.left =  curItem.dataset.initialLeft;
 
-        curItem.dataset.isEnlargement = 'shrink';
+        
         setTimeout(() => {
             curItem.style.cssText = `;
                                 transform: rotateZ(${rotateDeg}deg);
@@ -729,8 +734,27 @@ export default class ImagePreview{
                                 left: ${Number(curItem.dataset.initialLeft)}px;
                                 width: ${curItem.dataset.initialWidth}px;
                                 height: ${curItem.dataset.initialHeight}px;
-                                transition: none;
+                                transition: none; 
                                 `
+            ;
+            {
+                /**
+                 * bug prefix on ios,
+                 * frequent zoom with double-click may
+                 * cause img fuzzy
+                 */
+                let curImg: HTMLElement = curItem.querySelector(`img`);
+                let preImgStyle: string = curImg.style.cssText;
+
+                curImg.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                `            
+                setTimeout(function(){ 
+                    curImg.style.cssText = preImgStyle; 
+                },10)
+            }
+            curItem.dataset.isEnlargement = 'shrink';
             this.isAnimating = false;
         },550)
     }
@@ -1004,7 +1028,7 @@ export default class ImagePreview{
     handleToucnEnd(e: TouchEvent & MouseEvent){
         if( this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless ){//动画正在进行时，或者不是单指操作时一律不处理
             return;
-        } 
+        }   
         const type : string = (<HTMLElement>(e.target)).dataset.type;
     
         if( this.operateMaps[type] ){
@@ -1561,6 +1585,6 @@ export default class ImagePreview{
 function showDebugger(msg: string) : void{
     
     let stat = document.getElementById('stat');
-    stat.innerHTML = `<pre>${msg}</pre>` ;
+    stat.innerHTML = `<pre style="word-break: break-all;white-space: pre-line;">${msg}</pre>` ;
                
 }
