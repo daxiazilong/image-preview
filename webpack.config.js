@@ -12,7 +12,7 @@
 
   if(dev){
     compilePath = {
-        imagePreview: './src/ts/index.ts',
+        imagePreview: './src/ts/ImagePreview.ts',
         test: './src/ts/test.ts'
     }
     plugins = [

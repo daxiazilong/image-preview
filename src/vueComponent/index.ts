@@ -1,4 +1,4 @@
-import ImgPreview from "../ts/index";
+import ImgPreview from "../ts/ImagePreview";
 
 export default{
     props:{
