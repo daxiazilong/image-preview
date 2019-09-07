@@ -42,7 +42,8 @@
       devServer:{
           contentBase: './debug',
           hot: true,
-          host: getIp()
+          host: getIp(),
+          port: 9999
       },
       plugins:plugins,
       resolve: {

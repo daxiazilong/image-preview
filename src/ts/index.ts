@@ -739,7 +739,7 @@ export default class ImagePreview{
             ;
             {
                 /**
-                 * bug prefix on ios,
+                 * bug fix on ios,
                  * frequent zoom with double-click may
                  * cause img fuzzy
                  */
