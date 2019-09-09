@@ -806,7 +806,7 @@ export default class ImagePreview{
         }
         this.startX = curX;
 
-        this.imgContainer.style.transform = `translateX(${ this.imgContainerMoveX }px)`
+        this.imgContainer.style.left = `${ this.imgContainerMoveX }px`
     }
     handleMoveEnlage( e: TouchEvent & MouseEvent ){
 
@@ -1314,7 +1314,7 @@ export default class ImagePreview{
         function processStyle(){
             switch( prop ){
                 case 'transform':
-                        el.style.transform = `translateX( ${start + step}px )`;;
+                        el.style.left = ` ${start + step}px`;;
                         break;
                 case 'top':
                     el.style.top = `${start + step}px`;
@@ -1544,11 +1544,15 @@ export default class ImagePreview{
 
         
         this.ref.innerHTML = html;
+        if( !document.querySelector(`#${this.prefix}style`)){
+            let styleElem = document.createElement('style');
+            styleElem.id= `${this.prefix}style`;
+            styleElem.innerHTML = style;
+            
+            document.querySelector('head').appendChild(styleElem);
+        }
+        
 
-        let styleElem = document.createElement('style');
-        styleElem.innerHTML = style;
-
-        document.querySelector('head').appendChild(styleElem);
         document.body.appendChild( this.ref )
     }
     handleReausetAnimate(){
@@ -1556,7 +1560,7 @@ export default class ImagePreview{
             window['requestAnimationFrame'] = (function(){
             return  window['webkitRequestAnimationFrame'] ||
                     function( callback: Function ){
-                        window.setTimeout(callback, 1000 / 60);
+                        window.setTimeout(callback, 1000 / 17);
                         return 0;
                     };
             })();
@@ -1573,7 +1577,7 @@ export default class ImagePreview{
         this.curIndex = index;
         this.imgContainerMoveX = -index * this.screenWidth;
 
-        this.imgContainer.style.transform = `translateX( ${this.imgContainerMoveX}px )`;
+        this.imgContainer.style.left = `${this.imgContainerMoveX}px`;
         this.toggleClass( this.ref,this.defToggleClass )
     }
     toggleClass( ref:HTMLElement,className: string){
