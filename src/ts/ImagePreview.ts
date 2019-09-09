@@ -39,6 +39,7 @@ export default class ImagePreview{
     public ref: HTMLElement ;
     public imgContainer: HTMLElement;
     public imgItems: NodeListOf < HTMLElement >;
+    public defToggleClass: string = 'defToggleClass';
 
     public operateMaps: {
         [key: string]: string
@@ -1450,7 +1451,7 @@ export default class ImagePreview{
         let style: string =`
             .${this.prefix}imagePreviewer{
                 position: fixed;
-                top: 100% ;
+                top:0;
                 left: 100%;
                 width: 100%;
                 height: 100%;
@@ -1459,6 +1460,9 @@ export default class ImagePreview{
                 transform: translate3d(0,0,0);
                 transition: left 0.5s;
                 overflow:hidden;
+            }
+            .${this.prefix}imagePreviewer.${this.defToggleClass}{
+                left: 0%;
             }
             .${this.prefix}imagePreviewer .${this.prefix}close{
                 position: absolute;
@@ -1563,20 +1567,26 @@ export default class ImagePreview{
         e.stopImmediatePropagation();
         clearTimeout(this.performerClick)
 
-        this.ref.style.cssText = `
-            left: 100%;
-            top:0%;
-        `;
+        this.toggleClass( this.ref, this.defToggleClass )
     }
     show( index: number ){
         this.curIndex = index;
         this.imgContainerMoveX = -index * this.screenWidth;
 
         this.imgContainer.style.transform = `translateX( ${this.imgContainerMoveX}px )`;
-        this.ref.style.cssText = `
-            top: 0%;
-            left: 0%;
-        `;
+        this.toggleClass( this.ref,this.defToggleClass )
+    }
+    toggleClass( ref:HTMLElement,className: string){
+        let classes:Array<string> = ref.className.split(' ');
+        let index: number = classes.indexOf(className);
+        if(  index!== -1 ){
+            classes.splice(index,1)
+        }else{
+            classes.push( className )
+        }
+
+        ref.className = classes.join(' ');
+
     }
 }
 /**

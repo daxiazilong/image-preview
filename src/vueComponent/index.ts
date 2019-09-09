@@ -1,6 +1,6 @@
 import ImgPreview from "../ts/ImagePreview";
-
-export default{
+export let _Vue;
+let component =  {
     props:{
         images: Array
     },
@@ -30,3 +30,15 @@ export default{
         </div>     
     `
 }
+let ImagePreviewVue = {
+    install: function(Vue){
+        if( this.installed && _Vue === Vue) return;
+
+        this.installed = true;
+        Vue.component('image-preivew', this.imagePreview ) 
+    },
+
+    imagePreview: component
+}
+
+export {ImagePreviewVue};

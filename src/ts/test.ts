@@ -17,19 +17,9 @@ new ImgPreview({
     selector:'.imageWraper img'
 })
 const Vue = require('vue');
-import component from '../vueComponent/index'
-export let _Vue;
-export let imagePreview = {
-    install: function(Vue){
-        if( this.installed && _Vue === Vue) return;
+import {ImagePreviewVue} from '../vueComponent/index'
 
-        this.installed = true;
-        Vue.component('image-preivew', this.imagePreview ) 
-    },
-
-    imagePreview: component
-}
-Vue.use(imagePreview)
+Vue.use(ImagePreviewVue)
 new Vue({
     el:'#el',
     data:function(){
