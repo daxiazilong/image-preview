@@ -17,7 +17,7 @@ let imgObj =  new ImagePreview({
     'imgsrc'
   ]
 })
-//then show No n,use
+//then show n-th picture,use
 imgObj.show(n);
 
 ```
