@@ -4,11 +4,12 @@ front end image preview
 
 ``` javascript
 //just
-new ImagePreview({
+let imgObj = new ImagePreview({
   selector:``
 })
-or
-new ImagePreview({
+//or
+
+let imgObj =  new ImagePreview({
   curImg:'imgsrc',
   imgs:[
     'imgsrc',
@@ -16,4 +17,7 @@ new ImagePreview({
     'imgsrc'
   ]
 })
+//then show No n,use
+imgObj.show(n);
+
 ```
