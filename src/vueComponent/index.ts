@@ -33,7 +33,7 @@ let component =  {
 let ImagePreviewVue = {
     install: function(Vue){
         if( this.installed && _Vue === Vue) return;
-
+        _Vue = Vue;
         this.installed = true;
         Vue.component('image-preivew', this.imagePreview ) 
     },
