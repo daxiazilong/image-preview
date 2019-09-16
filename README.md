@@ -4,6 +4,8 @@ front end image preview
 #### install:
 Clone it ,then npm run build,find source image-preview.js in release/ts,finally use it in your project.
 Or you can install this project's release/ts/image-preview.js directily.
+#### example
+[click here](https://daxiazilong.github.io/) . 
 #### usage:
 ``` javascript
 //just

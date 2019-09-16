@@ -28,7 +28,13 @@
     }
 </style>
 </head>
-
+<script>
+    let isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
+    if(!isMobile){
+        confirm(`请务必使用移动端模式打开本项目`);
+        location.reload();
+    }
+</script>
 
 <div class="imageWraper">
     <img data-src="/images/main_body3.png" src="/images/main_body3.png">
