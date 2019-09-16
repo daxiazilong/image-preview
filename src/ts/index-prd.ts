@@ -4,7 +4,7 @@
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
- class ImagePreview{
+class ImagePreview{
     [key:string]: any;
     public showTools: boolean  = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
@@ -39,6 +39,7 @@
     public ref: HTMLElement ;
     public imgContainer: HTMLElement;
     public imgItems: NodeListOf < HTMLElement >;
+    public defToggleClass: string = 'defToggleClass';
 
     public operateMaps: {
         [key: string]: string
@@ -278,8 +279,10 @@
             transform: rotateZ( ${rotateDeg}deg );
         `;
         
-        curItem.dataset.rotateDeg = rotateDeg.toString();
+        
         setTimeout(()=>{
+            curItem.dataset.rotateDeg = rotateDeg.toString();
+
             this.isAnimating = false;
         },550)
 
@@ -300,17 +303,18 @@
         }
         rotateDeg += 90;
         this.isAnimating = true;
+
         curItem.style.cssText += `
             transition: transform 0.5s;
             transform: rotateZ( ${rotateDeg}deg );
         `
-        curItem.dataset.rotateDeg = rotateDeg.toString();
         setTimeout(()=>{
+            curItem.dataset.rotateDeg = rotateDeg.toString();
             this.isAnimating = false;
         },550)
     }
     
-    handleClick(e:TouchEvent & MouseEvent){
+    handleClick(e ? :TouchEvent & MouseEvent){
         let close: HTMLElement = <HTMLElement> (this.ref.querySelector(`.${this.prefix}close`));
         let bottom: HTMLElement = <HTMLElement>(this.ref.querySelector(`.${this.prefix}bottom`));
         this.showTools = !this.showTools
@@ -335,7 +339,7 @@
             this.isAnimating = false;
             return;
         }
-
+        
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeight: number = curItem.getBoundingClientRect().height;
 
@@ -515,7 +519,6 @@
             default:
                 break;
         } 
-        curItem.dataset.isEnlargement = 'enlargement';
         // 放大之后 图片相对视口位置不变
 
         let scaledX: number ;
@@ -560,6 +563,8 @@
             
             curItem.dataset.top = `${ -(scaledY - mouseY)  }`;
             curItem.dataset.left = `${ -(scaledX -mouseX)  }`;
+            curItem.dataset.isEnlargement = 'enlargement';
+            
             this.isAnimating = false;
         },550)
     }
@@ -699,6 +704,7 @@
 
                     let disteanceY: number =  curItemViewTop  + ( centerX )*( 1 - scaleY ) - top - viewTopInitial;
                     let distanceX:number = curItemViewLeft + (centerY)*( 1 -scaleX ) - left - viewLeftInitial;
+
                     curItem.style.cssText = `;
                         top:${top}px;
                         left:${left}px;
@@ -721,7 +727,7 @@
         curItem.dataset.top = curItem.dataset.initialTop;
         curItem.dataset.left =  curItem.dataset.initialLeft;
 
-        curItem.dataset.isEnlargement = 'shrink';
+        
         setTimeout(() => {
             curItem.style.cssText = `;
                                 transform: rotateZ(${rotateDeg}deg);
@@ -729,8 +735,27 @@
                                 left: ${Number(curItem.dataset.initialLeft)}px;
                                 width: ${curItem.dataset.initialWidth}px;
                                 height: ${curItem.dataset.initialHeight}px;
-                                transition: none;
+                                transition: none; 
                                 `
+            ;
+            {
+                /**
+                 * bug fix on ios,
+                 * frequent zoom with double-click may
+                 * cause img fuzzy
+                 */
+                let curImg: HTMLElement = curItem.querySelector(`img`);
+                let preImgStyle: string = curImg.style.cssText;
+
+                curImg.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                `            
+                setTimeout(function(){ 
+                    curImg.style.cssText = preImgStyle; 
+                },10)
+            }
+            curItem.dataset.isEnlargement = 'shrink';
             this.isAnimating = false;
         },550)
     }
@@ -781,7 +806,7 @@
         }
         this.startX = curX;
 
-        this.imgContainer.style.transform = `translateX(${ this.imgContainerMoveX }px)`
+        this.imgContainer.style.left = `${ this.imgContainerMoveX }px`
     }
     handleMoveEnlage( e: TouchEvent & MouseEvent ){
 
@@ -1004,7 +1029,7 @@
     handleToucnEnd(e: TouchEvent & MouseEvent){
         if( this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless ){//动画正在进行时，或者不是单指操作时一律不处理
             return;
-        } 
+        }   
         const type : string = (<HTMLElement>(e.target)).dataset.type;
     
         if( this.operateMaps[type] ){
@@ -1289,7 +1314,7 @@
         function processStyle(){
             switch( prop ){
                 case 'transform':
-                        el.style.transform = `translateX( ${start + step}px )`;;
+                        el.style.left = ` ${start + step}px`;;
                         break;
                 case 'top':
                     el.style.top = `${start + step}px`;
@@ -1426,7 +1451,7 @@
         let style: string =`
             .${this.prefix}imagePreviewer{
                 position: fixed;
-                top: 100% ;
+                top:0;
                 left: 100%;
                 width: 100%;
                 height: 100%;
@@ -1435,6 +1460,9 @@
                 transform: translate3d(0,0,0);
                 transition: left 0.5s;
                 overflow:hidden;
+            }
+            .${this.prefix}imagePreviewer.${this.defToggleClass}{
+                left: 0%;
             }
             .${this.prefix}imagePreviewer .${this.prefix}close{
                 position: absolute;
@@ -1516,11 +1544,15 @@
 
         
         this.ref.innerHTML = html;
+        if( !document.querySelector(`#${this.prefix}style`)){
+            let styleElem = document.createElement('style');
+            styleElem.id= `${this.prefix}style`;
+            styleElem.innerHTML = style;
+            
+            document.querySelector('head').appendChild(styleElem);
+        }
+        
 
-        let styleElem = document.createElement('style');
-        styleElem.innerHTML = style;
-
-        document.querySelector('head').appendChild(styleElem);
         document.body.appendChild( this.ref )
     }
     handleReausetAnimate(){
@@ -1528,7 +1560,7 @@
             window['requestAnimationFrame'] = (function(){
             return  window['webkitRequestAnimationFrame'] ||
                     function( callback: Function ){
-                        window.setTimeout(callback, 1000 / 60);
+                        window.setTimeout(callback, 1000 / 17);
                         return 0;
                     };
             })();
@@ -1539,19 +1571,25 @@
         e.stopImmediatePropagation();
         clearTimeout(this.performerClick)
 
-        this.ref.style.cssText = `
-            left: 100%;
-            top:0%;
-        `;
+        this.toggleClass( this.ref, this.defToggleClass )
     }
     show( index: number ){
         this.curIndex = index;
         this.imgContainerMoveX = -index * this.screenWidth;
 
-        this.imgContainer.style.transform = `translateX( ${this.imgContainerMoveX}px )`;
-        this.ref.style.cssText = `
-            top: 0%;
-            left: 0%;
-        `;
+        this.imgContainer.style.left = `${this.imgContainerMoveX}px`;
+        this.toggleClass( this.ref,this.defToggleClass )
+    }
+    toggleClass( ref:HTMLElement,className: string){
+        let classes:Array<string> = ref.className.split(' ');
+        let index: number = classes.indexOf(className);
+        if(  index!== -1 ){
+            classes.splice(index,1)
+        }else{
+            classes.push( className )
+        }
+
+        ref.className = classes.join(' ');
+
     }
 }

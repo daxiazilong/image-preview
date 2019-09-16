@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var index_1 = require("../ts/index");
-exports.default = {
+var ImagePreview_1 = require("../ts/ImagePreview");
+var component = {
     props: {
         images: Array
     },
@@ -11,7 +11,7 @@ exports.default = {
     mounted: function () {
         var childNodes = this.$refs.imgs.childNodes;
         childNodes = Array.prototype.filter.call(childNodes, (function (item) { return item.nodeType === 1; }));
-        var imgPreview = new index_1.default({
+        var imgPreview = new ImagePreview_1.default({
             curImg: "",
             imgs: this.images
         });
@@ -27,3 +27,14 @@ exports.default = {
     },
     template: "\n        <div ref=\"imgs\">\n            <slot></slot>  \n        </div>     \n    "
 };
+var ImagePreviewVue = {
+    install: function (Vue) {
+        if (this.installed && exports._Vue === Vue)
+            return;
+        exports._Vue = Vue;
+        this.installed = true;
+        Vue.component('image-preivew', this.imagePreview);
+    },
+    imagePreview: component
+};
+exports.ImagePreviewVue = ImagePreviewVue;

@@ -1,3 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var ImagePreview = (function () {
     function ImagePreview(options) {
         this.options = options;
@@ -1000,3 +1002,8 @@ var ImagePreview = (function () {
     };
     return ImagePreview;
 }());
+exports.default = ImagePreview;
+function showDebugger(msg) {
+    var stat = document.getElementById('stat');
+    stat.innerHTML = "<pre style=\"word-break: break-all;white-space: pre-line;\">" + msg + "</pre>";
+}
