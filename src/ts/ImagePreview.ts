@@ -1512,7 +1512,6 @@ export default class ImagePreview{
                 font-size: 14px;
                 white-space: normal;
                 transition: transform 0.5s;
-                border: 1px solid red;
             }
             .${this.prefix}imagePreviewer .${this.prefix}item img{
                 width: 100%;
