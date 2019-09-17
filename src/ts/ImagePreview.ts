@@ -1399,7 +1399,7 @@ export default class ImagePreview{
     }
     computeStep( displacement:number,time: number ): number{
         let v: number = displacement / time;
-        let frequency: number = 1000 / 60;
+        let frequency: number = 1000 / 16;
 
         return v * frequency;
     }
@@ -1559,7 +1559,7 @@ export default class ImagePreview{
             window['requestAnimationFrame'] = (function(){
             return  window['webkitRequestAnimationFrame'] ||
                     function( callback: Function ){
-                        window.setTimeout(callback, 1000 / 17);
+                        window.setTimeout(callback, 1000 / 16);
                         return 0;
                     };
             })();
