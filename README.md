@@ -29,3 +29,5 @@ let imgObj =  new ImagePreview({
 imgObj.show(n);
 
 ```
+### communicate
+yon can join qq-group 977121370 and chat with me.
