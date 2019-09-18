@@ -1,19 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var ImagePreview = (function () {
+/**
+ * image-preview 1.0.0
+ * author:zilong
+ * https://github.com/daxiazilong
+ * Released under the MIT License
+ */
+var ImagePreview = /** @class */ (function () {
     function ImagePreview(options) {
         this.options = options;
         this.showTools = true;
-        this.lastClick = -Infinity;
-        this.curIndex = 0;
-        this.imgContainerMoveX = 0;
-        this.imgContainerMoveY = 0;
-        this.screenWidth = window.innerWidth;
-        this.slideTime = 300;
-        this.zoomScale = 0.05;
-        this.isZooming = false;
-        this.isAnimating = false;
-        this.isMotionless = true;
+        this.lastClick = -Infinity; // 上次点击时间和执行单击事件的计时器
+        this.curIndex = 0; //当前第几个图片
+        this.imgContainerMoveX = 0; //图片容器x轴的移动距离
+        this.imgContainerMoveY = 0; //图片容器y轴的移动距离
+        this.screenWidth = window.innerWidth; //屏幕宽度
+        this.slideTime = 300; //切换至下一屏幕时需要的时间
+        this.zoomScale = 0.05; //缩放比例
+        this.isZooming = false; //是否在进行双指缩放
+        this.isAnimating = false; // 是否在动画中
+        this.isMotionless = true; // 是否没有产生位移
+        this.isEnlargeMove = false; // 大图下得切屏
         this.prefix = "__";
         this.defToggleClass = 'defToggleClass';
         this.operateMaps = {
@@ -24,7 +31,7 @@ var ImagePreview = (function () {
             this.bindTrigger();
         }
         this.genFrame();
-        this.handleReausetAnimate();
+        this.handleReausetAnimate(); //requestAnimationFrame兼容性
         this.threshold = this.screenWidth / 4;
         this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
         this.imgItems = this.imgContainer.querySelectorAll("." + this.prefix + "item");
@@ -40,6 +47,7 @@ var ImagePreview = (function () {
         var images = [];
         var triggerItems = document.querySelectorAll(this.options.selector);
         if (!triggerItems.length) {
+            // some operate
         }
         triggerItems.forEach(function (element, index) {
             images.push(element.dataset.src);
@@ -55,6 +63,9 @@ var ImagePreview = (function () {
     };
     ImagePreview.prototype.reCordInitialData = function (els) {
         var _this = this;
+        /**
+         * 记录并设置初始top，left值
+         */
         var imgContainerRect = this.imgContainer.getBoundingClientRect();
         var imgContainerHeight = imgContainerRect.height;
         els.forEach(function (el, key, parent) {
@@ -150,6 +161,9 @@ var ImagePreview = (function () {
     };
     ImagePreview.prototype.handleOneStart = function (e) {
         var _this = this;
+        /**
+         * 这里把操作派发
+         */
         var type = (e.target).dataset.type;
         if (this.operateMaps[type]) {
             this[this.operateMaps[type]](e);
@@ -159,6 +173,10 @@ var ImagePreview = (function () {
         this.touchStartY = this.startY = Math.round(e.touches[0].clientY);
         var now = (new Date()).getTime();
         if (now - this.lastClick < 300) {
+            /*
+                启动一个定时器，如果双击事件发生后就
+                取消单击事件的执行
+             */
             clearTimeout(this.performerClick);
             this.handleDoubleClick(e);
         }
@@ -174,6 +192,7 @@ var ImagePreview = (function () {
         var curItem = this.imgItems[this.curIndex];
         var rotateDeg;
         if (curItem.dataset.loaded == 'false') {
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
         if (curItem.dataset.rotateDeg) {
@@ -195,6 +214,7 @@ var ImagePreview = (function () {
         var curItem = this.imgItems[this.curIndex];
         var rotateDeg;
         if (curItem.dataset.loaded == 'false') {
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
         if (curItem.dataset.rotateDeg) {
@@ -231,6 +251,7 @@ var ImagePreview = (function () {
         var curItem = this.imgItems[this.curIndex];
         var curImg = curItem.querySelector('img');
         if (curItem.dataset.loaded == 'false') {
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             this.isAnimating = false;
             return;
         }
@@ -270,7 +291,7 @@ var ImagePreview = (function () {
         var scaleX;
         var scaleY;
         var isBigSize = curItem.dataset.isEnlargement == "enlargement";
-        if (isBigSize) {
+        if (isBigSize) { //当前浏览元素为大尺寸时执行缩小操作，小尺寸执行放大操作
             switch (Math.abs(rotateDeg % 360)) {
                 case 0:
                 case 180:
@@ -291,7 +312,7 @@ var ImagePreview = (function () {
             scaleY = toHeight / curItemHeight;
         }
         ;
-        if (scaleX > 1 && scaleY > 1) {
+        if (scaleX > 1 && scaleY > 1) { //放大
             this.setToNaturalImgSize(scaleX, scaleY, e);
         }
         else if (scaleX < 1 && scaleY < 1) {
@@ -303,12 +324,18 @@ var ImagePreview = (function () {
     };
     ImagePreview.prototype.setToNaturalImgSize = function (scaleX, scaleY, e) {
         var _this = this;
+        /**
+         * 踩坑记
+         * transform-origin 的参考点始终时对其初始位置来说的
+         * scale之后的元素, 实际的偏移路径等于 translate 的位移等于 位移 * scale
+         */
         var mouseX = e.touches[0].clientX;
         var mouseY = e.touches[0].clientY;
         var curItem = this.imgItems[this.curIndex];
         var curImg = curItem.querySelector('img');
-        var curItemViewTop = curItem.getBoundingClientRect().top;
-        var curItemViewLeft = curItem.getBoundingClientRect().left;
+        // 以下为旋转之后缩放时需要用到的参数
+        var curItemViewTop = curItem.getBoundingClientRect().top; //当前元素距离视口的top
+        var curItemViewLeft = curItem.getBoundingClientRect().left; //当前元素距离视口的left
         var curItemTop = Number(curItem.dataset.top) || 0;
         var curItemLeft = Number(curItem.dataset.left) || 0;
         var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
@@ -336,6 +363,13 @@ var ImagePreview = (function () {
                 break;
             case -90:
             case 270:
+                /**
+                 * 笔记：
+                 * 以 y轴偏移距离，因为旋转 -90或270度之后，
+                 * y轴的位移实际又translateX控制，所以需要translateX控制其偏移
+                 * (mouseY - curItemViewTop - centerX) * (scaleX -1 ) 是一个点缩放前后产生的位移偏差
+                 * 再除以scaleX是因为啥呢，是因为上边可能讲过 translate x px 实际效果是 x * scaleX 的大小
+                 */
                 curItem.style.cssText = ";\n                    top: " + curItemTop + "px;\n                    left: " + curItemLeft + "px;\n                    transform-origin: " + centerX + "px " + centerY + "px ; \n                    transform: \n                        rotateZ(" + rotateDeg + "deg) \n                        scale3d(" + scaleX + "," + scaleY + ",1) \n                        translateX(" + ((mouseY - curItemViewTop - centerX) * (scaleX - 1)) / scaleX + "px) \n                        translateY(" + (-(mouseX - curItemViewLeft - centerY) * (scaleY - 1)) / scaleY + "px) \n                    ;\n                    \n                ";
                 break;
             case -270:
@@ -345,6 +379,7 @@ var ImagePreview = (function () {
             default:
                 break;
         }
+        // 放大之后 图片相对视口位置不变
         var scaledX;
         var scaledY;
         if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
@@ -354,6 +389,12 @@ var ImagePreview = (function () {
         else {
             scaledX = (mouseX - curItemLeft) * scaleX;
             scaledY = (mouseY - curItemTop) * scaleY;
+            // 以y轴偏移的计算为例，以下是setTimout 计算时公式的推导
+            //- ( mouseY - curItemTop ) * (scaleY - 1) - curItemTop)
+            // = curItemTop -  (mouseY - curItemTop)  * (scaleY - 1)   ;
+            // = curItemTop - ( mouseY- curItemTop)*scaleY + (mouseY - curItemTop)   
+            // = mouseY - ( mouseY- curItemTop)*scaleY
+            //  = - (scaledY - mouseY)
         }
         setTimeout(function () {
             if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
@@ -373,8 +414,9 @@ var ImagePreview = (function () {
         var curItem = this.imgItems[this.curIndex];
         var curItemWidth = curItem.getBoundingClientRect().width;
         var curItemHeight = curItem.getBoundingClientRect().height;
-        var curItemViewTop = curItem.getBoundingClientRect().top;
-        var curItemViewLeft = curItem.getBoundingClientRect().left;
+        // 以下为旋转之后缩放时需要用到的参数
+        var curItemViewTop = curItem.getBoundingClientRect().top; //当前元素距离视口的top
+        var curItemViewLeft = curItem.getBoundingClientRect().left; //当前元素距离视口的left
         var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
         var toWidth;
         var toHeight;
@@ -421,6 +463,16 @@ var ImagePreview = (function () {
                     var viewLeftInitial_2 = Number(curItem.dataset.viewLeftInitial);
                     var top_4 = Number(curItem.dataset.top);
                     var left_2 = Number(curItem.dataset.left);
+                    /**
+                     * 缩小的时候要时的图像的位置向原始位置靠近
+                     * 以y轴得位移举例
+                     * 放大之后 再缩小时 图像顶部移动的距离  centerX*(1-scaleY)
+                     *  这个式子是这么推导而来的  Math.abs(centerX* scaleY - centerX)
+                     * (这是缩放前后产生的位移距离)，
+                     * 减去top（这是使用translate抵消top时产生的y轴位移，使其位置和top等于0时的位置一样）
+                     * 这个时候就能得到缩小之后图像距离视口顶部的距离，然后再减去原始的高度（变形前的高度）
+                     * 就得到了我们最终需要使其在y轴上偏移的距离
+                     */
                     var disteanceY_2 = curItemViewTop + (centerX_2) * (1 - scaleY) - top_4 - viewTopInitial_2;
                     var distanceX_2 = curItemViewLeft + (centerY_2) * (1 - scaleX) - left_2 - viewLeftInitial_2;
                     curItem.style.cssText = ";\n                        top:" + top_4 + "px;\n                        left:" + left_2 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_2 + "px " + centerY_2 + "px 0;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + (top_4 + disteanceY_2) / scaleY + "px) \n                            translateY(" + -(left_2 + distanceX_2) / scaleX + "px)\n                        ;\n\n                    ";
@@ -448,6 +500,11 @@ var ImagePreview = (function () {
         setTimeout(function () {
             curItem.style.cssText = ";\n                                transform: rotateZ(" + rotateDeg + "deg);\n                                top:" + Number(curItem.dataset.initialTop) + "px;\n                                left: " + Number(curItem.dataset.initialLeft) + "px;\n                                width: " + curItem.dataset.initialWidth + "px;\n                                height: " + curItem.dataset.initialHeight + "px;\n                                transition: none; \n                                ";
             {
+                /**
+                 * bug fix on ios,
+                 * frequent zoom with double-click may
+                 * cause img fuzzy
+                 */
                 var curImg_1 = curItem.querySelector("img");
                 var preImgStyle_1 = curImg_1.style.cssText;
                 curImg_1.style.cssText = "\n                    width: 100%;\n                    height: 100%;\n                ";
@@ -465,6 +522,7 @@ var ImagePreview = (function () {
         if (this.isAnimating) {
             return;
         }
+        // 双指缩放时的处理
         if (e.touches.length == 2) {
             this.handleZoom(e);
             return;
@@ -475,7 +533,10 @@ var ImagePreview = (function () {
         var direction = e.touches[0].clientX - this.startX > 0 ? 'right' : 'left';
         this.isMotionless = false;
         if (curItem.dataset.isEnlargement == 'enlargement') {
-            if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left')) {
+            // 放大的时候的移动是查看放大后的图片
+            // 放大的时候,如果到达边界还是进行正常的切屏操作
+            if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove)) {
+                this.isEnlargeMove = true;
                 this.handleMoveNormal(e);
             }
             else {
@@ -483,6 +544,7 @@ var ImagePreview = (function () {
             }
         }
         else {
+            //正常情况下的移动是图片左右切换
             this.handleMoveNormal(e);
         }
     };
@@ -505,6 +567,7 @@ var ImagePreview = (function () {
         var conHeight = imgContainerRect.height;
         var curItem = this.imgItems[this.curIndex];
         if (curItem.dataset.loaded == 'false') {
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
         var curItemWidth = curItem.getBoundingClientRect().width;
@@ -517,6 +580,7 @@ var ImagePreview = (function () {
         var curItemLeft = Number(curItem.dataset.left);
         var curTop;
         var curLeft;
+        // 如果容器内能完整展示图片就不需要移动
         if (curItemWidth > conWidth) {
             curLeft = curItemLeft + offsetX;
         }
@@ -550,12 +614,14 @@ var ImagePreview = (function () {
         this.isAnimating = true;
         var curItem = this.imgItems[this.curIndex];
         if (curItem.dataset.loaded == 'false') {
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             this.isAnimating = false;
             return;
         }
         if (curItem.dataset.isEnlargement !== 'enlargement') {
-            var curItemViewTop = curItem.getBoundingClientRect().top;
-            var curItemViewLeft = curItem.getBoundingClientRect().left;
+            // 以下为旋转之后缩放时需要用到的参数
+            var curItemViewTop = curItem.getBoundingClientRect().top; //当前元素距离视口的top
+            var curItemViewLeft = curItem.getBoundingClientRect().left; //当前元素距离视口的left
             curItem.dataset.viewTopInitial = curItemViewTop.toString();
             curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
         }
@@ -572,7 +638,14 @@ var ImagePreview = (function () {
         this.curPoint2.x = e.touches[1].clientX;
         this.curPoint2.y = e.touches[1].clientY;
         var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
-        if (distaceBefore > distanceNow) {
+        /**
+         * 踩坑记：
+         * 因为双指所确定的中心坐标 其参考起点始终是
+         * 相对于视口的，那么在图片不断放大之后 其所确定的中心坐标必然会较实际有所误差
+         * 所以这里在  放大的时候 同时需要在xy坐标加上其实际已经偏移的距离
+         * 因为放大之后偏移值必为负值，所以要减 负负得正嘛
+         */
+        if (distaceBefore > distanceNow) { //缩小
             var centerX_4 = (this.curStartPoint1.x + this.curStartPoint2.x) / 2 - left;
             var centerY_4 = (this.curStartPoint1.y + this.curStartPoint2.y) / 2 - top;
             curItem.dataset.top = (top + (this.zoomScale) * centerY_4).toString();
@@ -601,6 +674,11 @@ var ImagePreview = (function () {
                     }
                     break;
             }
+            /**
+             * 采坑记：
+             * 旋转 90 270 这些体位的时候 ，width和height得交换下位置
+             * 下同
+             */
             switch (Math.abs(rotateDeg % 360)) {
                 case 0:
                 case 180:
@@ -614,7 +692,7 @@ var ImagePreview = (function () {
                     break;
             }
         }
-        else if (distaceBefore < distanceNow) {
+        else if (distaceBefore < distanceNow) { //放大
             curItem.dataset.isEnlargement = 'enlargement';
             curItem.dataset.top = (top - (this.zoomScale) * centerY).toString();
             curItem.dataset.left = (left - (this.zoomScale) * centerX).toString();
@@ -634,7 +712,7 @@ var ImagePreview = (function () {
         this.isAnimating = false;
     };
     ImagePreview.prototype.handleToucnEnd = function (e) {
-        if (this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless) {
+        if (this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless) { //动画正在进行时，或者不是单指操作时一律不处理
             return;
         }
         var type = (e.target).dataset.type;
@@ -642,14 +720,18 @@ var ImagePreview = (function () {
             return;
         }
         if (e.touches.length == 0) {
+            // someOperate;
             this.isZooming = false;
         }
         var curItem = this.imgItems[this.curIndex];
         this.isMotionless = true;
+        this.isEnlargeMove = false;
         var isBoundary = curItem.dataset.toLeft == 'true' || curItem.dataset.toRight == 'true';
         if (curItem.dataset.isEnlargement == 'enlargement') {
+            // 放大的时候,如果到达边界还是进行正常的切屏操作
             if (isBoundary) {
                 this.handleTEndEnNormal(e);
+                // 重置是否已到达边界的变量
                 curItem.dataset.toLeft = 'false';
                 curItem.dataset.toRight = 'false';
             }
@@ -658,6 +740,7 @@ var ImagePreview = (function () {
             }
         }
         else {
+            //正常情况下的
             this.handleTEndEnNormal(e);
         }
     };
@@ -669,12 +752,21 @@ var ImagePreview = (function () {
         var curImg = curItem.querySelector('img');
         var curItemWidth = curItem.getBoundingClientRect().width;
         var curItemHeihgt = curItem.getBoundingClientRect().height;
+        /**
+         * 旋转后会产生偏移值
+         */
         var offsetX = 0;
         var offsetY = 0;
         var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
         switch (Math.abs(rotateDeg % 360)) {
             case 90:
             case 270:
+                /**
+                 * 以x轴为例子
+                 * curItemWidth / 2,为中心点的坐标，
+                 * curitemHeight / 2,是顶部距离中心点的坐标
+                 * 二者的差值即为x轴的偏移
+                 */
                 offsetX = (curItemWidth - curItemHeihgt) / 2;
                 offsetY = (curItemHeihgt - curItemWidth) / 2;
                 break;
@@ -687,6 +779,11 @@ var ImagePreview = (function () {
         var minLeft = conWidth - curItemWidth + offsetX;
         var curItemTop = Number(curItem.dataset.top);
         var curItemLeft = Number(curItem.dataset.left);
+        /**
+         * 1s 60 次
+         * 我需要在0.3s 完成这项操作
+         *
+         */
         var recoverY = false;
         var recoverX = false;
         var vy;
@@ -721,6 +818,7 @@ var ImagePreview = (function () {
             endY = minTop;
             recoverY = true;
         }
+        // 如果容器内能完整展示图片就不需要移动至边界
         if (curItemWidth <= conWidth) {
             recoverX = false;
             curItem.dataset.toLeft = 'true';
@@ -748,6 +846,7 @@ var ImagePreview = (function () {
             curItem.dataset.left = "" + endX;
             curItem.dataset.top = "" + endY;
             if (endX == maxLeft) {
+                //toLeft 即为到达左边界的意思下同
                 curItem.dataset.toLeft = 'true';
                 curItem.dataset.toRight = 'false';
             }
@@ -768,6 +867,7 @@ var ImagePreview = (function () {
             this.animate(curItem, 'left', startX, endX, -stepX);
             curItem.dataset.left = "" + endX;
             if (endX == maxLeft) {
+                //toLeft 即为到达左边界的意思下同
                 curItem.dataset.toLeft = 'true';
                 curItem.dataset.toRight = 'false';
             }
@@ -797,23 +897,23 @@ var ImagePreview = (function () {
     };
     ImagePreview.prototype.handleTEndEnNormal = function (e) {
         var endX = Math.round(e.changedTouches[0].clientX);
-        if (endX - this.touchStartX >= this.threshold) {
-            if (this.curIndex == 0) {
+        if (endX - this.touchStartX >= this.threshold) { //前一张
+            if (this.curIndex == 0) { //第一张
                 this.slideSelf();
                 return;
             }
             this.curIndex--;
             this.slidePrev();
         }
-        else if (endX - this.touchStartX <= -this.threshold) {
-            if (this.curIndex + 1 == this.imgsNumber) {
+        else if (endX - this.touchStartX <= -this.threshold) { //后一张
+            if (this.curIndex + 1 == this.imgsNumber) { //最后一张
                 this.slideSelf();
                 return;
             }
             this.curIndex++;
             this.slideNext();
         }
-        else {
+        else { //复原
             this.slideSelf();
         }
     };
@@ -1003,6 +1103,9 @@ var ImagePreview = (function () {
     return ImagePreview;
 }());
 exports.default = ImagePreview;
+/**
+* 移动端自己调试要显示的数据
+*/
 function showDebugger(msg) {
     var stat = document.getElementById('stat');
     stat.innerHTML = "<pre style=\"word-break: break-all;white-space: pre-line;\">" + msg + "</pre>";

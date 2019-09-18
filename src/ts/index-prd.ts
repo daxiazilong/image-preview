@@ -34,6 +34,7 @@ class ImagePreview{
 
     public isAnimating: boolean = false; // 是否在动画中
     public isMotionless: boolean = true;// 是否没有产生位移
+    public isEnlargeMove: boolean = false;// 大图下得切屏
 
     public prefix:string = "__"
     public ref: HTMLElement ;
@@ -782,7 +783,8 @@ class ImagePreview{
         if( curItem.dataset.isEnlargement == 'enlargement' ){
             // 放大的时候的移动是查看放大后的图片
             // 放大的时候,如果到达边界还是进行正常的切屏操作
-            if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') ){
+            if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove) ){
+                this.isEnlargeMove = true;
                 this.handleMoveNormal(e)
             }else{
                 this.handleMoveEnlage(e);
@@ -1044,6 +1046,7 @@ class ImagePreview{
         const curItem: HTMLElement = this.imgItems[this.curIndex];
 
         this.isMotionless = true;
+        this.isEnlargeMove = false;
 
         let isBoundary: boolean = curItem.dataset.toLeft == 'true' || curItem.dataset.toRight == 'true';
   
