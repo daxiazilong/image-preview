@@ -38,11 +38,16 @@
     <img data-src="/testImage/share_success_20190619.png" src="/testImage/share_success_20190619.png">
 </div>
 <div id="el">
-    <image-preivew :images="imgs">
-        <div v-for=" ( img, index ) in imgs ">
-            <img :src="img">
-        </div>
-    </image-preivew>
+    <div v-for="(item,index) in outter" :key="index">
+        <image-preivew :images="imgs">
+            <div v-for=" ( img, index ) in imgs ">
+                <img :src="img">
+            </div>
+        </image-preivew>
+    </div>
+    
+    <button @click="increase">增加</button>
+    <button @click="decrease">减少</button>
 </div>
 <div id="stat">
 

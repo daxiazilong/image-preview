@@ -23,6 +23,7 @@ new Vue({
     el: '#el',
     data: function () {
         return {
+            outter: [1, 2, 34],
             imgs: [
                 '/testImage/IMG_0512.JPG',
                 '/testImage/main_body3.png',
@@ -33,5 +34,17 @@ new Vue({
                 '/testImage/BBC82C020430AED149F8D18A0849D241.png'
             ]
         };
+    },
+    methods: {
+        increase: function () {
+            this.outter.push(0);
+        },
+        decrease: function () {
+            this.outter.pop();
+        }
     }
 });
+window.onerror = function (e) {
+    var stat = document.querySelector('#stat');
+    stat.innerHTML = "" + e;
+};

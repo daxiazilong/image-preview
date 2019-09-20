@@ -74,7 +74,7 @@ export default class ImagePreview{
         this.ref.addEventListener('touchstart',this.handleTouchStart.bind(this));
         this.ref.addEventListener('touchmove',this.handleMove.bind(this));
         this.ref.addEventListener('touchend',this.handleToucnEnd.bind(this));
-        this.ref.querySelector(`.${this.prefix}close`).addEventListener('click',this.close.bind(this))
+        this.ref.querySelector(`.${this.prefix}close`).addEventListener('touchstart',this.close.bind(this))
         
     }
     bindTrigger(){
@@ -207,6 +207,7 @@ export default class ImagePreview{
 
     }
     handleTouchStart(e: TouchEvent & MouseEvent){
+        e.preventDefault();
         switch( e.touches.length ){
             case 1:
                 this.handleOneStart(e);
@@ -234,6 +235,7 @@ export default class ImagePreview{
         /**
          * 这里把操作派发
          */
+
         const type : string = (<HTMLElement>(e.target)).dataset.type;
     
         if( this.operateMaps[type] ){
@@ -243,23 +245,22 @@ export default class ImagePreview{
         this.touchStartX = this.startX = Math.round(e.touches[0].clientX);
         this.touchStartY = this.startY = Math.round(e.touches[0].clientY);
         
-        let now = (new Date()).getTime();
-
-        if( now - this.lastClick < 300 ){
+        if( (new Date()).getTime() - this.lastClick < 300 ){
             /*
                 启动一个定时器，如果双击事件发生后就
                 取消单击事件的执行
              */
             clearTimeout( this.performerClick )
             this.handleDoubleClick(e);
-            
         }else{
             this.performerClick = setTimeout(() => {
                 this.handleClick(e);
             },300)
             
         }
+
         this.lastClick = (new Date()).getTime();
+        
     }
     handleRotateLeft(e: TouchEvent & MouseEvent ) :void{
         const curItem: HTMLElement = this.imgItems[this.curIndex];
@@ -1029,6 +1030,7 @@ export default class ImagePreview{
         this.isAnimating = false;
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
+        e.preventDefault();
         if( this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless ){//动画正在进行时，或者不是单指操作时一律不处理
             return;
         }   
@@ -1463,6 +1465,7 @@ export default class ImagePreview{
                 transform: translate3d(0,0,0);
                 transition: left 0.5s;
                 overflow:hidden;
+                user-select: none;
             }
             .${this.prefix}imagePreviewer.${this.defToggleClass}{
                 left: 0%;
@@ -1593,6 +1596,9 @@ export default class ImagePreview{
 
         ref.className = classes.join(' ');
 
+    }
+    destroy() : void{
+        this.ref.parentNode.removeChild(this.ref);
     }
 }
 /**

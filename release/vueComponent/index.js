@@ -6,7 +6,9 @@ var component = {
         images: Array
     },
     data: function () {
-        return {};
+        return {
+            imgPreview: null
+        };
     },
     mounted: function () {
         var childNodes = this.$refs.imgs.childNodes;
@@ -15,6 +17,7 @@ var component = {
             curImg: "",
             imgs: this.images
         });
+        this.imgPreview = imgPreview;
         var _loop_1 = function (i) {
             var childNode = childNodes[i];
             childNode.addEventListener('click', function () {
@@ -24,6 +27,9 @@ var component = {
         for (var i = 0; i < childNodes.length; i++) {
             _loop_1(i);
         }
+    },
+    beforeDestroy: function () {
+        this.imgPreview.destroy();
     },
     template: "\n        <div ref=\"imgs\">\n            <slot></slot>  \n        </div>     \n    "
 };

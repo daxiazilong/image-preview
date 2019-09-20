@@ -5,7 +5,9 @@ let component =  {
         images: Array
     },
     data:function(){
-        return{}
+        return{
+            imgPreview: null
+        }
     },
     mounted:function(){
 
@@ -15,7 +17,7 @@ let component =  {
             curImg:"",
             imgs: this.images
         })
-
+        this.imgPreview = imgPreview;
         for( let i = 0 ; i < childNodes.length; i++){
             let childNode = childNodes[i];
             childNode.addEventListener('click',function(){
@@ -23,6 +25,9 @@ let component =  {
             })
         }
 
+    },
+    beforeDestroy:function(){
+        this.imgPreview.destroy();
     },
     template: `
         <div ref="imgs">
