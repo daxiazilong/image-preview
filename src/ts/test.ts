@@ -46,7 +46,13 @@ new Vue({
         }
     }
 })
-window.onerror=function(e){
+window.onerror=function(message, source, lineno, colno, error){
     var stat = document.querySelector('#stat');
-    stat.innerHTML=`${e}`;
+    stat.innerHTML=`
+        ${message}
+        ${source}
+        ${lineno}
+        ${colno}
+        ${error}
+    `;
 }

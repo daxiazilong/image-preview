@@ -8,7 +8,7 @@ class ImagePreview{
     [key:string]: any;
     public showTools: boolean  = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
-    public performerClick: any;
+    public performerClick: any;// 单机执行计时器
     public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
     public startX: number;//手指移动时的x起始坐标
     public touchStartX: number;//手指第一次点击时的x起点坐标
@@ -45,6 +45,8 @@ class ImagePreview{
     public movePoints: Array< {x:number,y:number} > = [];//收集移动点，判断滑动方向
     public isMoved: boolean = false;//开始移动了没
     public fingerDirection: string = '';//当前手指得移动方向
+    public performerRecordMove: any;
+
     public operateMaps: {
         [key: string]: string
     } = {
@@ -265,7 +267,7 @@ class ImagePreview{
         }
 
         this.lastClick = (new Date()).getTime();
-        
+        this.getMovePoints(e);
     }
     handleRotateLeft(e: TouchEvent & MouseEvent ) :void{
         const curItem: HTMLElement = this.imgItems[this.curIndex];
@@ -768,16 +770,23 @@ class ImagePreview{
     }
     handleMove(e: TouchEvent & MouseEvent){
         e.preventDefault();
-        clearTimeout( this.performerClick )
         if( this.isAnimating ){
             return;
         } 
 
         // 双指缩放时的处理
         if( e.touches.length == 2 ){
-            
+            clearTimeout(this.performerRecordMove); 
+            clearTimeout( this.performerClick )
+
             this.handleZoom( e );
             return;
+        }
+
+        let curTouchX: number = e.touches[0].clientX;
+        let curTouchY: number = e.touches[0].clientY;
+        if( (this.touchStartX - curTouchX) > 2 && Math.abs( this.touchStartY - curTouchY ) > 2 ){
+            clearTimeout( this.performerClick )
         }
        
 
@@ -788,7 +797,10 @@ class ImagePreview{
         let direction: string = e.touches[0].clientX - this.startX > 0 ? 'right':'left';
         this.isMotionless = false;
 
-        // 收集一段时间之内得移动得点，用于获取当前手指得移动方向
+        /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
+         * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
+         * 并启动一个计时器 一定时间之后处理移动方向
+         **/
         if( this.fingerDirection ){
             if( curItem.dataset.isEnlargement == 'enlargement' ){
                 // 放大的时候的移动是查看放大后的图片
@@ -834,9 +846,10 @@ class ImagePreview{
             if( this.isMoved ){
                 return;
             }
-            setTimeout( () => {
+            this.performerRecordMove = setTimeout( () => {
                 this.isMoved = true;
                 let L: number = this.movePoints.length;
+                if( L == 0 ) return;
                 let endPoint:{x:number,y:number} = this.movePoints[L-1];
                 let startPoint: { x:number,y:number } = this.movePoints[0];
 
@@ -845,7 +858,7 @@ class ImagePreview{
 
                 let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
                 
-                if( Math.abs( 90 - Math.abs(degree) ) < 15 ){
+                if( Math.abs( 90 - Math.abs(degree) ) < 30 ){
                     this.fingerDirection = 'vertical'
                 }else{
                     this.fingerDirection ='horizontal'
@@ -1132,6 +1145,8 @@ class ImagePreview{
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
         e.preventDefault();
+        this.movePoints = [];//重置收集手指移动时要收集得点
+
         //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
         if( this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless ){
             return;
@@ -1189,7 +1204,6 @@ class ImagePreview{
             this.handleTEndEnNormal(e)
         }
         this.fingerDirection = '';
-        this.movePoints = [];
         this.isMoved = false;
        
         

@@ -189,6 +189,7 @@ var ImagePreview = /** @class */ (function () {
             }, 300);
         }
         this.lastClick = (new Date()).getTime();
+        this.getMovePoints(e);
     };
     ImagePreview.prototype.handleRotateLeft = function (e) {
         var _this = this;
@@ -522,21 +523,30 @@ var ImagePreview = /** @class */ (function () {
     ImagePreview.prototype.handleMove = function (e) {
         var _this = this;
         e.preventDefault();
-        clearTimeout(this.performerClick);
         if (this.isAnimating) {
             return;
         }
         // 双指缩放时的处理
         if (e.touches.length == 2) {
+            clearTimeout(this.performerRecordMove);
+            clearTimeout(this.performerClick);
             this.handleZoom(e);
             return;
+        }
+        var curTouchX = e.touches[0].clientX;
+        var curTouchY = e.touches[0].clientY;
+        if ((this.touchStartX - curTouchX) > 2 && Math.abs(this.touchStartY - curTouchY) > 2) {
+            clearTimeout(this.performerClick);
         }
         var curItem = this.imgItems[this.curIndex];
         var isBoundaryLeft = curItem.dataset.toLeft == 'true';
         var isBoundaryRight = curItem.dataset.toRight == 'true';
         var direction = e.touches[0].clientX - this.startX > 0 ? 'right' : 'left';
         this.isMotionless = false;
-        // 收集一段时间之内得移动得点，用于获取当前手指得移动方向
+        /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
+         * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
+         * 并启动一个计时器 一定时间之后处理移动方向
+         **/
         if (this.fingerDirection) {
             if (curItem.dataset.isEnlargement == 'enlargement') {
                 // 放大的时候的移动是查看放大后的图片
@@ -579,15 +589,17 @@ var ImagePreview = /** @class */ (function () {
             if (this.isMoved) {
                 return;
             }
-            setTimeout(function () {
+            this.performerRecordMove = setTimeout(function () {
                 _this.isMoved = true;
                 var L = _this.movePoints.length;
+                if (L == 0)
+                    return;
                 var endPoint = _this.movePoints[L - 1];
                 var startPoint = _this.movePoints[0];
                 var dx = endPoint.x - startPoint.x;
                 var dy = endPoint.y - startPoint.y;
                 var degree = Math.atan2(dy, dx) * 180 / Math.PI;
-                if (Math.abs(90 - Math.abs(degree)) < 15) {
+                if (Math.abs(90 - Math.abs(degree)) < 30) {
                     _this.fingerDirection = 'vertical';
                 }
                 else {
@@ -798,6 +810,7 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.handleToucnEnd = function (e) {
         e.preventDefault();
+        this.movePoints = []; //重置收集手指移动时要收集得点
         //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
         if (this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless) {
             return;
@@ -846,7 +859,6 @@ var ImagePreview = /** @class */ (function () {
             this.handleTEndEnNormal(e);
         }
         this.fingerDirection = '';
-        this.movePoints = [];
         this.isMoved = false;
     };
     ImagePreview.prototype.handleTEndEnlarge = function (e) {

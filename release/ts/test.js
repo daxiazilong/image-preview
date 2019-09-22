@@ -44,7 +44,7 @@ new Vue({
         }
     }
 });
-window.onerror = function (e) {
+window.onerror = function (message, source, lineno, colno, error) {
     var stat = document.querySelector('#stat');
-    stat.innerHTML = "" + e;
+    stat.innerHTML = "\n        " + message + "\n        " + source + "\n        " + lineno + "\n        " + colno + "\n        " + error + "\n    ";
 };
