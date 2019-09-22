@@ -1160,7 +1160,7 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.computeStep = function (displacement, time) {
         var v = displacement / time;
-        var frequency = 1000 / 16;
+        var frequency = 1000 / 60;
         return v * frequency;
     };
     ImagePreview.prototype.genFrame = function () {
@@ -1200,7 +1200,7 @@ var ImagePreview = /** @class */ (function () {
             window['requestAnimationFrame'] = (function () {
                 return window['webkitRequestAnimationFrame'] ||
                     function (callback) {
-                        window.setTimeout(callback, 1000 / 16);
+                        window.setTimeout(callback, 1000 / 60);
                         return 0;
                     };
             })();
@@ -1240,10 +1240,3 @@ var ImagePreview = /** @class */ (function () {
     return ImagePreview;
 }());
 exports.default = ImagePreview;
-/**
-* 移动端自己调试要显示的数据
-*/
-function showDebugger(msg) {
-    var stat = document.getElementById('stat');
-    stat.innerHTML = "<pre style=\"word-break: break-all;white-space: pre-line;\">" + msg + "</pre>";
-}

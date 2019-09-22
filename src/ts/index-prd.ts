@@ -8,7 +8,7 @@ class ImagePreview{
     [key:string]: any;
     public showTools: boolean  = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
-    public performerClick: any;// 单机执行计时器
+    public performerClick: any;// 单机事件执行计时器
     public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
     public startX: number;//手指移动时的x起始坐标
     public touchStartX: number;//手指第一次点击时的x起点坐标
@@ -1552,7 +1552,7 @@ class ImagePreview{
     }
     computeStep( displacement:number,time: number ): number{
         let v: number = displacement / time;
-        let frequency: number = 1000 / 16;
+        let frequency: number = 1000 / 60;
 
         return v * frequency;
     }
@@ -1713,7 +1713,7 @@ class ImagePreview{
             window['requestAnimationFrame'] = (function(){
             return  window['webkitRequestAnimationFrame'] ||
                     function( callback: Function ){
-                        window.setTimeout(callback, 1000 / 16);
+                        window.setTimeout(callback, 1000 / 60);
                         return 0;
                     };
             })();

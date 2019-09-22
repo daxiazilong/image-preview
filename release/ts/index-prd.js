@@ -1158,7 +1158,7 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.computeStep = function (displacement, time) {
         var v = displacement / time;
-        var frequency = 1000 / 16;
+        var frequency = 1000 / 60;
         return v * frequency;
     };
     ImagePreview.prototype.genFrame = function () {
@@ -1198,7 +1198,7 @@ var ImagePreview = /** @class */ (function () {
             window['requestAnimationFrame'] = (function () {
                 return window['webkitRequestAnimationFrame'] ||
                     function (callback) {
-                        window.setTimeout(callback, 1000 / 16);
+                        window.setTimeout(callback, 1000 / 60);
                         return 0;
                     };
             })();
