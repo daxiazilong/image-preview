@@ -23,6 +23,9 @@ var ImagePreview = /** @class */ (function () {
         this.isEnlargeMove = false; // 大图下得切屏
         this.prefix = "__";
         this.defToggleClass = 'defToggleClass';
+        this.movePoints = []; //收集移动点，判断滑动方向
+        this.isMoved = false; //开始移动了没
+        this.fingerDirection = ''; //当前手指得移动方向
         this.operateMaps = {
             rotateLeft: 'handleRotateLeft',
             rotateRight: 'handleRotateRight'
@@ -138,6 +141,8 @@ var ImagePreview = /** @class */ (function () {
         });
     };
     ImagePreview.prototype.handleTouchStart = function (e) {
+        // preventDefault is very import, because if not do this, we will get 
+        // an error lastClick Time on wx.
         e.preventDefault();
         switch (e.touches.length) {
             case 1:
@@ -517,6 +522,7 @@ var ImagePreview = /** @class */ (function () {
         }, 550);
     };
     ImagePreview.prototype.handleMove = function (e) {
+        var _this = this;
         e.preventDefault();
         clearTimeout(this.performerClick);
         if (this.isAnimating) {
@@ -532,20 +538,99 @@ var ImagePreview = /** @class */ (function () {
         var isBoundaryRight = curItem.dataset.toRight == 'true';
         var direction = e.touches[0].clientX - this.startX > 0 ? 'right' : 'left';
         this.isMotionless = false;
-        if (curItem.dataset.isEnlargement == 'enlargement') {
-            // 放大的时候的移动是查看放大后的图片
-            // 放大的时候,如果到达边界还是进行正常的切屏操作
-            if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove)) {
-                this.isEnlargeMove = true;
-                this.handleMoveNormal(e);
+        // 收集一段时间之内得移动得点，用于获取当前手指得移动方向
+        if (this.fingerDirection) {
+            if (curItem.dataset.isEnlargement == 'enlargement') {
+                // 放大的时候的移动是查看放大后的图片
+                // 放大的时候,如果到达边界还是进行正常的切屏操作
+                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
+                var imgContainerRect = this.imgContainer.getBoundingClientRect();
+                var conWidth = imgContainerRect.width;
+                var curItemViewLeft = curItem.getBoundingClientRect().left;
+                var curItemViewRight = curItem.getBoundingClientRect().right;
+                // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
+                if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
+                    if (((isBoundaryLeft && direction == 'right') ||
+                        (isBoundaryRight && direction == 'left') ||
+                        (this.isEnlargeMove)) &&
+                        (this.fingerDirection == 'horizontal')) {
+                        this.isEnlargeMove = true;
+                        this.handleMoveNormal(e);
+                    }
+                    else {
+                        this.handleMoveEnlage(e);
+                    }
+                }
+                else {
+                    if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove)) {
+                        this.isEnlargeMove = true;
+                        this.handleMoveNormal(e);
+                    }
+                    else {
+                        this.handleMoveEnlage(e);
+                    }
+                }
             }
             else {
-                this.handleMoveEnlage(e);
+                //正常情况下的移动是图片左右切换
+                this.handleMoveNormal(e);
             }
         }
         else {
-            //正常情况下的移动是图片左右切换
-            this.handleMoveNormal(e);
+            this.getMovePoints(e);
+            if (this.isMoved) {
+                return;
+            }
+            setTimeout(function () {
+                _this.isMoved = true;
+                var L = _this.movePoints.length;
+                var endPoint = _this.movePoints[L - 1];
+                var startPoint = _this.movePoints[0];
+                var dx = endPoint.x - startPoint.x;
+                var dy = endPoint.y - startPoint.y;
+                var degree = Math.atan2(dy, dx) * 180 / Math.PI;
+                if (Math.abs(90 - Math.abs(degree)) < 15) {
+                    _this.fingerDirection = 'vertical';
+                }
+                else {
+                    _this.fingerDirection = 'horizontal';
+                }
+                if (curItem.dataset.isEnlargement == 'enlargement') {
+                    // 放大的时候的移动是查看放大后的图片
+                    // 放大的时候,如果到达边界还是进行正常的切屏操作
+                    // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
+                    var imgContainerRect = _this.imgContainer.getBoundingClientRect();
+                    var conWidth = imgContainerRect.width;
+                    var curItemViewLeft = curItem.getBoundingClientRect().left;
+                    var curItemViewRight = curItem.getBoundingClientRect().right;
+                    // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
+                    if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
+                        if (((isBoundaryLeft && direction == 'right') ||
+                            (isBoundaryRight && direction == 'left') ||
+                            (_this.isEnlargeMove)) &&
+                            (_this.fingerDirection == 'horizontal')) {
+                            _this.isEnlargeMove = true;
+                            _this.handleMoveNormal(e);
+                        }
+                        else {
+                            _this.handleMoveEnlage(e);
+                        }
+                    }
+                    else {
+                        if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (_this.isEnlargeMove)) {
+                            _this.isEnlargeMove = true;
+                            _this.handleMoveNormal(e);
+                        }
+                        else {
+                            _this.handleMoveEnlage(e);
+                        }
+                    }
+                }
+                else {
+                    //正常情况下的移动是图片左右切换
+                    _this.handleMoveNormal(e);
+                }
+            }, 25);
         }
     };
     ImagePreview.prototype.handleMoveNormal = function (e) {
@@ -572,6 +657,8 @@ var ImagePreview = /** @class */ (function () {
         }
         var curItemWidth = curItem.getBoundingClientRect().width;
         var curItemHeihgt = curItem.getBoundingClientRect().height;
+        var viewLeft = curItem.getBoundingClientRect().left;
+        var viewRight = curItem.getBoundingClientRect().right;
         var curX = Math.round(e.touches[0].clientX);
         var curY = Math.round(e.touches[0].clientY);
         var offsetX = curX - this.startX;
@@ -581,7 +668,7 @@ var ImagePreview = /** @class */ (function () {
         var curTop;
         var curLeft;
         // 如果容器内能完整展示图片就不需要移动
-        if (curItemWidth > conWidth) {
+        if (viewLeft < 0 || viewRight > conWidth) {
             curLeft = curItemLeft + offsetX;
         }
         else {
@@ -713,7 +800,8 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.handleToucnEnd = function (e) {
         e.preventDefault();
-        if (this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless) { //动画正在进行时，或者不是单指操作时一律不处理
+        //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
+        if (this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless) {
             return;
         }
         var type = (e.target).dataset.type;
@@ -730,11 +818,26 @@ var ImagePreview = /** @class */ (function () {
         var isBoundary = curItem.dataset.toLeft == 'true' || curItem.dataset.toRight == 'true';
         if (curItem.dataset.isEnlargement == 'enlargement') {
             // 放大的时候,如果到达边界还是进行正常的切屏操作
+            // for long-img operate it solely
             if (isBoundary) {
-                this.handleTEndEnNormal(e);
-                // 重置是否已到达边界的变量
-                curItem.dataset.toLeft = 'false';
-                curItem.dataset.toRight = 'false';
+                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
+                var imgContainerRect = this.imgContainer.getBoundingClientRect();
+                var conWidth = imgContainerRect.width;
+                var curItemViewLeft = curItem.getBoundingClientRect().left;
+                var curItemViewRight = curItem.getBoundingClientRect().right;
+                if (curItemViewLeft < 0 || curItemViewRight > conWidth) {
+                    curItem.dataset.toLeft = 'false';
+                    curItem.dataset.toRight = 'false';
+                    this.handleTEndEnNormal(e);
+                }
+                else {
+                    if (this.fingerDirection == 'vertical') {
+                        this.handleTEndEnlarge(e);
+                    }
+                    else if (this.fingerDirection == 'horizontal') {
+                        this.handleTEndEnNormal(e);
+                    }
+                }
             }
             else {
                 this.handleTEndEnlarge(e);
@@ -744,6 +847,9 @@ var ImagePreview = /** @class */ (function () {
             //正常情况下的
             this.handleTEndEnNormal(e);
         }
+        this.fingerDirection = '';
+        this.movePoints = [];
+        this.isMoved = false;
     };
     ImagePreview.prototype.handleTEndEnlarge = function (e) {
         var imgContainerRect = this.imgContainer.getBoundingClientRect();
@@ -753,6 +859,8 @@ var ImagePreview = /** @class */ (function () {
         var curImg = curItem.querySelector('img');
         var curItemWidth = curItem.getBoundingClientRect().width;
         var curItemHeihgt = curItem.getBoundingClientRect().height;
+        var curItemViewLeft = curItem.getBoundingClientRect().left;
+        var curItemViewRight = curItem.getBoundingClientRect().right;
         /**
          * 旋转后会产生偏移值
          */
@@ -820,7 +928,7 @@ var ImagePreview = /** @class */ (function () {
             recoverY = true;
         }
         // 如果容器内能完整展示图片就不需要移动至边界
-        if (curItemWidth <= conWidth) {
+        if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
             recoverX = false;
             curItem.dataset.toLeft = 'true';
             curItem.dataset.toRight = 'true';
@@ -890,8 +998,15 @@ var ImagePreview = /** @class */ (function () {
             }
         }
         else {
-            curItem.dataset.toLeft = 'false';
-            curItem.dataset.toRight = 'false';
+            // 如果容器内能完整展示图片就不需要移动至边界
+            if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
+                curItem.dataset.toLeft = 'true';
+                curItem.dataset.toRight = 'true';
+            }
+            else {
+                curItem.dataset.toLeft = 'false';
+                curItem.dataset.toRight = 'false';
+            }
             curItem.dataset.toTop = 'false';
             curItem.dataset.toBottom = 'false';
         }
@@ -1056,7 +1171,7 @@ var ImagePreview = /** @class */ (function () {
             imagesHtml += "\n            <div class=\"" + _this.prefix + "itemWraper\">\n                <div class=\"" + _this.prefix + "item\">\n                    <img src=\"" + src + "\">\n                </div>\n            </div>\n            ";
         });
         var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\">\n                    " + imagesHtml + "\n                </div>\n                <div class=\"" + this.prefix + "bottom\">\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\" t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
-        var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: rgba(0,0,0,1);\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 1;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                transform: translateX( " + this.imgContainerMoveX + "px );\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100%;\n                height: 100%;\n                overflow:hidden;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item{\n                box-sizing:border-box;\n                position: absolute;\n                width: 100%;\n                height: auto;\n                font-size: 14px;\n                white-space: normal;\n                transition: transform 0.5s;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "item img{\n                width: 100%;\n                height: auto;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: 0;\n                left: 20px;\n                right: 20px;\n                padding:10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 22px;\n                height: 22px;\n                margin-right: 10px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                width: 100%;\n                height: 100%;\n            }\n        ";
+        var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: rgba(0,0,0,1);\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 1;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                transform: translateX( " + this.imgContainerMoveX + "px );\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100%;\n                height: 100%;\n                overflow:hidden;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item{\n                box-sizing:border-box;\n                position: absolute;\n                width: 100%;\n                height: auto;\n                font-size: 0;\n                white-space: normal;\n                transition: transform 0.5s;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "item img{\n                width: 100%;\n                height: auto;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: 0;\n                left: 20px;\n                right: 20px;\n                padding:10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 22px;\n                height: 22px;\n                margin-right: 10px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                width: 100%;\n                height: 100%;\n            }\n        ";
         this.ref = document.createElement('div');
         this.ref.className = this.prefix + "imagePreviewer";
         this.ref.innerHTML = html;
@@ -1100,6 +1215,12 @@ var ImagePreview = /** @class */ (function () {
             classes.push(className);
         }
         ref.className = classes.join(' ');
+    };
+    ImagePreview.prototype.getMovePoints = function (e) {
+        this.movePoints.push({
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        });
     };
     ImagePreview.prototype.destroy = function () {
         this.ref.parentNode.removeChild(this.ref);

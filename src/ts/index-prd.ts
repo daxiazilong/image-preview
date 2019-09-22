@@ -42,6 +42,9 @@ class ImagePreview{
     public imgItems: NodeListOf < HTMLElement >;
     public defToggleClass: string = 'defToggleClass';
 
+    public movePoints: Array< {x:number,y:number} > = [];//收集移动点，判断滑动方向
+    public isMoved: boolean = false;//开始移动了没
+    public fingerDirection: string = '';//当前手指得移动方向
     public operateMaps: {
         [key: string]: string
     } = {
@@ -207,6 +210,8 @@ class ImagePreview{
 
     }
     handleTouchStart(e: TouchEvent & MouseEvent){
+        // preventDefault is very import, because if not do this, we will get 
+        // an error lastClick Time on wx.
         e.preventDefault();
         switch( e.touches.length ){
             case 1:
@@ -774,6 +779,7 @@ class ImagePreview{
             this.handleZoom( e );
             return;
         }
+       
 
         const curItem: HTMLElement = this.imgItems[this.curIndex];
      
@@ -781,19 +787,112 @@ class ImagePreview{
         let isBoundaryRight: boolean = curItem.dataset.toRight == 'true'
         let direction: string = e.touches[0].clientX - this.startX > 0 ? 'right':'left';
         this.isMotionless = false;
-        if( curItem.dataset.isEnlargement == 'enlargement' ){
-            // 放大的时候的移动是查看放大后的图片
-            // 放大的时候,如果到达边界还是进行正常的切屏操作
-            if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove) ){
-                this.isEnlargeMove = true;
-                this.handleMoveNormal(e)
+
+        // 收集一段时间之内得移动得点，用于获取当前手指得移动方向
+        if( this.fingerDirection ){
+            if( curItem.dataset.isEnlargement == 'enlargement' ){
+                // 放大的时候的移动是查看放大后的图片
+
+                // 放大的时候,如果到达边界还是进行正常的切屏操作
+                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
+                const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
+                const conWidth: number = imgContainerRect.width;
+
+                const curItemViewLeft: number = curItem.getBoundingClientRect().left;
+                const curItemViewRight: number = curItem.getBoundingClientRect().right;
+                // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
+
+                if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
+                    if( 
+                        (
+                            (isBoundaryLeft && direction == 'right') ||
+                             (isBoundaryRight && direction == 'left') || 
+                             (this.isEnlargeMove)
+                        ) && 
+                        (this.fingerDirection == 'horizontal')  ){
+                        this.isEnlargeMove = true;
+                        this.handleMoveNormal(e)
+                    }else{
+                        this.handleMoveEnlage(e);
+                    }
+                }else{
+                    if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove) ){
+                        this.isEnlargeMove = true;
+                        this.handleMoveNormal(e)
+                    }else{
+                        this.handleMoveEnlage(e);
+                    }
+                }
+                
             }else{
-                this.handleMoveEnlage(e);
+                //正常情况下的移动是图片左右切换
+                this.handleMoveNormal(e)
             }
+
         }else{
-            //正常情况下的移动是图片左右切换
-            this.handleMoveNormal(e)
+            this.getMovePoints( e );
+            if( this.isMoved ){
+                return;
+            }
+            setTimeout( () => {
+                this.isMoved = true;
+                let L: number = this.movePoints.length;
+                let endPoint:{x:number,y:number} = this.movePoints[L-1];
+                let startPoint: { x:number,y:number } = this.movePoints[0];
+
+                let dx: number = endPoint.x - startPoint.x;
+                let dy:number = endPoint.y - startPoint.y;
+
+                let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                if( Math.abs( 90 - Math.abs(degree) ) < 15 ){
+                    this.fingerDirection = 'vertical'
+                }else{
+                    this.fingerDirection ='horizontal'
+                }
+                if( curItem.dataset.isEnlargement == 'enlargement' ){
+                    // 放大的时候的移动是查看放大后的图片
+
+                    // 放大的时候,如果到达边界还是进行正常的切屏操作
+                    // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
+                    const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
+                    const conWidth: number = imgContainerRect.width;
+
+                    const curItemViewLeft: number = curItem.getBoundingClientRect().left;
+                    const curItemViewRight: number = curItem.getBoundingClientRect().right;
+                    // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
+
+                    if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
+                        if( 
+                            (
+                                (isBoundaryLeft && direction == 'right') ||
+                                (isBoundaryRight && direction == 'left') || 
+                                (this.isEnlargeMove)
+                            ) && 
+                            (this.fingerDirection == 'horizontal')  ){
+                            this.isEnlargeMove = true;
+                            this.handleMoveNormal(e)
+                        }else{
+                            this.handleMoveEnlage(e);
+                        }
+                    }else{
+                        if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove) ){
+                            this.isEnlargeMove = true;
+                            this.handleMoveNormal(e)
+                        }else{
+                            this.handleMoveEnlage(e);
+                        }
+                    }
+                    
+                }else{
+                    //正常情况下的移动是图片左右切换
+                    this.handleMoveNormal(e)
+                }
+
+            },25)
         }
+        
+    
         
         
     }
@@ -826,6 +925,8 @@ class ImagePreview{
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
 
+        const viewLeft: number = curItem.getBoundingClientRect().left;
+        const viewRight: number = curItem.getBoundingClientRect().right;
         let curX: number = Math.round(e.touches[0].clientX);
         let curY: number = Math.round(e.touches[0].clientY);
 
@@ -840,10 +941,10 @@ class ImagePreview{
         let curTop: number ;
         let curLeft: number;
         // 如果容器内能完整展示图片就不需要移动
-        if( curItemWidth > conWidth ){
+        if( viewLeft < 0 || viewRight > conWidth ){
             curLeft = curItemLeft + offsetX;
         }else{
-            curLeft = curItemLeft
+            curLeft = curItemLeft;
         }
 
         if( curItemHeihgt > conHeight ){
@@ -1031,7 +1132,8 @@ class ImagePreview{
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
         e.preventDefault();
-        if( this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless ){//动画正在进行时，或者不是单指操作时一律不处理
+        //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
+        if( this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless ){
             return;
         }   
         const type : string = (<HTMLElement>(e.target)).dataset.type;
@@ -1050,16 +1152,34 @@ class ImagePreview{
         this.isMotionless = true;
         this.isEnlargeMove = false;
 
+        
         let isBoundary: boolean = curItem.dataset.toLeft == 'true' || curItem.dataset.toRight == 'true';
   
-
         if( curItem.dataset.isEnlargement == 'enlargement' ){
             // 放大的时候,如果到达边界还是进行正常的切屏操作
+            // for long-img operate it solely
             if( isBoundary ){
-                this.handleTEndEnNormal(e);
-                // 重置是否已到达边界的变量
-                curItem.dataset.toLeft = 'false';
-                curItem.dataset.toRight = 'false';
+                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
+                const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
+                const conWidth: number = imgContainerRect.width;
+
+                const curItemViewLeft: number = curItem.getBoundingClientRect().left;
+                const curItemViewRight: number = curItem.getBoundingClientRect().right;
+                
+                if( curItemViewLeft < 0 || curItemViewRight > conWidth ){
+                    curItem.dataset.toLeft = 'false';
+                    curItem.dataset.toRight = 'false';
+                    this.handleTEndEnNormal(e);
+
+                }else{
+                    if( this.fingerDirection == 'vertical'){
+                        this.handleTEndEnlarge(e);
+                    }else if( this.fingerDirection == 'horizontal'){
+                        this.handleTEndEnNormal(e);
+
+                    }
+                }
+                
             }else{
                 this.handleTEndEnlarge(e);
             }
@@ -1068,10 +1188,14 @@ class ImagePreview{
             //正常情况下的
             this.handleTEndEnNormal(e)
         }
+        this.fingerDirection = '';
+        this.movePoints = [];
+        this.isMoved = false;
        
         
     }
     handleTEndEnlarge ( e: TouchEvent & MouseEvent) : void{
+
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
@@ -1081,6 +1205,8 @@ class ImagePreview{
 
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
+        const curItemViewLeft: number = curItem.getBoundingClientRect().left;
+        const curItemViewRight: number = curItem.getBoundingClientRect().right;
         /**
          * 旋转后会产生偏移值
          */
@@ -1171,7 +1297,8 @@ class ImagePreview{
         }
 
         // 如果容器内能完整展示图片就不需要移动至边界
-        if( curItemWidth <= conWidth ){
+        if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
+        
             recoverX = false;
             curItem.dataset.toLeft = 'true';
             curItem.dataset.toRight = 'true';
@@ -1181,7 +1308,7 @@ class ImagePreview{
             curItem.dataset.toTop = 'true';
             curItem.dataset.toBottom = 'true';
         }
-
+        
         if( recoverX && recoverY ){
             this.animateMultiValue(curItem,[
                 {
@@ -1239,8 +1366,15 @@ class ImagePreview{
                 curItem.dataset.toBottom = 'true';
             }
         }else{
-            curItem.dataset.toLeft = 'false';
-            curItem.dataset.toRight = 'false';
+            // 如果容器内能完整展示图片就不需要移动至边界
+            if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
+                curItem.dataset.toLeft = 'true';
+                curItem.dataset.toRight = 'true';
+            }else{
+                curItem.dataset.toLeft = 'false';
+                curItem.dataset.toRight = 'false';
+            }
+            
             curItem.dataset.toTop = 'false';
             curItem.dataset.toBottom = 'false';
         }
@@ -1515,7 +1649,7 @@ class ImagePreview{
                 position: absolute;
                 width: 100%;
                 height: auto;
-                font-size: 14px;
+                font-size: 0;
                 white-space: normal;
                 transition: transform 0.5s;
             }
@@ -1596,6 +1730,12 @@ class ImagePreview{
 
         ref.className = classes.join(' ');
 
+    }
+    getMovePoints( e: MouseEvent & TouchEvent ){
+        this.movePoints.push({
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        })
     }
     destroy() : void{
         this.ref.parentNode.removeChild(this.ref);
