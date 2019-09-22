@@ -8,7 +8,7 @@ export default class ImagePreview{
     [key:string]: any;
     public showTools: boolean  = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
-    public performerClick: any;// 单机事件执行计时器
+    public performerClick: any;// 单击事件执行计时器
     public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
     public startX: number;//手指移动时的x起始坐标
     public touchStartX: number;//手指第一次点击时的x起点坐标
