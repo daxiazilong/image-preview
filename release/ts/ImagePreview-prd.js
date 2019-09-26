@@ -22,7 +22,6 @@ var ImagePreview = /** @class */ (function () {
         this.prefix = "__";
         this.defToggleClass = 'defToggleClass';
         this.movePoints = []; //收集移动点，判断滑动方向
-        this.isMoved = false; //开始移动了没
         this.fingerDirection = ''; //当前手指得移动方向
         this.operateMaps = {
             rotateLeft: 'handleRotateLeft',
@@ -140,7 +139,7 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.handleTouchStart = function (e) {
         // preventDefault is very import, because if not do this, we will get 
-        // an error lastClick Time on wx.
+        // an error last-Click-Time on wx.
         e.preventDefault();
         switch (e.touches.length) {
             case 1:
@@ -530,6 +529,7 @@ var ImagePreview = /** @class */ (function () {
         if (e.touches.length == 2) {
             clearTimeout(this.performerRecordMove);
             clearTimeout(this.performerClick);
+            this.performerRecordMove = 0;
             this.handleZoom(e);
             return;
         }
@@ -548,6 +548,7 @@ var ImagePreview = /** @class */ (function () {
          * 并启动一个计时器 一定时间之后处理移动方向
          **/
         if (this.fingerDirection) {
+            this.performerRecordMove = 0;
             if (curItem.dataset.isEnlargement == 'enlargement') {
                 // 放大的时候的移动是查看放大后的图片
                 // 放大的时候,如果到达边界还是进行正常的切屏操作
@@ -586,11 +587,10 @@ var ImagePreview = /** @class */ (function () {
         }
         else {
             this.getMovePoints(e);
-            if (this.isMoved) {
+            if (this.performerRecordMove) {
                 return;
             }
             this.performerRecordMove = setTimeout(function () {
-                _this.isMoved = true;
                 var L = _this.movePoints.length;
                 if (L == 0)
                     return;
@@ -859,7 +859,6 @@ var ImagePreview = /** @class */ (function () {
             this.handleTEndEnNormal(e);
         }
         this.fingerDirection = '';
-        this.isMoved = false;
     };
     ImagePreview.prototype.handleTEndEnlarge = function (e) {
         var imgContainerRect = this.imgContainer.getBoundingClientRect();

@@ -43,7 +43,6 @@ class ImagePreview{
     public defToggleClass: string = 'defToggleClass';
 
     public movePoints: Array< {x:number,y:number} > = [];//收集移动点，判断滑动方向
-    public isMoved: boolean = false;//开始移动了没
     public fingerDirection: string = '';//当前手指得移动方向
     public performerRecordMove: any;
 
@@ -213,7 +212,7 @@ class ImagePreview{
     }
     handleTouchStart(e: TouchEvent & MouseEvent){
         // preventDefault is very import, because if not do this, we will get 
-        // an error lastClick Time on wx.
+        // an error last-Click-Time on wx.
         e.preventDefault();
         switch( e.touches.length ){
             case 1:
@@ -779,6 +778,7 @@ class ImagePreview{
             clearTimeout(this.performerRecordMove); 
             clearTimeout( this.performerClick )
 
+            this.performerRecordMove = 0;
             this.handleZoom( e );
             return;
         }
@@ -802,6 +802,7 @@ class ImagePreview{
          * 并启动一个计时器 一定时间之后处理移动方向
          **/
         if( this.fingerDirection ){
+            this.performerRecordMove = 0;
             if( curItem.dataset.isEnlargement == 'enlargement' ){
                 // 放大的时候的移动是查看放大后的图片
 
@@ -843,11 +844,10 @@ class ImagePreview{
 
         }else{
             this.getMovePoints( e );
-            if( this.isMoved ){
+            if( this.performerRecordMove ){
                 return;
             }
             this.performerRecordMove = setTimeout( () => {
-                this.isMoved = true;
                 let L: number = this.movePoints.length;
                 if( L == 0 ) return;
                 let endPoint:{x:number,y:number} = this.movePoints[L-1];
@@ -1204,7 +1204,6 @@ class ImagePreview{
             this.handleTEndEnNormal(e)
         }
         this.fingerDirection = '';
-        this.isMoved = false;
        
         
     }
