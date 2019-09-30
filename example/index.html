@@ -33,16 +33,7 @@
     }
 </style>
 </head>
-<script>
-    let isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
-    if(!isMobile){
-        confirm(`
-            请务必使用移动端模式打开本项目
-            Be sure to open this project in mobile mode
-        `);
-        location.reload();
-    }
-</script>
+
 <h2><a href="https://github.com/daxiazilong/image-preview">仓库地址<br>repository</a></h2>
 <h2>示例<br>example</h2>
 <div class="imageWraper">
@@ -55,6 +46,19 @@
     <img data-src="/images/BBC82C020430AED149F8D18A0849D241.png" src="/images/BBC82C020430AED149F8D18A0849D241.png">
     <img data-src="/images/share_success_20190619.png" src="/images/share_success_20190619.png">
 </div>
+<script>
+    let isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
+    if(!isMobile){
+        if(confirm(`
+            请务必使用移动端模式打开本项目
+            Be sure to open this project in mobile mode
+        `)){
+            location.reload();   
+        }else{
+            document.body.innerHTML = '';
+        };
+    }
+</script>
 <script src="/js/ImagePreview-prd.js"></script>
 <script>
     new ImagePreview({

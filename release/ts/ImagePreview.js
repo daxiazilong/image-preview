@@ -19,7 +19,7 @@ var ImagePreview = /** @class */ (function () {
         this.zoomScale = 0.05; //缩放比例
         this.isZooming = false; //是否在进行双指缩放
         this.isAnimating = false; // 是否在动画中
-        this.isMotionless = true; // 是否没有产生位移
+        this.isMotionless = true; // 是否没有产生位移，用于左右切换图片或者拖动放大之后的图片
         this.isEnlargeMove = false; // 大图下得切屏
         this.prefix = "__";
         this.defToggleClass = 'defToggleClass';
@@ -535,6 +535,10 @@ var ImagePreview = /** @class */ (function () {
             this.handleZoom(e);
             return;
         }
+        if (this.isZooming) {
+            // 执行了缩放操作，则不进行任何移动
+            return;
+        }
         var curTouchX = e.touches[0].clientX;
         var curTouchY = e.touches[0].clientY;
         if ((this.touchStartX - curTouchX) > 2 && Math.abs(this.touchStartY - curTouchY) > 2) {
@@ -544,7 +548,6 @@ var ImagePreview = /** @class */ (function () {
         var isBoundaryLeft = curItem.dataset.toLeft == 'true';
         var isBoundaryRight = curItem.dataset.toRight == 'true';
         var direction = e.touches[0].clientX - this.startX > 0 ? 'right' : 'left';
-        this.isMotionless = false;
         /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
          * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
          * 并启动一个计时器 一定时间之后处理移动方向
@@ -586,6 +589,7 @@ var ImagePreview = /** @class */ (function () {
                 //正常情况下的移动是图片左右切换
                 this.handleMoveNormal(e);
             }
+            this.isMotionless = false;
         }
         else {
             this.getMovePoints(e);
@@ -642,6 +646,7 @@ var ImagePreview = /** @class */ (function () {
                     //正常情况下的移动是图片左右切换
                     _this.handleMoveNormal(e);
                 }
+                _this.isMotionless = false;
             }, 25);
         }
     };
@@ -793,16 +798,34 @@ var ImagePreview = /** @class */ (function () {
         }
         else if (distaceBefore < distanceNow) { //放大
             curItem.dataset.isEnlargement = 'enlargement';
-            curItem.dataset.top = (top - (this.zoomScale) * centerY).toString();
-            curItem.dataset.left = (left - (this.zoomScale) * centerX).toString();
             switch (Math.abs(rotateDeg % 360)) {
                 case 0:
                 case 180:
-                    curItem.style.cssText += "\n                            width: " + curItemWidth * (1 + this.zoomScale) + "px;\n                            height: " + curItemHeihgt * (1 + this.zoomScale) + "px;\n                            top: " + curItem.dataset.top + "px;\n                            left: " + curItem.dataset.left + "px;\n                    ";
+                    {
+                        // biggest width for zoom in
+                        var maxWidth = this.screenWidth * 4;
+                        if (curItemWidth * (1 + this.zoomScale) > maxWidth) {
+                            this.isAnimating = false;
+                            return;
+                        }
+                        curItem.dataset.top = (top - (this.zoomScale) * centerY).toString();
+                        curItem.dataset.left = (left - (this.zoomScale) * centerX).toString();
+                        curItem.style.cssText += "\n                            width: " + curItemWidth * (1 + this.zoomScale) + "px;\n                            height: " + curItemHeihgt * (1 + this.zoomScale) + "px;\n                            top: " + curItem.dataset.top + "px;\n                            left: " + curItem.dataset.left + "px;\n                    ";
+                    }
                     break;
                 case 90:
                 case 270:
-                    curItem.style.cssText += "\n                            height: " + curItemWidth * (1 + this.zoomScale) + "px;\n                            width: " + curItemHeihgt * (1 + this.zoomScale) + "px;\n                            left: " + curItem.dataset.left + "px;\n                            top: " + curItem.dataset.top + "px;\n                    ";
+                    {
+                        // biggest width for zoom in
+                        var maxWidth = this.screenWidth * 4;
+                        if (curItemHeihgt * (1 + this.zoomScale) > maxWidth) {
+                            this.isAnimating = false;
+                            return;
+                        }
+                        curItem.dataset.top = (top - (this.zoomScale) * centerY).toString();
+                        curItem.dataset.left = (left - (this.zoomScale) * centerX).toString();
+                        curItem.style.cssText += "\n                            height: " + curItemWidth * (1 + this.zoomScale) + "px;\n                            width: " + curItemHeihgt * (1 + this.zoomScale) + "px;\n                            left: " + curItem.dataset.left + "px;\n                            top: " + curItem.dataset.top + "px;\n                    ";
+                    }
                     break;
                 default:
                     break;
@@ -813,6 +836,11 @@ var ImagePreview = /** @class */ (function () {
     ImagePreview.prototype.handleToucnEnd = function (e) {
         e.preventDefault();
         this.movePoints = []; //重置收集手指移动时要收集得点
+        this.performerRecordMove = 0; //重置收集收支移动点的计时器
+        if (e.touches.length == 0 && this.isZooming) { //重置是否正在进行双指缩放操作
+            // someOperate;
+            this.isZooming = false;
+        }
         //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
         if (this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless) {
             return;
@@ -820,10 +848,6 @@ var ImagePreview = /** @class */ (function () {
         var type = (e.target).dataset.type;
         if (this.operateMaps[type]) {
             return;
-        }
-        if (e.touches.length == 0) {
-            // someOperate;
-            this.isZooming = false;
         }
         var curItem = this.imgItems[this.curIndex];
         this.isMotionless = true;
