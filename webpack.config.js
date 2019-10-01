@@ -4,7 +4,7 @@
   const version = '1.0.0';
   const dev = (process.argv[2].split('=')[1]) == "development";
   let compilePath = {
-    imagePreview: './src/ts/index.ts'
+    imagePreview: './src/ts/image-preview-prd.ts'
   };
   const output = dev ? 'debug' : 'release';
 
@@ -12,7 +12,7 @@
 
   if(dev){
     compilePath = {
-        imagePreview: './src/ts/ImagePreview.ts',
+        imagePreview: './src/ts/image-preview.ts',
         test: './src/ts/test.ts'
     }
     plugins = [

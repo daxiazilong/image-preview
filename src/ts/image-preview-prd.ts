@@ -139,6 +139,8 @@ class ImagePreview{
                 el.dataset.initialTop = top.toString();
                 el.dataset.left = left.toString();
                 el.dataset.initialLeft = left.toString();
+                el.dataset.viewTopInitial = styleObj.top.toString();
+                el.dataset.viewLeftInitial = styleObj.left.toString();
                 el.dataset.loaded = "true";
 
                 el.style.top = `${top}px`;
@@ -174,6 +176,8 @@ class ImagePreview{
                         el.dataset.initialTop = top.toString();
                         el.dataset.left = left.toString();
                         el.dataset.initialLeft = left.toString();
+                        el.dataset.viewTopInitial = styleObj.top.toString();
+                        el.dataset.viewLeftInitial = styleObj.left.toString();
                         el.dataset.loaded = "true";
 
                         el.style.top = `${top}px`;
@@ -290,7 +294,7 @@ class ImagePreview{
         
         setTimeout(()=>{
             curItem.dataset.rotateDeg = rotateDeg.toString();
-
+        
             this.isAnimating = false;
         },550)
 
@@ -318,6 +322,7 @@ class ImagePreview{
         `
         setTimeout(()=>{
             curItem.dataset.rotateDeg = rotateDeg.toString();
+            
             this.isAnimating = false;
         },550)
     }
@@ -454,8 +459,6 @@ class ImagePreview{
             toHeight = curImg.naturalHeight;
         }
        
-        curItem.dataset.viewTopInitial = curItemViewTop.toString();
-        curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
 
         switch( rotateDeg % 360 ){
             case 0:
@@ -579,7 +582,7 @@ class ImagePreview{
     setToInitialSize( scaleX: number , scaleY: number,e: TouchEvent & MouseEvent ){
 
         const curItem: HTMLElement = this.imgItems[this.curIndex];
-
+        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeight: number = curItem.getBoundingClientRect().height;
 
@@ -606,7 +609,7 @@ class ImagePreview{
                 const centerX: number =  curItemWidth / 2;
                 const centerY: number = curItemHeight / 2;
 
-                let top: number = Number(curItem.dataset.top);
+                let top: number = Number(curItem.dataset.top) || 0;
                 let left: number = Number(curItem.dataset.left) || 0;
 
                 const viewTopInitial:number =   Number(curItem.dataset.initialTop);
@@ -664,8 +667,14 @@ class ImagePreview{
                     const centerX: number =  curItemHeight / 2;
                     const centerY: number = curItemWidth / 2;
 
-                    const viewTopInitial:number =  Number(curItem.dataset.viewTopInitial);
-                    const viewLeftInitial:number = Number(curItem.dataset.viewLeftInitial);
+                    let intialItemWidth: number = Number(curItem.dataset.initialWidth);
+                    let intialItemHeight: number = Number( curItem.dataset.initialHeight);
+                    let conWidth : number = imgContainerRect.width;
+                    let conHeight: number = imgContainerRect.height;
+                    // 90 and 270 deg is derived from 0 deg state
+                    // next case-expression is same.
+                    const viewTopInitial:number =  (conHeight - intialItemWidth) / 2;
+                    const viewLeftInitial:number = (conWidth - intialItemHeight) / 2;
 
                     let top: number = Number(curItem.dataset.top);
                     let left: number = Number(curItem.dataset.left);
@@ -704,8 +713,13 @@ class ImagePreview{
                     const centerX: number =  curItemHeight / 2;
                     const centerY: number = curItemWidth / 2;
 
-                    const viewTopInitial:number =  Number(curItem.dataset.viewTopInitial);
-                    const viewLeftInitial:number = Number(curItem.dataset.viewLeftInitial);
+                    let intialItemWidth: number = Number(curItem.dataset.initialWidth);
+                    let intialItemHeight: number = Number( curItem.dataset.initialHeight);
+                    let conWidth : number = imgContainerRect.width;
+                    let conHeight: number = imgContainerRect.height;
+                    
+                    const viewTopInitial:number =  (conHeight - intialItemWidth) / 2;
+                    const viewLeftInitial:number = (conWidth - intialItemHeight) / 2;
 
                     let top: number = Number(curItem.dataset.top);
                     let left: number = Number(curItem.dataset.left);
@@ -785,6 +799,7 @@ class ImagePreview{
 
         if( this.isZooming ){
             // 执行了缩放操作，则不进行任何移动
+            // 这个值会在手指全部离开屏幕后重置
             return;
         }
         let curTouchX: number = e.touches[0].clientX;
@@ -1000,13 +1015,7 @@ class ImagePreview{
             return;
         }
 
-        if( curItem.dataset.isEnlargement !== 'enlargement' ){
-            // 以下为旋转之后缩放时需要用到的参数
-            const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
-            const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
-            curItem.dataset.viewTopInitial = curItemViewTop.toString();
-            curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
-        }
+        
         const curItemWidth: number = curItem.getBoundingClientRect().width;
         const curItemHeihgt: number = curItem.getBoundingClientRect().height;
 

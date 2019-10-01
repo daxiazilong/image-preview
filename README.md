@@ -1,5 +1,6 @@
-# image-preview
-front end image preview,for mobile-web application.
+# image-preview(The most fluent & The most comfortable)
+front end image preview
+for mobile-web application.
 ### features:
 1. most of operation is supported by gensture.
 2. rotate and zoom image.

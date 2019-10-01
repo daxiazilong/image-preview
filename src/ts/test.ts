@@ -1,4 +1,4 @@
-import ImgPreview from './ImagePreview'
+import ImgPreview from './image-preview'
 
 new ImgPreview({
     curImg:'/testImage/IMG_0512.JPG',

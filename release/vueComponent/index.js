@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var ImagePreview_1 = require("../ts/ImagePreview");
+var image_preview_1 = require("../ts/image-preview");
 var component = {
     props: {
         images: Array
@@ -13,7 +13,7 @@ var component = {
     mounted: function () {
         var childNodes = this.$refs.imgs.childNodes;
         childNodes = Array.prototype.filter.call(childNodes, (function (item) { return item.nodeType === 1; }));
-        var imgPreview = new ImagePreview_1.default({
+        var imgPreview = new image_preview_1.default({
             curImg: "",
             imgs: this.images
         });

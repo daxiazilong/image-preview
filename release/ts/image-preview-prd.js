@@ -89,6 +89,8 @@ var ImagePreview = /** @class */ (function () {
                 el.dataset.initialTop = top_1.toString();
                 el.dataset.left = left.toString();
                 el.dataset.initialLeft = left.toString();
+                el.dataset.viewTopInitial = styleObj.top.toString();
+                el.dataset.viewLeftInitial = styleObj.left.toString();
                 el.dataset.loaded = "true";
                 el.style.top = top_1 + "px";
                 el.style.left = left + "px";
@@ -114,6 +116,8 @@ var ImagePreview = /** @class */ (function () {
                         el.dataset.initialTop = top.toString();
                         el.dataset.left = left.toString();
                         el.dataset.initialLeft = left.toString();
+                        el.dataset.viewTopInitial = styleObj.top.toString();
+                        el.dataset.viewLeftInitial = styleObj.left.toString();
                         el.dataset.loaded = "true";
                         el.style.top = top + "px";
                         el.style.left = left + "px";
@@ -354,8 +358,6 @@ var ImagePreview = /** @class */ (function () {
             toWidth = curImg.naturalWidth;
             toHeight = curImg.naturalHeight;
         }
-        curItem.dataset.viewTopInitial = curItemViewTop.toString();
-        curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
         switch (rotateDeg % 360) {
             case 0:
                 curItem.style.cssText = ";\n                    top:" + curItemTop + "px;\n                    left:" + curItemLeft + "px;\n                    transform-origin: " + centerX + "px " + centerY + "px;\n                    transform: \n                        rotateZ(" + rotateDeg + "deg) \n                        scale3d(" + scaleX + "," + scaleY + ",1) \n                        translateY(" + (-(mouseY - curItemViewTop - centerY) * (scaleY - 1)) / scaleY + "px) \n                        translateX(" + (-(mouseX - curItemViewLeft - centerX) * (scaleX - 1)) / scaleX + "px) \n                    ;\n                ";
@@ -415,6 +417,7 @@ var ImagePreview = /** @class */ (function () {
     ImagePreview.prototype.setToInitialSize = function (scaleX, scaleY, e) {
         var _this = this;
         var curItem = this.imgItems[this.curIndex];
+        var imgContainerRect = this.imgContainer.getBoundingClientRect();
         var curItemWidth = curItem.getBoundingClientRect().width;
         var curItemHeight = curItem.getBoundingClientRect().height;
         // 以下为旋转之后缩放时需要用到的参数
@@ -435,7 +438,7 @@ var ImagePreview = /** @class */ (function () {
             case 0:
                 var centerX = curItemWidth / 2;
                 var centerY = curItemHeight / 2;
-                var top_2 = Number(curItem.dataset.top);
+                var top_2 = Number(curItem.dataset.top) || 0;
                 var left = Number(curItem.dataset.left) || 0;
                 var viewTopInitial = Number(curItem.dataset.initialTop);
                 var viewLeftInitial = Number(curItem.dataset.initialLeft);
@@ -462,8 +465,14 @@ var ImagePreview = /** @class */ (function () {
                 {
                     var centerX_2 = curItemHeight / 2;
                     var centerY_2 = curItemWidth / 2;
-                    var viewTopInitial_2 = Number(curItem.dataset.viewTopInitial);
-                    var viewLeftInitial_2 = Number(curItem.dataset.viewLeftInitial);
+                    var intialItemWidth = Number(curItem.dataset.initialWidth);
+                    var intialItemHeight = Number(curItem.dataset.initialHeight);
+                    var conWidth = imgContainerRect.width;
+                    var conHeight = imgContainerRect.height;
+                    // 90 and 270 deg is derived from 0 deg state
+                    // next case-expression is same.
+                    var viewTopInitial_2 = (conHeight - intialItemWidth) / 2;
+                    var viewLeftInitial_2 = (conWidth - intialItemHeight) / 2;
                     var top_4 = Number(curItem.dataset.top);
                     var left_2 = Number(curItem.dataset.left);
                     /**
@@ -486,8 +495,12 @@ var ImagePreview = /** @class */ (function () {
                 {
                     var centerX_3 = curItemHeight / 2;
                     var centerY_3 = curItemWidth / 2;
-                    var viewTopInitial_3 = Number(curItem.dataset.viewTopInitial);
-                    var viewLeftInitial_3 = Number(curItem.dataset.viewLeftInitial);
+                    var intialItemWidth = Number(curItem.dataset.initialWidth);
+                    var intialItemHeight = Number(curItem.dataset.initialHeight);
+                    var conWidth = imgContainerRect.width;
+                    var conHeight = imgContainerRect.height;
+                    var viewTopInitial_3 = (conHeight - intialItemWidth) / 2;
+                    var viewLeftInitial_3 = (conWidth - intialItemHeight) / 2;
                     var top_5 = Number(curItem.dataset.top);
                     var left_3 = Number(curItem.dataset.left);
                     var disteanceY_3 = curItemViewTop + (centerX_3) * (1 - scaleY) - top_5 - viewTopInitial_3;
@@ -535,6 +548,7 @@ var ImagePreview = /** @class */ (function () {
         }
         if (this.isZooming) {
             // 执行了缩放操作，则不进行任何移动
+            // 这个值会在手指全部离开屏幕后重置
             return;
         }
         var curTouchX = e.touches[0].clientX;
@@ -719,13 +733,6 @@ var ImagePreview = /** @class */ (function () {
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             this.isAnimating = false;
             return;
-        }
-        if (curItem.dataset.isEnlargement !== 'enlargement') {
-            // 以下为旋转之后缩放时需要用到的参数
-            var curItemViewTop = curItem.getBoundingClientRect().top; //当前元素距离视口的top
-            var curItemViewLeft = curItem.getBoundingClientRect().left; //当前元素距离视口的left
-            curItem.dataset.viewTopInitial = curItemViewTop.toString();
-            curItem.dataset.viewLeftInitial = curItemViewLeft.toString();
         }
         var curItemWidth = curItem.getBoundingClientRect().width;
         var curItemHeihgt = curItem.getBoundingClientRect().height;

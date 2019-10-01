@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var ImagePreview_1 = require("./ImagePreview");
-new ImagePreview_1.default({
+var image_preview_1 = require("./image-preview");
+new image_preview_1.default({
     curImg: '/testImage/IMG_0512.JPG',
     imgs: [
         '/testImage/IMG_0512.JPG',
@@ -13,7 +13,7 @@ new ImagePreview_1.default({
         '/testImage/BBC82C020430AED149F8D18A0849D241.png'
     ]
 });
-new ImagePreview_1.default({
+new image_preview_1.default({
     selector: '.imageWraper img'
 });
 var Vue = require('vue');
