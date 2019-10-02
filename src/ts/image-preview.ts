@@ -46,6 +46,9 @@ export default class ImagePreview{
     public fingerDirection: string = '';//当前手指得移动方向
     public performerRecordMove: any;
 
+    public moveStartTime: number = 0;
+    public moveEndTime: number = 0;
+
     public operateMaps: {
         [key: string]: string
     } = {
@@ -232,6 +235,7 @@ export default class ImagePreview{
         
     }
     handleTwoStart(e: TouchEvent & MouseEvent ) :void{
+
         this.curPoint1 = {
             x: e.touches[0].clientX,
             y: e.touches[0].clientY
@@ -815,6 +819,11 @@ export default class ImagePreview{
         let isBoundaryRight: boolean = curItem.dataset.toRight == 'true'
         let direction: string = e.touches[0].clientX - this.startX > 0 ? 'right':'left';
 
+        const curItemViewLeft: number = curItem.getBoundingClientRect().left;
+        const curItemViewRight: number = curItem.getBoundingClientRect().right;
+        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
+        const conWidth: number = imgContainerRect.width;
+
         /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
          * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
          * 并启动一个计时器 一定时间之后处理移动方向
@@ -826,11 +835,7 @@ export default class ImagePreview{
 
                 // 放大的时候,如果到达边界还是进行正常的切屏操作
                 // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
-                const conWidth: number = imgContainerRect.width;
-
-                const curItemViewLeft: number = curItem.getBoundingClientRect().left;
-                const curItemViewRight: number = curItem.getBoundingClientRect().right;
+                
                 // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
 
                 if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
@@ -863,6 +868,25 @@ export default class ImagePreview{
 
 
         }else{
+
+            // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
+            if( 
+                ( curItem.dataset.isEnlargement == 'enlargement' &&  curItemViewLeft < 0 && curItemViewRight > conWidth )
+                 ||
+                ( curItem.dataset.isEnlargement !== 'enlargement' )
+            
+            ){
+                if( curItem.dataset.isEnlargement == 'enlargement' &&  curItemViewLeft < 0 && curItemViewRight > conWidth ){
+                    this.handleMoveEnlage(e);
+                }else if(curItem.dataset.isEnlargement !== 'enlargement'){
+                    this.handleMoveNormal(e)
+
+                }
+                this.isMotionless = false;
+
+                return;
+            }
+
             this.getMovePoints( e );
             if( this.performerRecordMove ){
                 return;
@@ -940,7 +964,9 @@ export default class ImagePreview{
         this.imgContainer.style.left = `${ this.imgContainerMoveX }px`
     }
     handleMoveEnlage( e: TouchEvent & MouseEvent ){
-
+        if( !this.moveStartTime){
+            this.moveStartTime = (new Date).getTime();
+        }
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
@@ -1237,7 +1263,14 @@ export default class ImagePreview{
         
     }
     handleTEndEnlarge ( e: TouchEvent & MouseEvent) : void{
-
+        this.moveEndTime = (new Date).getTime();
+        var showDebugger = require('../tools/index');
+        showDebugger(`
+            starx:${ this.touchStartX }
+            starty: ${this.touchStartY}
+            endx:${this.startX}
+            endy:${this.startY}
+        `)
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
