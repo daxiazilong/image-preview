@@ -1,6 +1,10 @@
-import ImgPreview from './image-preview'
+import {ImagePreview}  from './image-preview'
+import {ImagePreviewVue} from '../vueComponent/index'
+import { stat } from 'fs';
 
-new ImgPreview({
+const Vue = require('vue');
+
+new ImagePreview({
     curImg:'/testImage/IMG_0512.JPG',
     imgs: [
         '/testImage/IMG_0512.JPG',
@@ -13,12 +17,10 @@ new ImgPreview({
     ]
 });
 
-new ImgPreview({
+new ImagePreview({
     selector:'.imageWraper img'
 })
-const Vue = require('vue');
-import {ImagePreviewVue} from '../vueComponent/index'
-import { stat } from 'fs';
+
 
 Vue.use(ImagePreviewVue)
 new Vue({

@@ -22,7 +22,7 @@
         mounted: function () {
             var childNodes = this.$refs.imgs.childNodes;
             childNodes = Array.prototype.filter.call(childNodes, (function (item) { return item.nodeType === 1; }));
-            var imgPreview = new image_preview_1.default({
+            var imgPreview = new image_preview_1.ImagePreview({
                 curImg: "",
                 imgs: this.images
             });

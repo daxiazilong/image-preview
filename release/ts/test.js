@@ -10,7 +10,9 @@
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var image_preview_1 = require("./image-preview");
-    new image_preview_1.default({
+    var index_1 = require("../vueComponent/index");
+    var Vue = require('vue');
+    new image_preview_1.ImagePreview({
         curImg: '/testImage/IMG_0512.JPG',
         imgs: [
             '/testImage/IMG_0512.JPG',
@@ -22,11 +24,9 @@
             '/testImage/BBC82C020430AED149F8D18A0849D241.png'
         ]
     });
-    new image_preview_1.default({
+    new image_preview_1.ImagePreview({
         selector: '.imageWraper img'
     });
-    var Vue = require('vue');
-    var index_1 = require("../vueComponent/index");
     Vue.use(index_1.ImagePreviewVue);
     new Vue({
         el: '#el',

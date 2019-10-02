@@ -5,6 +5,8 @@
     }
     else if (typeof define === "function" && define.amd) {
         define(["require", "exports"], factory);
+    }else{
+        window['ImagePreview'] = factory
     }
 })(function (require, exports) {
     "use strict";

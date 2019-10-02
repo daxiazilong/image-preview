@@ -4,7 +4,8 @@
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
-export default class ImagePreview{
+var showDebugger = require('../tools/index');
+export class ImagePreview{
     [key:string]: any;
     public showTools: boolean  = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
@@ -1264,13 +1265,31 @@ export default class ImagePreview{
     }
     handleTEndEnlarge ( e: TouchEvent & MouseEvent) : void{
         this.moveEndTime = (new Date).getTime();
-        var showDebugger = require('../tools/index');
+        let endPoint:{x:number,y:number} = {
+            x: this.startX,
+            y: this.startY
+        };
+        let startPoint: { x:number,y:number } = {
+            x: this.touchStartX,
+            y: this.touchStartY
+        };
+
+
+        let dx: number = endPoint.x - startPoint.x;
+        let dy:number = endPoint.y - startPoint.y;
+
+        let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
         showDebugger(`
+            开始移动时间：${this.moveStartTime}
+            结束移动时间：${this.moveEndTime}
+            持续时长：${ this.moveEndTime - this.moveStartTime}ms
+            移动方向：${degree}°
             starx:${ this.touchStartX }
             starty: ${this.touchStartY}
             endx:${this.startX}
             endy:${this.startY}
         `)
+        this.moveStartTime = 0;
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;

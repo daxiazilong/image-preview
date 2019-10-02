@@ -1,4 +1,4 @@
-import ImgPreview from "../ts/image-preview";
+import { ImagePreview } from "../ts/image-preview";
 export let _Vue;
 let component =  {
     props:{
@@ -13,7 +13,7 @@ let component =  {
 
         let childNodes = this.$refs.imgs.childNodes;
         childNodes = Array.prototype.filter.call(childNodes,( item => item.nodeType === 1))
-        let imgPreview = new ImgPreview({
+        let imgPreview = new ImagePreview({
             curImg:"",
             imgs: this.images
         })

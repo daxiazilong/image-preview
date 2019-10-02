@@ -5,6 +5,6 @@
           "suppressImplicitAnyIndexErrors":true,
           "removeComments":false,
           "outDir":"../release",
-          "module": "umd"
+          "module": "UMD"
       }
   }
