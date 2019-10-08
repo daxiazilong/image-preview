@@ -1264,32 +1264,7 @@ export class ImagePreview{
         
     }
     handleTEndEnlarge ( e: TouchEvent & MouseEvent) : void{
-        this.moveEndTime = (new Date).getTime();
-        let endPoint:{x:number,y:number} = {
-            x: this.startX,
-            y: this.startY
-        };
-        let startPoint: { x:number,y:number } = {
-            x: this.touchStartX,
-            y: this.touchStartY
-        };
-
-
-        let dx: number = endPoint.x - startPoint.x;
-        let dy:number = endPoint.y - startPoint.y;
-
-        let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
-        showDebugger(`
-            开始移动时间：${this.moveStartTime}
-            结束移动时间：${this.moveEndTime}
-            持续时长：${ this.moveEndTime - this.moveStartTime}ms
-            移动方向：${degree}°
-            starx:${ this.touchStartX }
-            starty: ${this.touchStartY}
-            endx:${this.startX}
-            endy:${this.startY}
-        `)
-        this.moveStartTime = 0;
+        
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
@@ -1471,11 +1446,44 @@ export class ImagePreview{
             
             curItem.dataset.toTop = 'false';
             curItem.dataset.toBottom = 'false';
-        }
 
-        
+            this.moveEndTime = (new Date).getTime();
+            let endPoint:{x:number,y:number} = {
+                x: this.startX,
+                y: this.startY
+            };
+            let startPoint: { x:number,y:number } = {
+                x: this.touchStartX,
+                y: this.touchStartY
+            };
 
-        
+
+            let dx: number = endPoint.x - startPoint.x;
+            let dy:number = endPoint.y - startPoint.y;
+
+            let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
+            let touchTime = this.moveEndTime - this.moveStartTime;
+            showDebugger(`
+                开始移动时间：${this.moveStartTime}
+                结束移动时间：${this.moveEndTime}
+                持续时长：${ this.moveEndTime - this.moveStartTime}ms
+                移动方向：${degree}°
+                starx:${ this.touchStartX }
+                starty: ${this.touchStartY}
+                endx:${this.startX}
+                endy:${this.startY}
+                Math.cons deg * 100: ${ 100*Math.cos((degree/180)*Math.PI) }
+                Math.sin deg * 100: ${ 100*Math.sin((degree/180)*Math.PI) }
+            `)
+            // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
+            // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
+            if( touchTime < 70 ){
+                let boundryObj = {maxTop,minTop,maxLeft,minLeft}
+                this.autoMove( curItem,degree,startX,startY,boundryObj)
+            }
+            this.moveStartTime = 0;
+
+        }    
 
     }
     handleTEndEnNormal ( e: TouchEvent & MouseEvent) : void{
@@ -1498,6 +1506,52 @@ export class ImagePreview{
         }else{//复原
             this.slideSelf();
         }
+    }
+    autoMove(curItem:HTMLElement,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}):void{
+        deg = (deg / 180) * Math.PI;
+        let distance: number = 100;
+        let offsetX: number = distance * Math.cos( deg )
+        let offsetY: number = distance * Math.sin(deg);
+
+        let endX = startX + offsetX;
+        let endY = startY + offsetY;
+
+        let stepX: number = this.computeStep( startX - endX,150 );
+        let stepY: number = this.computeStep( startY - endY ,150 );
+        console.log(1)
+        this.animateMultiValue(curItem,[
+            {
+                prop: 'left',
+                start: startX,
+                end: endX,
+                step: -stepX
+            },{
+                prop:'top',
+                start: startY,
+                end: endY,
+                step: -stepY
+            }
+        ])
+        curItem.dataset.left = `${endX}`;
+        curItem.dataset.top = `${endY}`;
+        if( endX == maxLeft ){
+            //toLeft 即为到达左边界的意思下同
+            curItem.dataset.toLeft = 'true';
+            curItem.dataset.toRight = 'false';
+            
+        }else if( endX == minLeft ){
+            curItem.dataset.toLeft = 'false';
+            curItem.dataset.toRight = 'true';
+        }
+
+        if( endY == maxTop ){
+            curItem.dataset.toTop = 'true';
+            curItem.dataset.toBottom = 'false';
+        }else if( endY == minTop ){
+            curItem.dataset.toTop = 'false';
+            curItem.dataset.toBottom = 'true';
+        }
+
     }
     slideNext(){
         let endX = -(this.curIndex * this.screenWidth);
