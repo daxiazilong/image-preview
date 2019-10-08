@@ -4,8 +4,7 @@
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
-var showDebugger = require('../tools/index');
-export class ImagePreview{
+class ImagePreview{
     [key:string]: any;
     public showTools: boolean  = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
@@ -1463,18 +1462,6 @@ export class ImagePreview{
 
             let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
             let touchTime = this.moveEndTime - this.moveStartTime;
-            showDebugger(`
-                开始移动时间：${this.moveStartTime}
-                结束移动时间：${this.moveEndTime}
-                持续时长：${ this.moveEndTime - this.moveStartTime}ms
-                移动方向：${degree}°
-                starx:${ this.touchStartX }
-                starty: ${this.touchStartY}
-                endx:${this.startX}
-                endy:${this.startY}
-                Math.cons deg * 100: ${ 100*Math.cos((degree/180)*Math.PI) }
-                Math.sin deg * 100: ${ 100*Math.sin((degree/180)*Math.PI) }
-            `)
             // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
             // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
             if( touchTime < 90 ){

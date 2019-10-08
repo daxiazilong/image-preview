@@ -922,8 +922,6 @@
             this.fingerDirection = '';
         };
         ImagePreview.prototype.handleTEndEnlarge = function (e) {
-            this.moveEndTime = (new Date).getTime();
-            showDebugger("\n            starx:" + this.touchStartX + "\n            starty: " + this.touchStartY + "\n            endx:" + this.startX + "\n            endy:" + this.startY + "\n        ");
             var imgContainerRect = this.imgContainer.getBoundingClientRect();
             var conWidth = imgContainerRect.width;
             var conHeight = imgContainerRect.height;
@@ -1081,7 +1079,28 @@
                 }
                 curItem.dataset.toTop = 'false';
                 curItem.dataset.toBottom = 'false';
+                this.moveEndTime = (new Date).getTime();
+                var endPoint = {
+                    x: this.startX,
+                    y: this.startY
+                };
+                var startPoint = {
+                    x: this.touchStartX,
+                    y: this.touchStartY
+                };
+                var dx = endPoint.x - startPoint.x;
+                var dy = endPoint.y - startPoint.y;
+                var degree = Math.atan2(dy, dx) * 180 / Math.PI;
+                var touchTime = this.moveEndTime - this.moveStartTime;
+                showDebugger("\n                \u5F00\u59CB\u79FB\u52A8\u65F6\u95F4\uFF1A" + this.moveStartTime + "\n                \u7ED3\u675F\u79FB\u52A8\u65F6\u95F4\uFF1A" + this.moveEndTime + "\n                \u6301\u7EED\u65F6\u957F\uFF1A" + (this.moveEndTime - this.moveStartTime) + "ms\n                \u79FB\u52A8\u65B9\u5411\uFF1A" + degree + "\u00B0\n                starx:" + this.touchStartX + "\n                starty: " + this.touchStartY + "\n                endx:" + this.startX + "\n                endy:" + this.startY + "\n                Math.cons deg * 100: " + 100 * Math.cos((degree / 180) * Math.PI) + "\n                Math.sin deg * 100: " + 100 * Math.sin((degree / 180) * Math.PI) + "\n            ");
+                // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
+                // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
+                if (touchTime < 90) {
+                    var boundryObj = { maxTop: maxTop, minTop: minTop, maxLeft: maxLeft, minLeft: minLeft };
+                    this.autoMove(curItem, degree, curItemLeft, curItemTop, boundryObj);
+                }
             }
+            this.moveStartTime = 0;
         };
         ImagePreview.prototype.handleTEndEnNormal = function (e) {
             var endX = Math.round(e.changedTouches[0].clientX);
@@ -1103,6 +1122,61 @@
             }
             else { //复原
                 this.slideSelf();
+            }
+        };
+        ImagePreview.prototype.autoMove = function (curItem, deg, startX, startY, _a) {
+            var maxTop = _a.maxTop, minTop = _a.minTop, maxLeft = _a.maxLeft, minLeft = _a.minLeft;
+            deg = (deg / 180) * Math.PI;
+            var distance = 500;
+            var offsetX = Math.round(distance * Math.cos(deg));
+            var offsetY = Math.round(distance * Math.sin(deg));
+            var endX = startX + offsetX;
+            var endY = startY + offsetY;
+            if (endX > maxLeft) {
+                endX = maxLeft;
+            }
+            else if (endX < minLeft) {
+                endX = minLeft;
+            }
+            if (endY > maxTop) {
+                endY = maxTop;
+            }
+            else if (endY < minTop) {
+                endY = minTop;
+            }
+            var stepX = this.computeStep(startX - endX, 300);
+            var stepY = this.computeStep(startY - endY, 300);
+            this.animateMultiValue(curItem, [
+                {
+                    prop: 'left',
+                    start: startX,
+                    end: endX,
+                    step: -stepX
+                }, {
+                    prop: 'top',
+                    start: startY,
+                    end: endY,
+                    step: -stepY
+                }
+            ]);
+            curItem.dataset.left = "" + endX;
+            curItem.dataset.top = "" + endY;
+            if (endX == maxLeft) {
+                //toLeft 即为到达左边界的意思下同
+                curItem.dataset.toLeft = 'true';
+                curItem.dataset.toRight = 'false';
+            }
+            else if (endX == minLeft) {
+                curItem.dataset.toLeft = 'false';
+                curItem.dataset.toRight = 'true';
+            }
+            if (endY == maxTop) {
+                curItem.dataset.toTop = 'true';
+                curItem.dataset.toBottom = 'false';
+            }
+            else if (endY == minTop) {
+                curItem.dataset.toTop = 'false';
+                curItem.dataset.toBottom = 'true';
             }
         };
         ImagePreview.prototype.slideNext = function () {
@@ -1193,9 +1267,6 @@
                 return;
             }
             this.isAnimating = true;
-            for (var i = 0, L = options.length; i < L; i++) {
-                var item = options[i];
-            }
             var processStyle = function () {
                 var isFullFilled = true;
                 for (var i = 0, L = options.length; i < L; i++) {
@@ -1228,7 +1299,7 @@
             var curImg = this.options.curImg;
             var images = this.options.imgs;
             if (!images || !images.length) {
-                console.error("没图，玩你麻痹");
+                console.error("没有图片哦!\n no pictures!");
                 return;
             }
             this.imgsNumber = images.length;
