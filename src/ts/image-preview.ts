@@ -1496,6 +1496,14 @@ export class ImagePreview{
         }
     }
     autoMove(curItem:HTMLElement,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}):void{
+        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
+        const conWidth: number = imgContainerRect.width;
+        const conHeight: number = imgContainerRect.height;
+
+        const curItemViewTop: number = curItem.getBoundingClientRect().top;
+        const curItemViewBottom: number = curItem.getBoundingClientRect().bottom;
+        const curItemViewLeft: number = curItem.getBoundingClientRect().left;
+        const curItemViewRight: number = curItem.getBoundingClientRect().right;
         deg = (deg / 180) * Math.PI;
         let distance: number = 500;
         let offsetX: number = Math.round(distance * Math.cos( deg ))
@@ -1517,21 +1525,35 @@ export class ImagePreview{
 
         let stepX: number = this.computeStep( startX - endX,300 );
         let stepY: number = this.computeStep( startY - endY ,300 );
-        this.animateMultiValue(curItem,[
-            {
+
+        // 容器宽度能容纳图片宽度，则水平方向不需要移动，
+        // 容器高度能容纳图片高度，则垂直方向不需要移动。
+
+        let moveStyles: Array<{
+            prop: string,
+            start: number,
+            end: number,
+            step: number
+        }> = [];
+        if( !(curItemViewLeft >= 0 && curItemViewRight <= conWidth) ){
+            moveStyles.push({
                 prop: 'left',
                 start: startX,
                 end: endX,
                 step: -stepX
-            },{
+            })
+            curItem.dataset.left = `${endX}`;
+        }
+        if( !( curItemViewTop >= 0 && curItemViewBottom <= conHeight ) ){
+            moveStyles.push({
                 prop:'top',
                 start: startY,
                 end: endY,
                 step: -stepY
-            }
-        ])
-        curItem.dataset.left = `${endX}`;
-        curItem.dataset.top = `${endY}`;
+            })
+            curItem.dataset.top = `${endY}`;
+        }
+        this.animateMultiValue(curItem,moveStyles)
         if( endX == maxLeft ){
             //toLeft 即为到达左边界的意思下同
             curItem.dataset.toLeft = 'true';
