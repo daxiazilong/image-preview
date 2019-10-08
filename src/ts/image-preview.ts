@@ -1479,7 +1479,7 @@ export class ImagePreview{
             // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
             if( touchTime < 70 ){
                 let boundryObj = {maxTop,minTop,maxLeft,minLeft}
-                this.autoMove( curItem,degree,startX,startY,boundryObj)
+                this.autoMove( curItem,degree,curItemLeft,curItemTop,boundryObj)
             }
             this.moveStartTime = 0;
 
@@ -1518,7 +1518,6 @@ export class ImagePreview{
 
         let stepX: number = this.computeStep( startX - endX,150 );
         let stepY: number = this.computeStep( startY - endY ,150 );
-        console.log(1)
         this.animateMultiValue(curItem,[
             {
                 prop: 'left',
