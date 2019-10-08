@@ -1462,6 +1462,7 @@ class ImagePreview{
 
             let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
             let touchTime = this.moveEndTime - this.moveStartTime;
+
             // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
             // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
             if( touchTime < 90 ){
@@ -1496,6 +1497,14 @@ class ImagePreview{
         }
     }
     autoMove(curItem:HTMLElement,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}):void{
+        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
+        const conWidth: number = imgContainerRect.width;
+        const conHeight: number = imgContainerRect.height;
+
+        const curItemViewTop: number = curItem.getBoundingClientRect().top;
+        const curItemViewBottom: number = curItem.getBoundingClientRect().bottom;
+        const curItemViewLeft: number = curItem.getBoundingClientRect().left;
+        const curItemViewRight: number = curItem.getBoundingClientRect().right;
         deg = (deg / 180) * Math.PI;
         let distance: number = 500;
         let offsetX: number = Math.round(distance * Math.cos( deg ))
@@ -1517,21 +1526,35 @@ class ImagePreview{
 
         let stepX: number = this.computeStep( startX - endX,300 );
         let stepY: number = this.computeStep( startY - endY ,300 );
-        this.animateMultiValue(curItem,[
-            {
+
+        // 容器宽度能容纳图片宽度，则水平方向不需要移动，
+        // 容器高度能容纳图片高度，则垂直方向不需要移动。
+
+        let moveStyles: Array<{
+            prop: string,
+            start: number,
+            end: number,
+            step: number
+        }> = [];
+        if( !(curItemViewLeft >= 0 && curItemViewRight <= conWidth) ){
+            moveStyles.push({
                 prop: 'left',
                 start: startX,
                 end: endX,
                 step: -stepX
-            },{
+            })
+            curItem.dataset.left = `${endX}`;
+        }
+        if( !( curItemViewTop >= 0 && curItemViewBottom <= conHeight ) ){
+            moveStyles.push({
                 prop:'top',
                 start: startY,
                 end: endY,
                 step: -stepY
-            }
-        ])
-        curItem.dataset.left = `${endX}`;
-        curItem.dataset.top = `${endY}`;
+            })
+            curItem.dataset.top = `${endY}`;
+        }
+        this.animateMultiValue(curItem,moveStyles)
         if( endX == maxLeft ){
             //toLeft 即为到达左边界的意思下同
             curItem.dataset.toLeft = 'true';

@@ -1113,6 +1113,13 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.autoMove = function (curItem, deg, startX, startY, _a) {
         var maxTop = _a.maxTop, minTop = _a.minTop, maxLeft = _a.maxLeft, minLeft = _a.minLeft;
+        var imgContainerRect = this.imgContainer.getBoundingClientRect();
+        var conWidth = imgContainerRect.width;
+        var conHeight = imgContainerRect.height;
+        var curItemViewTop = curItem.getBoundingClientRect().top;
+        var curItemViewBottom = curItem.getBoundingClientRect().bottom;
+        var curItemViewLeft = curItem.getBoundingClientRect().left;
+        var curItemViewRight = curItem.getBoundingClientRect().right;
         deg = (deg / 180) * Math.PI;
         var distance = 500;
         var offsetX = Math.round(distance * Math.cos(deg));
@@ -1133,21 +1140,28 @@ var ImagePreview = /** @class */ (function () {
         }
         var stepX = this.computeStep(startX - endX, 300);
         var stepY = this.computeStep(startY - endY, 300);
-        this.animateMultiValue(curItem, [
-            {
+        // 容器宽度能容纳图片宽度，则水平方向不需要移动，
+        // 容器高度能容纳图片高度，则垂直方向不需要移动。
+        var moveStyles = [];
+        if (!(curItemViewLeft >= 0 && curItemViewRight <= conWidth)) {
+            moveStyles.push({
                 prop: 'left',
                 start: startX,
                 end: endX,
                 step: -stepX
-            }, {
+            });
+            curItem.dataset.left = "" + endX;
+        }
+        if (!(curItemViewTop >= 0 && curItemViewBottom <= conHeight)) {
+            moveStyles.push({
                 prop: 'top',
                 start: startY,
                 end: endY,
                 step: -stepY
-            }
-        ]);
-        curItem.dataset.left = "" + endX;
-        curItem.dataset.top = "" + endY;
+            });
+            curItem.dataset.top = "" + endY;
+        }
+        this.animateMultiValue(curItem, moveStyles);
         if (endX == maxLeft) {
             //toLeft 即为到达左边界的意思下同
             curItem.dataset.toLeft = 'true';
