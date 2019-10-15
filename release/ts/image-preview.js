@@ -15,7 +15,6 @@
      * https://github.com/daxiazilong
      * Released under the MIT License
      */
-    var showDebugger = require('../tools/index');
     var ImagePreview = /** @class */ (function () {
         function ImagePreview(options) {
             this.options = options;
@@ -1092,7 +1091,6 @@
                 var dy = endPoint.y - startPoint.y;
                 var degree = Math.atan2(dy, dx) * 180 / Math.PI;
                 var touchTime = this.moveEndTime - this.moveStartTime;
-                showDebugger("\n                \u5F00\u59CB\u79FB\u52A8\u65F6\u95F4\uFF1A" + this.moveStartTime + "\n                \u7ED3\u675F\u79FB\u52A8\u65F6\u95F4\uFF1A" + this.moveEndTime + "\n                \u6301\u7EED\u65F6\u957F\uFF1A" + (this.moveEndTime - this.moveStartTime) + "ms\n                \u79FB\u52A8\u65B9\u5411\uFF1A" + degree + "\u00B0\n                starx:" + this.touchStartX + "\n                starty: " + this.touchStartY + "\n                endx:" + this.startX + "\n                endy:" + this.startY + "\n                Math.cons deg * 100: " + 100 * Math.cos((degree / 180) * Math.PI) + "\n                Math.sin deg * 100: " + 100 * Math.sin((degree / 180) * Math.PI) + "\n            ");
                 // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
                 // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
                 if (touchTime < 90) {
