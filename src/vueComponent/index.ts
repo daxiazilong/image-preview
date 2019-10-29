@@ -4,13 +4,7 @@ let component =  {
     props:{
         images: Array
     },
-    data:function(){
-        return{
-            imgPreview: null
-        }
-    },
     mounted:function(){
-
         let childNodes = this.$refs.imgs.childNodes;
         childNodes = Array.prototype.filter.call(childNodes,( item => item.nodeType === 1))
         let imgPreview = new ImagePreview({
@@ -29,11 +23,7 @@ let component =  {
     beforeDestroy:function(){
         this.imgPreview.destroy();
     },
-    template: `
-        <div ref="imgs">
-            <slot></slot>  
-        </div>     
-    `
+    render:  new Function("with(this){return _c('div',{ref:'imgs'},[_t('default')],2)}" ),
 }
 let ImagePreviewVue = {
     install: function(Vue){

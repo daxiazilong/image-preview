@@ -1,0 +1,23 @@
+/*
+* @Author: f
+* @Date:   2016-12-19 09:21:06
+* @Last Modified by:   Administrator
+* @Last Modified time: 2016-12-19 09:36:28
+*/
+*{
+	margin:0;
+	padding:0;
+	font-family:"微软雅黑";
+	color:#000;
+}
+a,i,s{
+	color:#000;
+	text-decoration:none;
+	font-style:normal;
+}
+dl,ul,ol{
+	list-style: none;
+}
+img,button,input{
+	border:none;
+}

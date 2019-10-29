@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="css/init.css" type="text/css" />
+        <link rel="stylesheet" href="css/s_style.css" type="text/css" />
+        <script type="text/javascript" src="js/domMouseScroll.js" language="javascript"></script>
+        <script src="js/shop.js" language="javascript"></script>
+        <script type="text/javascript" src="js/jquery-3.1.1.min.js" language="javascript"></script>
+        <script src="js/jq.js" type="text/javascript" language="javascript"></script>
+
+    </head>
+    <body>
+    	<header>
+    		<div class="top">
+    			<div class="left">
+					<h1>我们在线出售各种极限运动产品：远足装备，衣服，帐篷...</h1>
+					<p>Shop all kinds of Extreme Sports Products, Hiking Equipments, Clothes, Tents online!</p>
+				</div>
+				<div class="right">
+					<a href="#"><img src="s_images/flag.png" />中文简体</a>
+					<a href="#">我的账户</a>
+					<a href="#">心愿单</a>
+					<a href="#"><img src="s_images/s_top_call.png " />+8623-456-789</a>
+				</div>
+    		</div>
+    		<nav>
+    			<div class="left">
+    				<h1>
+    				<a href="index.html" title="welcome!!!"><img src="s_images/s_n_logo.png"></a>
+					</h1>
+    			</div>
+    			<div class="right">
+    				<a href="index.html">主页</a>
+    				<a href="#">关于</a>
+    				<a href="#">分类</a>
+    				<a href="#">套餐优惠</a>
+    				<a href="#" class="nav_active">商城</a>
+    				<a href="#">联系我们</a>
+    				<a href="#">博客</a>
+    				<div class="widget" id="nav_widget">
+    					<div class="box" id="cart">
+    						<img src="s_images/nav_cart_b.png">
+    						<div class="triangle" id="count">
+    							1
+    						</div>
+                            <div class="Cart" id="Cart">
+                                <div class="top">
+                                    <div class="left">
+                                        <img src="s_images/cartpic1.png" />
+                                    </div>
+                                    <div class="right">
+                                        <h1>SPEED bubble CAP  <img class="wrong" src="s_images/wrong.png"></h1>
+                                        <h2>￥120</h2>
+                                        <h3>数量：<span>1</span></h3>
+                                    </div>
+                                </div>
+                                <div class="bottom" id="bottom">
+                                    <div class="discount">
+                                        折扣<span id="discount">￥12.00</span>
+                                    </div>
+                                    <div class="discount">
+                                        总计<span id="total">￥600.00</span>
+                                    </div>
+                                </div>
+                                <div class="button_g">
+                                    <button>购物车<div class="b_triangle"></div></button>
+                                    <button>结算<div class="b_triangle"></div></button>
+                                </div>
+                            </div>
+    					</div>
+    					<div class="box">
+    						<img src="s_images/nav_search_b.png">
+    						<div class="triangle">
+    							2
+    						</div>
+    					</div>
+    					<div class="box">
+    						<img src="s_images/nav_car_b.png">
+    						<div class="triangle">
+    							1
+    						</div>
+    					</div>
+    					<div class="box">
+    						<img src="s_images/nav_prasie_b.png">
+    						<div class="triangle">
+    							0
+    						</div>
+    					</div>
+    				</div>
+    			</div>
+    		</nav>
+    	</header>
+    	<div class="banner">
+			<div class="wraper">
+				<h1>2016最热新品</h1>
+				<div class="double_line"></div>
+				<div class="left">
+					<div class="left1" id="up"><img src="images/toparrow.png" title="上一个"/><div class="left"><img src="images/toparrow.png" title="上一个"/></div></div>
+					<div class="left2" id="down">
+						<img src="images/downarrow.png" title="下一个" />
+						<div class="left"><img src="images/downarrow.png" title="下一个" /></div>
+					</div>
+				</div>
+				<div class="right">
+					<h1>霹雳先锋登山必备</h1>
+					<p>Shop the New Arrivals & Genuine Products with Amazing Discounts & Free Shipping!</p>
+					<button>详情
+						<div class="b_triangle">
+						</div>
+					</button>
+				</div>
+			</div>
+    	</div>
+    	<div class="retriangle" id="retriangle">
+    		<div class="wraper">
+	    		<div>
+	    			只要一次性消费超过￥180即可获得一件小礼品<br />
+	    			<span>WE WILL SHIP YOUR ITEM WITHIN 2 DAYS</span>
+	    		</div>
+	    		<button id="re_button">立即购物
+	    				<div class="b_triangle">
+	    				</div>
+	    		</button>
+	    	</div>
+    	</div>
+    	<div class="welcome" id="welcome">
+			<h1>欢迎来到</h1>
+			<h2>XTREME SPORTS CLUB 在线商城</h2>
+			<p>Aenean urna tellus sodales aliquam egestas quis convallis cursus magna. Fusce sa scelerisque. Proin tempor rci vestibulum adipiscing. Etiam blanditd<br /> Vestibulum nis Duis nibh dui porttitor eu rhoncus uted. Fusce lacus alc neque interdum pulvinarl Integer vel ante ut. Pellentesque habitant<br />
+tristique senectus et netus et malesuada fames ac nunc placerat cursus eros. Donec turpis. Nullam porttitor urabitur</p>
+			<div class="double_line"></div>
+    	</div>
+        <div class="category">
+            <h1>分类购物</h1>
+            <h2>FEATURED CATEGORY</h2>
+                <div class="f_group">
+                    <div class="box" id="f_active">
+                        全部
+                        <div class="f_triangle">
+                        </div>
+                    </div>
+                    <div class="box">
+                        衣服
+                        <div class="f_triangle">
+                        </div>
+                    </div>
+                    <div class="box">
+                        水下装备
+                        <div class="f_triangle">
+                        </div>
+                    </div>
+                    <div class="box">
+                        野外生存
+                        <div class="f_triangle">
+                        </div>
+                    </div>
+                    <div class="box">
+                        登山装备
+                        <div class="f_triangle">
+                        </div>
+                    </div>
+                </div>
+                    <div class="r_group cc" style="display:block;">
+                        <div class="box">
+                            <img src="images/Gsoubycicle.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>极速自行车</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                        <div class="hot">
+                            <img src="images/r_hot.jpg" alt="shit" />
+                            <div class="purchase" title="加入购物车">HOT
+                                <div class="triangle"></div>
+                            </div>
+                            <div class="pentagram">
+                                ★★★★★
+                            </div>
+                            <div class="widget">
+                                <div class="w_box">
+                                    <img src="images/cart_w.png" />
+                                </div>
+                                <div class="w_box">
+                                    <img src="images/heart_w.png" />
+                                </div>
+                                <div class="w_box">
+                                    <img src="images/_3_w.png" />
+                                </div>
+                                <div class="w_box">
+                                    <img src="images/search_w.png" />
+                                </div>
+                            </div>
+                            <div class="slogan">
+                                <p>一周成为健身达人<br />
+                                    500 SOFTSHELL HIKING WEAR
+                                </p>
+                            </div>
+                            <button>￥120.00</button>
+                            <span>可节省50%</span>
+                        </div>
+                        <div class="box">
+                            <img src="images/mrsliu.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>与MRS.刘一起一览众山小</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                        <div class="box not">
+                            <img src="images/beachrun.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>夜雨泛心远</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                            <div class="r_group" style="display:block;clear:both;">
+                                <div class="box">
+                                    <img src="images/Gsoubycicle.jpg" alt="its no ok" />
+                                    <div class="purchase" title="加入购物车">购买
+                                        <div class="triangle"></div>
+                                    </div>
+                                    <p>极速自行车</p>
+                                    <button>￥120.00</button>
+                                    <span>￥200.00</span>
+                                </div>
+                               <div class="box">
+                                    <img src="images/mrsliu.jpg" alt="its no ok" />
+                                    <div class="purchase" title="加入购物车">购买
+                                        <div class="triangle"></div>
+                                    </div>
+                                    <p>与MRS.刘一起一览众山小</p>
+                                    <button>￥120.00</button>
+                                    <span>￥200.00</span>
+                                </div>
+                                <div class="box">
+                                    <img src="images/mrsliu.jpg" alt="its no ok" />
+                                    <div class="purchase" title="加入购物车">购买
+                                        <div class="triangle"></div>
+                                    </div>
+                                    <p>与MRS.刘一起一览众山小</p>
+                                    <button>￥120.00</button>
+                                    <span>￥200.00</span>
+                                </div>
+                                <div class="box not">
+                                    <img src="images/beachrun.jpg" alt="its no ok" />
+                                    <div class="purchase" title="加入购物车">购买
+                                        <div class="triangle"></div>
+                                    </div>
+                                    <p>夜雨泛心远</p>
+                                    <button>￥120.00</button>
+                                    <span>￥200.00</span>
+                                </div>
+                        </div>
+                </div>
+                <div class="r_group cc" style="display:none">
+                    <div class="box">
+                        <img src="images/Gsoubycicle.jpg" alt="its no ok" />
+                        <div class="purchase" title="加入购物车">购买
+                            <div class="triangle"></div>
+                        </div>
+                        <p>极速自行车</p>
+                        <button>￥120.00</button>
+                        <span>￥200.00</span>
+                    </div>
+                    <div class="hot">
+                        <img src="images/r_hot.jpg" alt="shit" />
+                        <div class="purchase" title="加入购物车">HOT
+                            <div class="triangle"></div>
+                        </div>
+                        <div class="pentagram">
+                            ★★★★★
+                        </div>
+                        <div class="widget">
+                            <div class="w_box">
+                                <img src="images/cart_w.png" />
+                            </div>
+                            <div class="w_box">
+                                <img src="images/heart_w.png" />
+                            </div>
+                            <div class="w_box">
+                                <img src="images/_3_w.png" />
+                            </div>
+                            <div class="w_box">
+                                <img src="images/search_w.png" />
+                            </div>
+                        </div>
+                        <div class="slogan">
+                            <p>一周成为健身达人<br />
+                                500 SOFTSHELL HIKING WEAR
+                            </p>
+                        </div>
+                        <button>￥120.00</button>
+                        <span>可节省50%</span>
+                    </div>
+                    <div class="box">
+                        <img src="images/mrsliu.jpg" alt="its no ok" />
+                        <div class="purchase" title="加入购物车">购买
+                            <div class="triangle"></div>
+                        </div>
+                        <p>与MRS.刘一起一览众山小</p>
+                        <button>￥120.00</button>
+                        <span>￥200.00</span>
+                    </div>
+                    <div class="box not">
+                        <img src="images/beachrun.jpg" alt="its no ok" />
+                        <div class="purchase" title="加入购物车">购买
+                            <div class="triangle"></div>
+                        </div>
+                        <p>夜雨泛心远</p>
+                        <button>￥120.00</button>
+                        <span>￥200.00</span>
+                    </div>
+                </div>
+                    <div class="r_group cc" style="display:none;clear:both;">
+                        <div class="box">
+                            <img src="images/Gsoubycicle.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>极速自行车</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                       <div class="box">
+                            <img src="images/mrsliu.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>与MRS.刘一起一览众山小</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                        <div class="box">
+                            <img src="images/mrsliu.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>与MRS.刘一起一览众山小</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                        <div class="box not">
+                            <img src="images/beachrun.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>夜雨泛心远</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                </div>
+                    <div class="r_group cc" style="display:none;clear:both;">
+                        <div class="box">
+                            <img src="images/mrsliu.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>极速自行车</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                       <div class="box">
+                            <img src="images/Gsoubycicle.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>与MRS.刘一起一览众山小</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                        <div class="box">
+                            <img src="images/mrsliu.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>与MRS.刘一起一览众山小</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                        <div class="box not">
+                            <img src="images/beachrun.jpg" alt="its no ok" />
+                            <div class="purchase" title="加入购物车">购买
+                                <div class="triangle"></div>
+                            </div>
+                            <p>夜雨泛心远</p>
+                            <button>￥120.00</button>
+                            <span>￥200.00</span>
+                        </div>
+                </div>
+                <div class="r_group cc" style="display:none">
+                    <div class="box">
+                        <img src="images/Gsoubycicle.jpg" alt="its no ok" />
+                        <div class="purchase" title="加入购物车">购买
+                            <div class="triangle"></div>
+                        </div>
+                        <p>极速自行车</p>
+                        <button>￥120.00</button>
+                        <span>￥200.00</span>
+                    </div>
+                    <div class="hot">
+                        <img src="images/r_hot.jpg" alt="shit" />
+                        <div class="purchase" title="加入购物车">HOT
+                            <div class="triangle"></div>
+                        </div>
+                        <div class="pentagram">
+                            ★★★★★
+                        </div>
+                        <div class="widget">
+                            <div class="w_box">
+                                <img src="images/cart_w.png" />
+                            </div>
+                            <div class="w_box">
+                                <img src="images/heart_w.png" />
+                            </div>
+                            <div class="w_box">
+                                <img src="images/_3_w.png" />
+                            </div>
+                            <div class="w_box">
+                                <img src="images/search_w.png" />
+                            </div>
+                        </div>
+                        <div class="slogan">
+                            <p>一周成为健身达人<br />
+                                500 SOFTSHELL HIKING WEAR
+                            </p>
+                        </div>
+                        <button>￥120.00</button>
+                        <span>可节省50%</span>
+                    </div>
+                    <div class="box">
+                        <img src="images/mrsliu.jpg" alt="its no ok" />
+                        <div class="purchase" title="加入购物车">购买
+                            <div class="triangle"></div>
+                        </div>
+                        <p>与MRS.刘一起一览众山小</p>
+                        <button>￥120.00</button>
+                        <span>￥200.00</span>
+                    </div>
+                    <div class="box not">
+                        <img src="images/beachrun.jpg" alt="its no ok" />
+                        <div class="purchase" title="加入购物车">购买
+                            <div class="triangle"></div>
+                        </div>
+                        <p>夜雨泛心远</p>
+                        <button>￥120.00</button>
+                        <span>￥200.00</span>
+                    </div>
+                </div>
+                <div class="more">
+                    <div class="left_l"></div>
+                    <button>浏览更多<div class="m_triangle"></div></button>
+                    <div class="right_l"></div>
+                </div>
+        </div>
+        <div class="promotions">
+            <h1>野营装备</h1>
+            <h2>PROMOTIONS & OFFERS</h2>
+            <div class="p_group">
+                <div class="box margin_r">
+                    <img src="s_images/sailing.jpg" />
+                    <p>水上运动<br />
+                    COLLECTION<p>
+                    <div class="p_triangle"></div>
+                    <button>SHOP NOW</button>
+                </div>
+                <div class="box">
+                    <img src="s_images/tent.jpg" />
+                    <p>水上运动<br />
+                    COLLECTION<p>
+                    <div class="p_triangle"></div>
+                    <button>SHOP NOW</button>
+                </div>
+                <div class="box margin_r">
+                    <img src="s_images/tent3.jpg" />
+                    <p>水上运动<br />
+                    COLLECTION<p>
+                    <div class="p_triangle"></div>
+                    <button>SHOP NOW</button>
+                </div>
+                <div class="box">
+                    <img src="s_images/shoes.jpg" />
+                    <p>水上运动<br />
+                    COLLECTION<p>
+                    <div class="p_triangle"></div>
+                    <button>SHOP NOW</button>
+                </div>
+            </div>
+        </div>
+        <div class="customer_say">
+            <h1>客户评价</h1>
+            <h5>what our customers are saying</h5>
+            <div class="bottom">
+                <div class="left">
+                    <img src="s_images/customer_header.png" />
+                </div>
+                <div class="right">
+                    <p>大江流日夜，客心悲未央。徒念关山近，终知返路长。秋河曙耿耿，寒渚夜苍苍。引领见京室，宫雉正相望。金波<br />丽鳷鹊，玉绳低建章。驱车鼎门外，思见昭丘阳。驰晖不可接，何况隔两乡。<br />
+                    击，时菊委严霜风云有鸟路，江汉限无梁。常恐鹰隼。</p>
+                    <div class="left">
+                        <div class="double_l"></div>
+                        <p class="name">
+                            CARLA ANDERSON
+                            <span>Sports Expert</span>
+                        </p>
+                    </div>
+                    <div class="right">
+                        <div class="left_aside">&lt;</div>
+                        <div class="right_aside">&gt;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="contact_us" id="contact_us">
+            <h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+            <h2>联系我们</h2>
+            <div class="note">WE'RE ALL ABOUT XTREAM SPORTS</div>
+            <p>
+                Lacus sit amet aliquet cons equate metus eros volutpat leo id ms auctor elit lorem eu orci. Suspendisse ante. Cras pedey Mauris<br /> lectus quam facilisis ad condimentum sit amet condm entum eudel justo. Sed eget nulla at quam.
+            </p>
+            <div class="c_method">
+                <form>
+                    <div class="left">
+                        <input type="text" placeholder="*姓名" />
+                        <input type="text" placeholder="*电子邮件" />
+                        <input class="not" type="text" placeholder="*电话号码" />
+                    </div>
+                    <div class="right">
+                        <textarea>*信息</textarea>
+                        <button>即刻发送
+                            <div class="b_triangle">
+                            </div>
+                        </button>
+                    </div>
+                </form>
+                <address>
+                    <div class="box">
+                        <img src="images/location.png" />
+                        <p>
+                        青岛市市北区<br/>
+                        向南500m左转50步抬头
+                        </p>
+                    </div>
+                    <div class="box">
+                        <img src="images/message.png" />
+                        <p>
+                        nfo@xtremesp.org<br />
+                        support@xtremesp.org
+                        </p>
+                    </div>
+                    <div class="box not">
+                        <img src="images/phone_call.png" />
+                        <p>
+                        0800 123 4567<br />
+                        +86 234 56789-0
+                        </p>
+                    </div>
+                </address>
+        </div>
+            <div class="feedback">
+                <h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+                <h2>向我们反馈<span>TO CLUB NEWSLETTER</span></h2>
+                <P>Lacus sit amet aliquet cons equate metus eros volutpat leo id ms auctor elit lorem eu orci. Suspendisse ante cras pedey
+                </P>
+                <div class="bottom">
+                    <input type="text" placeholder="请输入您的电子邮件地址" />
+                    <img src="images/feed_msg.png">
+                    <button>提交<div class="f_triangle">
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <div class="wrap">
+                <dl>
+                    <dt>营业时间</dt>
+                    <dd class="not">MOMDAY<span>09:00AM-06:00PM</span></dd>
+                    <dd>TUESDAY<span>09:00AM-06:00PM</span></dd>
+                    <dd>WEDNESDAY<span>09:00AM-06:00PM</span></dd>
+                    <dd>THURSDAY<span>09:00AM-06:00PM</span></dd>
+                    <dd>FRIDAY<span>09:00AM-06:00PM</span></dd>
+                    <dd>SATURSDAY<span>09:00AM-06:00PM</span></dd>
+                </dl>
+                <div class="middle">
+                    <img src="images/w_x.png">
+                    <h1>XTREME SPORTS CLUB</h1>
+                    <p>ALL RIGHTS RESERVED (C) 2016</p>
+                    <div class="img_group">
+                        <img src="images/f_contacter.png">
+                        <img src="images/f_wechat.png">
+                        <img src="images/f_weibo.png">
+                        <img src="images/f_t_weibo.png">
+                        <img src="images/f_wifi.png">
+                        <img src="images/f_qq.png">
+                    </div>
+                </div>
+                <img class="X" src="images/X.png" title="we're best!!!">
+            </div>
+        </footer>
+        <div class="back_top">
+            ↑
+        </div>
+    </body>
+</html>
