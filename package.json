@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "webpack-dev-server --mode=development",
-    "build": "tsc --project ./src"
+    "build": "tsc --project ./src",
+    "genModule":"./build.cmd"
   },
   "repository": {
     "url": "https://github.com/daxiazilong/image-preview"

@@ -1,3 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * image-preview 1.0.0
  * author:zilong
@@ -1371,4 +1373,4 @@ var ImagePreview = /** @class */ (function () {
     };
     return ImagePreview;
 }());
-export { ImagePreview };
+exports.ImagePreview = ImagePreview;

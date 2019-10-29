@@ -1,0 +1,1150 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>首页</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scable=no,target- denisitydpi=high-dpi" />
+<link rel="css/init.css">
+<link rel="stylesheet" href="css/style.css" type="text/css" />
+</head>
+<body>
+	<header>
+    	<h1 class="logo"><a href="#"><img src="images/logo.png" alt="网络太差" title="welcome" /></a></h1>
+        <div class="special">特色项目</div>
+        <div class="h_top">
+        	<div class="left1" id="up"><img src="images/toparrow.png" title="上一个"/><div class="left"><img src="images/toparrow.png" title="上一个"/></div></div>
+            <h2 id="sname" class="right">极限冲浪</>
+        </div>
+        <div class="h_bot">
+        	<div class="left1" id="down"><img src="images/downarrow.png" title="下一个" /><div class="left"><img src="images/downarrow.png" title="下一个" /></div></div>
+            <h2 class="right"><p>wish your life like a poem.</p>
+                 <p>tempus erat id tortor. Duis eget libero non nisi lobor tis suspe  disse</p>
+                <p>lobort is ante accumsan est quisque tincidunt.</p>
+                <button class="now">now
+                	 <div class="trangle"></div>
+                </button>
+                <ul id="Cgroup">
+                	<li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                </ul>
+            </h2>
+        </div>
+        <div class="stage-container">
+            <div class="stage-area">
+                <img src="images/hedbgd.png">
+                <img src="images/hedbgd.png">
+                <img src="images/hedbgd.png">
+                <img src="images/hedbgd.png">
+                <img src="images/hedbgd.png">
+                <img src="images/hedbgd.png">
+            </div>
+        </div>
+       
+    </header>
+    <script>
+        var header = document.querySelector('header')
+        var hHeight = header.getBoundingClientRect().height;
+        var imgs = document.querySelectorAll('.stage-area img');
+        var stageContainer = document.querySelector('.stage-container')
+        var stage = document.querySelector('.stage-area');
+        var stageWidth = stageContainer.getBoundingClientRect().width;
+        var arr = [];
+        for(let i = 0; i < imgs.length;i++){
+            let item = imgs[i];
+            if(item.complete){
+                var clientRect = imgs[0].getBoundingClientRect();
+                var width = clientRect.width;
+                var height = clientRect.height;
+                var offsetZ = (width/2)/Math.tan(Math.PI / 6)
+                
+                if( height + 35 > hHeight ){
+                    hHeight = height + 35
+                }
+                stageContainer.style.left = `${(stageWidth - width)/2}px`;
+                header.style.cssText = `
+                    padding-left: ${(stageWidth - width)/2 + 15}px;
+                    height: ${hHeight}px;
+                `;
+
+                imgs.forEach((item,index)=>{
+                    item.style.cssText =`
+                        transform: rotateY(${index*60}deg) translateZ(${offsetZ}px)
+                `
+                })
+                break;
+            }
+
+            arr.push(new Promise(res => {
+                item.onload = function(){
+                    res(1)
+                }
+            }))
+        }
+        var allSettled = Promise.all(arr)
+        allSettled.then(()=>{
+            var clientRect = imgs[0].getBoundingClientRect();
+            var width = clientRect.width;
+            var height = clientRect.height;
+            var offsetZ = (width/2)/Math.tan(Math.PI / 6)
+            
+            if( height + 35 > hHeight ){
+                hHeight = height + 35
+            }
+            stageContainer.style.left = `${(stageWidth - width)/2}px`;
+            header.style.cssText = `
+                padding-left: ${(stageWidth - width)/2 + 15}px;
+                height: ${hHeight}px;
+            `;
+
+            imgs.forEach((item,index)=>{
+                item.style.cssText =`
+                    transform: rotateY(${index*60}deg) translateZ(${offsetZ}px)
+            `
+            })
+        })
+    </script>
+    <nav>
+    	<ol>
+        	<li><a class="active" href="#">主页</a></li>
+            <li><a id="nav1" href="#about">关于</a></li>
+            <li><a id="nav2" href="#s_project">项目</a></li>
+            <li><a id="nav3" href="#tournament">赛事</a></li>
+            <li><a id="nav4" href="#stuff">职员</a></li>
+            <li><a id="nav5" href="#">视频中心</a></li>
+            <li><a id="nav6" href="#">套餐优惠</a></li>
+            <li><a href="shop.html">商城</a></li>
+            <li><a id="nav7" href="#">联系我们</a></li>
+            <li><a href="#">博客</a></li>
+            <li><a href="#">加入我们</a></li>
+        </ol>
+    </nav>
+    <div class="container">
+    	<div class="welcome">
+        	<div class="box">
+            	<h1><img src="images/contentlogo.png" title="welcome" alt="哇哦 网速不佳"/></h1>
+                <div class="bottom">
+                	<div class="left">
+                    	<div class="aim">
+                        	<span>我</span>
+                            <span class="Nmargin">们的</span>
+                            <span>服务宗旨</span>
+                            <div class="trangle"></div>
+                        </div>
+                        <dl>
+                        	<dt>
+                            	<span>&quot;</span>
+                                <p>怒发冲冠，凭阑处、潇潇雨歇。<br />
+                                        抬望眼、仰天长啸，壮同激烈。三十功名尘<br />
+                                        与土，八千里路云和月。莫等闲、白了少年头，<br />
+                                        空悲切。<br /> </p>
+                                        <p class="secondp">
+                                        Pellentesque felis nunc interdum vitae pretium acbib<br /> edg<br/>
+                                        ndum vel velit. Etiam proin luctus sodales elit. </p>
+								<div class="doubleline"></div>
+                            </dt>
+                            <dd>
+                            	<img src="images/headimg.png" alt="网速不好" title="i'm 大神"/>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="right">
+                    	<div class="top">
+                        	<img src="images/tennis.jpg" alt="网速不佳" title="路漫漫其修远兮">
+                            <img src="images/runningwoman.jpg" alt="网速不佳" title="路漫漫其修远兮">
+                            <img src="images/jump.jpg" alt="网速不佳" title="路漫漫其修远兮">
+                            <h1>We Are Best <span>Xtreme Sports Club</span></h1>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal rsus in metus. Sep interd<br />
+                             eli Aliquam scelerisque. Donec congue pede egu lacus. Vestibulum fringilla nullda<br />
+                              ultricies sem.Aliquam nudnc urnai ornare sed, tincidunt quis, posuere d justo. Integer<br />
+                               consectetu erd lacus sit amet aliquet con sequati metus eros volutpat leo, id auctor eit<br />
+                                ore eu orci.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="about" id="about">
+        	<h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+            <h2>关于俱乐部</h2>
+            <div class="note">我们是一家专注服务于极限运动的俱乐部</div>
+            <div class="i_group">
+            	<div class="box margin_r">
+                   <div class="outter"><img src="images/saling.png" alt="网速不佳"  title="这是帆船运动，亲"/>
+                        <div class="back">你不愿意种花，<br />你说,不愿看见它凋落。<br />避免结束，你避免了一切开始</div>
+                   </div>
+                    	<h3><a href="#">极限冲浪</a></h3>
+                        <p>Ut eu diam vel leo aliquam consectetu<br /> Proin torto elit rutrum donec rhoncu. <br />Cras erad
+                        </p>
+
+                </div>
+                <div class="box margin_r">
+                	<div class="outter"><img src="images/bicycle.png" alt="网速不佳"  title="这是极限自行车，亲"/>
+                        <div class="back"><br /><br />hi<br />可敢<br />秋名山一战！</div>
+                    </div>
+                    	<h3><a href="#">山崖自行车</a></h3>
+                        <p>Ut eu diam vel leo aliquam consectetu<br /> Proin torto elit rutrum donec rhoncu. <br />Cras erad
+                        </p>
+
+                </div>
+                <div class="box margin_r">
+                	<div class="outter"><img src="images/ward.png" alt="网速不佳"  title="这是奖牌榜，亲"/>
+                        <div class="back"><br /><br />才不告诉你结果<br /><br />呢！</div>
+                    </div>
+                    	<h3><a href="#">奖牌榜</a></h3>
+                        <p>Ut eu diam vel leo aliquam consectetu<br /> Proin torto elit rutrum donec rhoncu. <br />Cras erad
+                        </p>
+
+                </div>
+                <div class="box">
+                	<div class="outter"><img src="images/boating.png" >
+                        <div class="back"><br /><br />来吧<br />亲！<br /><br /></div>
+                    </div>
+                    	<h3><a href="#">今天就来加入我们吧</a></h3>
+                        <p>Ut eu diam vel leo aliquam consectetu<br /> Proin torto elit rutrum donec rhoncu. <br />Cras erad
+                        </p>
+
+                </div>
+            </div>
+        </div>
+        <div class="purpose">
+        	<div class="box">
+            	<div class="left">
+                	<img src="images/rider.png" alt="网速不佳"  title="hi"/>
+                    <div class="doubleline"></div>
+                    <h2>激情</h2>
+                    <p>
+                    	Fusce ut odio get eleifend tincidunt vestibulum fring<br />
+						al rsus in metus. Sep interd umli uam scelerisque.<br />
+							Nam odiodui vestibulum amolestie pulvinar
+                    </p>
+                    <div class="trangle"></div>
+                </div>
+                <div class="middle">
+                	<img src="images/boater.png" alt="网速不佳"  title="hi"/>
+                    <div class="doubleline"></div>
+                    <h2>成就</h2>
+                    <p>
+                    	Fusce ut odio get eleifend tincidunt vestibulum fring<br />
+						al rsus in metus. Sep interd umli uam scelerisque.<br />
+							Nam odiodui vestibulum amolestie pulvinar
+                    </p>
+                    <div class="trangle"></div>
+                </div>
+                <div class="right">
+                	<img src="images/target.png" alt="网速不佳"  title="hi"/>
+                    <div class="doubleline"></div>
+                    <h2>我们的目标</h2>
+                    <p>
+                    	Fusce ut odio get eleifend tincidunt vestibulum fring<br />
+						al rsus in metus. Sep interd umli uam scelerisque.<br />
+							Nam odiodui vestibulum amolestie pulvinar
+                    </p>
+                    <div class="trangle"></div>
+                </div>
+            </div>
+        </div>
+        <div class="spe_active">
+        	<img src="images/middlelogo.png" alt="网速不佳"  title="hi" />
+            <h3>特色活动</h3>
+            <div class="img_group">
+            	<div class="img">
+                	<img src="images/party.png" alt="网速不佳"  title="hi">
+                    	<h2>每周活动</h2>
+                        <h3 class="small">PROMOTIONS</h3>
+                </div>
+                <div class="img">
+                	<img src="images/retreat.png" alt="网速不佳"  title="hi">
+                    	<h2>感悟生命</h2>
+                        <h3 class="small">OF&nbsp;SPORTS</h3>
+                </div>
+                <div class="img">
+                	<img  src="images/sunsetsmall.png" alt="网速不佳"  title="阿西吧">
+                    	<h2>岁月静好</h2>
+                        <h3 class="small">CUSTOMERS</h3>
+                </div>
+                <div class="img">
+                	<img src="images/tennisER.png" alt="网速不佳"  title="吹呀吹呀我的骄傲放纵">
+                    	<h2>但生命就是运动</h2>
+                        <h3 class="small">OFFEREF</h3>
+                </div>
+                <div class="img" id="front">
+                	<img  src="images/sunsettop.png" alt="网速不佳"  title="阿西吧">
+                    	<h2>岁月静好</h2>
+                        <h3 class="small">CUSTOMERS</h3>
+                        <div class="img relat" id="bacon" style="position:absolute;top:0;">
+                		<img src="images/sunset.png" alt="网速不佳"  title="there is notitle">
+                        <div class="word">
+                        	<h1>SEASONAL</h1>
+                            <h1>TOURNAMENTS</h1>
+                            <p>Fusce ut odio get eleifend tincde<br /> dunt vestibulum frng arsus inclu<br /> metus ipsum.</p>
+                            <a href="#"><img src="images/button.png" title="go!!!" /></a>
+                        </div>
+                        <div class="tranglera"></div>
+                </div>
+                </div>
+                <div class="img">
+                	<img src="images/hiking.png" alt="网速不佳"  title="hi">
+                    	<h2>与我们一起远行</h2>
+                        <h3 class="small">CONTENTS<span>NOW</span></h3>
+                </div>
+            </div>
+        </div>
+        <div class="sports" id="s_project">
+        	<h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+            <h2>运动项目</h2>
+            <div class="note">WE'RE ALL ABOUT XTREAM SPORTS</div>
+            <div class="items">
+            	<div class="box not">
+                	ALL SPORTS
+                    <div class="Trangle"></div>
+                </div>
+                <div class="box not">
+                	ALL SPORTS
+                    <div class="Trangle"></div>
+                </div><div class="box not">
+                	ALL SPORTS
+                    <div class="Trangle"></div>
+                </div><div class="box not">
+                	ALL SPORTS
+                    <div class="Trangle"></div>
+                </div><div class="box not">
+                	ALL SPORTS
+                    <div class="Trangle"></div>
+                </div>
+            </div>
+             <div class="img_group" id="takeTurns">
+              		<div class="image">
+                    	<div class="name">
+                        	<h1>帆船</h1>
+                            <div class="double_l"></div>
+                        </div>
+                    	<img src="images/sailor1.png" alt="badgateway" title="竞速" />
+                        <div class="front">
+                        	<div class="TRangle"></div>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal<br />
+                             risus in metus. Sep interd umli Aliquam scelerisque.  In sollicd<br />
+                              itudin gravida tortor. Class aptent tacitd sociosqu ad litoracel<br />
+                               torquent. Suspendisse vehicula rhoncus leo. Integer ante bio<br />
+                                nunc accumsan sed tempus rutrum.</p>
+                            <button>
+                            	<a href="#">现在就来</a>
+                            	<div class="TRAngle"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image">
+                    	<div class="name">
+                        	<h1>登山</h1>
+                            <div class="double_l"></div>
+                        </div>
+                    	<img src="images/climber.png" alt="badgateway" title="登山" />
+                        <div class="front">
+                        	<div class="TRangle"></div>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal<br />
+                             risus in metus. Sep interd umli Aliquam scelerisque.  In sollicd<br />
+                              itudin gravida tortor. Class aptent tacitd sociosqu ad litoracel<br />
+                               torquent. Suspendisse vehicula rhoncus leo. Integer ante bio<br />
+                                nunc accumsan sed tempus rutrum.</p>
+                            <button>
+                            	<a href="#">现在就来</a>
+                            	<div class="TRAngle"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image">
+                    	<div class="name">
+                        	<h1>瑜伽</h1>
+                            <div class="double_l"></div>
+                        </div>
+                    	<img src="images/yoga.png" alt="badgateway" title="瑜伽" />
+                        <div class="front">
+                        	<div class="TRangle"></div>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal<br />
+                             risus in metus. Sep interd umli Aliquam scelerisque.  In sollicd<br />
+                              itudin gravida tortor. Class aptent tacitd sociosqu ad litoracel<br />
+                               torquent. Suspendisse vehicula rhoncus leo. Integer ante bio<br />
+                                nunc accumsan sed tempus rutrum.</p>
+                            <button>
+                            	<a href="#">现在就来</a>
+                            	<div class="TRAngle"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image">
+                    	<div class="name">
+                        	<h1>静坐</h1>
+                            <div class="double_l"></div>
+                        </div>
+                    	<img src="images/sit-in.png" alt="badgateway" title="sin-in" />
+                        <div class="front">
+                        	<div class="TRangle"></div>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal<br />
+                             risus in metus. Sep interd umli Aliquam scelerisque.  In sollicd<br />
+                              itudin gravida tortor. Class aptent tacitd sociosqu ad litoracel<br />
+                               torquent. Suspendisse vehicula rhoncus leo. Integer ante bio<br />
+                                nunc accumsan sed tempus rutrum.</p>
+                            <button>
+                            	<a href="#">现在就来</a>
+                            	<div class="TRAngle"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image">
+                    	<div class="name">
+                        	<h1>滑雪</h1>
+                            <div class="double_l"></div>
+                        </div>
+                    	<img src="images/sailor1.png" alt="badgateway" title="滑雪" />
+                        <div class="front">
+                        	<div class="TRangle"></div>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal<br />
+                             risus in metus. Sep interd umli Aliquam scelerisque.  In sollicd<br />
+                              itudin gravida tortor. Class aptent tacitd sociosqu ad litoracel<br />
+                               torquent. Suspendisse vehicula rhoncus leo. Integer ante bio<br />
+                                nunc accumsan sed tempus rutrum.</p>
+                            <button>
+                            	<a href="#">现在就来</a>
+                            	<div class="TRAngle"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image">
+                    	<div class="name">
+                        	<h1>网球</h1>
+                            <div class="double_l"></div>
+                        </div>
+                    	<img src="images/tennisor.png" alt="badgateway" title="网球" />
+                        <div class="front">
+                        	<div class="TRangle"></div>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal<br />
+                             risus in metus. Sep interd umli Aliquam scelerisque.  In sollicd<br />
+                              itudin gravida tortor. Class aptent tacitd sociosqu ad litoracel<br />
+                               torquent. Suspendisse vehicula rhoncus leo. Integer ante bio<br />
+                                nunc accumsan sed tempus rutrum.</p>
+                            <button>
+                            	<a href="#">现在就来</a>
+                            	<div class="TRAngle"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image">
+                    	<div class="name">
+                        	<h1>蹦极</h1>
+                            <div class="double_l"></div>
+                        </div>
+                    	<img src="images/bungee.png" alt="badgateway" title="skateborder" />
+                        <div class="front">
+                        	<div class="TRangle"></div>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal<br />
+                             risus in metus. Sep interd umli Aliquam scelerisque.  In sollicd<br />
+                              itudin gravida tortor. Class aptent tacitd sociosqu ad litoracel<br />
+                               torquent. Suspendisse vehicula rhoncus leo. Integer ante bio<br />
+                                nunc accumsan sed tempus rutrum.</p>
+                            <button>
+                            	<a href="#">现在就来</a>
+                            	<div class="TRAngle"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image">
+                    	<div class="name">
+                        	<h1>滑板</h1>
+                            <div class="double_l"></div>
+                        </div>
+                    	<img  src="images/skateborder.png" alt="badgateway" title="SKATEBORDER" />
+                        <div class="front">
+                        	<div class="TRangle"></div>
+                            <p>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal<br />
+                             risus in metus. Sep interd umli Aliquam scelerisque.  In sollicd<br />
+                              itudin gravida tortor. Class aptent tacitd sociosqu ad litoracel<br />
+                               torquent. Suspendisse vehicula rhoncus leo. Integer ante bio<br />
+                                nunc accumsan sed tempus rutrum.</p>
+                            <button>
+                            	<a href="#">现在就来</a>
+                            	<div class="TRAngle"></div>
+                            </button>
+                        </div>
+                    </div>
+              </div>
+              <div class="brand">
+              		<div class="title">
+                    	部分<span>赞助商</span>
+                        <div class="TRANgle"></div>
+                    </div>
+                    <div class="brand_logo">
+                    	<img src="images/adidas.png" alt="xxxx" title="adidas" />
+                    </div>
+                    <div class="brand_logo">
+                    	<img src="images/nike.png" alt="xxxx" title="Nike" />
+                    </div>
+                    <div class="brand_logo">
+                    	<img src="images/puma.png" alt="xxxx" title="Puma" />
+                    </div>
+                    <div class="brand_logo">
+                    	<img src="images/erke.png" alt="xxxx" title="erke" />
+                    </div>
+              </div>
+         </div>
+         <div class="tournament" id="tournament">
+         	<div class="top">
+            	<div class="left">
+                	<h1>赛事: 博尔特再战紫金之巅</h1>
+                    <h2>DECEMBER 25 - 31, 2016</h2>
+                    <p>
+                    	Aenean urna tellus sodales aliquam egestas quis convallis cursus, magna. Fusce sa<br />
+                         scelerisque. Proin tempor rci vestibulum adipiscing. Etiam blanditd Vestibulum nis<br />
+                          Duis nibh dui porttitor eu rhoncus uted. Fusce lacus alc neque interdum pulvinarl<br />
+                           Integer vel ante ut.
+                    </p>
+                </div>
+                <div class="right">
+                	<h4>距离开始还有：</h4>
+                    <div class="time">
+                    	<div class="moment">
+                        	<i id="day">39</i>
+                        	<div class="d_line">
+                            </div>
+                            <span>天</span>
+                        </div>
+                        <div class="moment">
+                        	<i id="h">24</i>
+                        	<div class="d_line">
+                            </div>
+                            <span>时</span>
+                        </div>
+                        <div class="moment">
+                        	<i id="m">59</i>
+                        	<div class="d_line">
+                            </div>
+                            <span>分</span>
+                        </div>
+                        <div class="moment r_bord">
+                        	<i id="s">18</i>
+                        	<div class="d_line">
+                            </div>
+                            <span>秒</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bottom">
+            	<button class="next_m">下场赛事<div class="x_trangle"></div></button>
+                <p>
+                    水上世锦赛<i>&nbsp;Water&nbsp;Sports&nbsp;</i>|&nbsp;<span>December 13 - 18, 2017</span>
+                    |
+                    <i>Fusce ut odio eget elit eleifend tincidunt Vestibulum fringil lal rsus in metus ...</i>
+                </p>
+                <img src="images/button_left.png" title="上一条">
+                <img src="images/button_right.png" title="下一条">
+            </div>
+         </div>
+         <div class="stuff" id="stuff">
+            <h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+            <h2>精英职员</h2>
+            <div class="note">WE'RE ALL ABOUT XTREAM SPORTS</div>
+            <p>
+                Lacus sit amet aliquet cons equate metus eros volutpat leo id ms auctor elit lorem eu orci. Suspendisse ante. Cras pedey Mauris<br /> lectus quam facilisis ad condimentum sit amet condm entum eudel justo. Sed eget nulla at quam.
+            </p>
+            <div class="bottom">
+                <div class="box b_marginr">
+                    <img src="images/linda.png" />
+                    <div class="b_trangle"></div>
+                    <span>LINDA</span>
+                    <div class="s_name">SUPPORT STAFF</div>
+                    <div class="share">
+                        <img src="images/wechat.png" title="微信"/>
+                        <img class="i_right" src="images/weibo.png" title="微博" />
+                        <img class="i_right" src="images/qq.png" title="qq" />
+                        <img class="not" src="images/camera.png" title="??"/>
+                    </div>
+                    <div class="detail">
+                         <div class="share">
+                            <a href="www.wechat.com"><img src="images/wechat.png" title="微信"/></a>
+                             <a href="http://www.sina.com"><img class="i_right" src="images/weibo.png" title="微博" /></a>
+                             <a href="www.qq.com"><img class="i_right" src="images/qq.png" title="qq" /></a>
+                             <a href="www.baidu.com"><img class="not" src="images/camera.png" title="??"/> </a>
+                         </div>
+                         <p>
+                         Personal Trainer, Body Builder,<br />
+                            3 Times Country Champion,<br/>
+                            Water Sports Expert, Gold Medalist
+                         </p>
+                    </div>
+                </div>
+                 <div class="box b_marginr">
+                    <img src="images/fitnesstrainer.png" />
+                    <div class="b_trangle"></div>
+                    <span>TOMIY</span>
+                    <div class="s_name">SUPPORT STAFF</div>
+                    <div class="share">
+                        <img src="images/wechat.png" title="微信"/>
+                        <img class="i_right" src="images/weibo.png" title="微博" />
+                        <img class="i_right" src="images/qq.png" title="qq" />
+                        <img class="not" src="images/camera.png" title="??"/>
+                    </div>
+                    <div class="detail">
+                         <div class="share">
+                            <a href="www.wechat.com"><img src="images/wechat.png" title="微信"/></a>
+                             <a href="www.sina.com"><img class="i_right" src="images/weibo.png" title="微博" /></a>
+                             <a href="www.qq.com"><img class="i_right" src="images/qq.png" title="qq" /></a>
+                             <a href="www.baidu.com"><img class="not" src="images/camera.png" title="??"/></a>
+                         </div>
+                         <p>
+                         Personal Trainer, Body Builder,<br />
+                            3 Times Country Champion,<br/>
+                            Water Sports Expert, Gold Medalist
+                         </p>
+                    </div>
+                </div>
+                <div class="box b_marginr">
+                    <img src="images/ron.png" />
+                    <div class="b_trangle"></div>
+                    <span>EARON</span>
+                    <div class="s_name">SUPPORT STAFF</div>
+                    <div class="share">
+                        <img src="images/wechat.png" title="微信"/>
+                        <img class="i_right" src="images/weibo.png" title="微博" />
+                        <img class="i_right" src="images/qq.png" title="qq" />
+                        <img class="not" src="images/camera.png" title="??"/>
+                    </div>
+                    <div class="detail">
+                         <div class="share">
+                            <a href="www.wechat.com"><img src="images/wechat.png" title="微信"/></a>
+                             <a href="www.sina.com"><img class="i_right" src="images/weibo.png" title="微博" /></a>
+                             <a href="www.qq.com"><img class="i_right" src="images/qq.png" title="qq" /> </a>
+                             <a href="www.baidu.com"><img class="not" src="images/camera.png" title="??"/></a>
+                         </div>
+                         <p>
+                         Personal Trainer, Body Builder,<br />
+                            3 Times Country Champion,<br/>
+                            Water Sports Expert, Gold Medalist
+                         </p>
+                    </div>
+                </div>
+                <div class="box">
+                    <img src="images/andrea.png" />
+                    <div class="b_trangle"></div>
+                    <span>ANDREA</span>
+                    <div class="s_name">SUPPORT STAFF</div>
+                    <div class="share">
+                        <img src="images/wechat.png" title="微信"/>
+                        <img class="i_right" src="images/weibo.png" title="微博" />
+                        <img class="i_right" src="images/qq.png" title="qq" />
+                        <img class="not" src="images/camera.png" title="??"/>
+                    </div>
+                    <div class="detail">
+                         <div class="share">
+                            <a href="www.wechat.com"><img src="images/wechat.png" title="微信"/></a>
+                             <a href="www.sina.com"><img class="i_right" src="images/weibo.png" title="微博" /></a>
+                             <a href="www.qq.com"><img class="i_right" src="images/qq.png" title="qq" /> </a>
+                             <a href="www.baidu.com"><img class="not" src="images/camera.png" title="??"/> </a>
+                         </div>
+                         <p>
+                         Personal Trainer, Body Builder,<br />
+                            3 Times Country Champion,<br/>
+                            Water Sports Expert, Gold Medalist
+                         </p>
+                    </div>
+                </div>
+            </div>
+         </div>
+        <div class="member">
+            <h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+            <h2>优秀会员</h2>
+            <div class="m_group">
+                <div class="margin_b">
+                <div class="rectangle margin_r">
+                    <img src="images/member_1.png" alt=" a o" />
+                    <div class="right">
+                        <p class="m_p">
+                            Ut eu diam vel leo aliquam consectetu Proin torto elit rutrum donec<br />
+                             rhoncu. Cras eradest cursdus sed dignissim sed euismod Maecenas<br />
+                              tortor tellus hendrerit venenatis malesuada.
+                        </p>
+                        <div class="bottom">
+                            <span class="quot">&quot;</span>
+                            <p>CARLA ANDERSON<br />
+                                <span>Member of the Club</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="triangle">
+                    </div>
+                </div>
+                <div class="rectangle">
+                    <img src="images/member_2.png" alt=" a o" />
+                    <div class="right">
+                        <p class="m_p">
+                            Ut eu diam vel leo aliquam consectetu Proin torto elit rutrum donec<br />
+                             rhoncu. Cras eradest cursdus sed dignissim sed euismod Maecenas<br />
+                              tortor tellus hendrerit venenatis malesuada.
+                        </p>
+                        <div class="bottom">
+                            <span class="quot">&quot;</span>
+                            <p>CARLA ANDERSON<br />
+                                <span>Member of the Club</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="triangle">
+                    </div>
+                </div>
+                </div>
+                <div class="margin_t">
+                <div class="rectangle margin_r">
+                    <img src="images/member_3.png" alt=" a o" />
+                    <div class="right">
+                        <p class="m_p">
+                            Ut eu diam vel leo aliquam consectetu Proin torto elit rutrum donec<br />
+                             rhoncu. Cras eradest cursdus sed dignissim sed euismod Maecenas<br />
+                              tortor tellus hendrerit venenatis malesuada.
+                        </p>
+                        <div class="bottom">
+                            <span class="quot">&quot;</span>
+                            <p>CARLA ANDERSON<br />
+                                <span>Member of the Club</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="triangle">
+                    </div>
+                </div>
+                <div class="rectangle">
+                    <img src="images/member_4.png" alt=" a o" />
+                    <div class="right">
+                        <p class="m_p">
+                            Ut eu diam vel leo aliquam consectetu Proin torto elit rutrum donec<br />
+                             rhoncu. Cras eradest cursdus sed dignissim sed euismod Maecenas<br />
+                              tortor tellus hendrerit venenatis malesuada.
+                        </p>
+                        <div class="bottom">
+                            <span class="quot">&quot;</span>
+                            <p>CARLA ANDERSON<br />
+                                <span>Member of the Club</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="triangle">
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div class="ruffle">
+                <div class="left_l"></div>
+                <div class="left_rectangle"><img src="images/left_arrow.png" /></div>
+                <div class="right_rectangle"><img src="images/right_arrow.png" /></div>
+                <div class="right_l"></div>
+            </div>
+        </div>
+        <div class="recent_push">
+            <h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+            <h2>近期推出</h2>
+            <div class="r_group">
+                <div class="box">
+                    <img src="images/Gsoubycicle.jpg" alt="its no ok" />
+                    <div class="purchase">购买
+                        <div class="triangle"></div>
+                    </div>
+                    <p>极速自行车</p>
+                    <button>￥120.00</button>
+                    <span>￥200.00</span>
+                </div>
+                <div class="hot">
+                    <img src="images/r_hot.jpg" alt="shit" />
+                    <div class="purchase">HOT
+                        <div class="triangle"></div>
+                    </div>
+                    <div class="pentagram">
+                        ★★★★★
+                    </div>
+                    <div class="widget">
+                        <div class="w_box">
+                            <img src="images/cart_w.png" />
+                        </div>
+                        <div class="w_box">
+                            <img src="images/heart_w.png" />
+                        </div>
+                        <div class="w_box">
+                            <img src="images/_3_w.png" />
+                        </div>
+                        <div class="w_box">
+                            <img src="images/search_w.png" />
+                        </div>
+                    </div>
+                    <div class="slogan">
+                        <p>一周成为健身达人<br />
+                            500 SOFTSHELL HIKING WEAR
+                        </p>
+                    </div>
+                    <button>￥120.00</button>
+                    <span>可节省50%</span>
+                </div>
+                <div class="box">
+                    <img src="images/mrsliu.jpg" alt="its no ok" />
+                    <div class="purchase">购买
+                        <div class="triangle"></div>
+                    </div>
+                    <p>与MRS.刘一起一览众山小</p>
+                    <button>￥120.00</button>
+                    <span>￥200.00</span>
+                </div>
+                <div class="box not">
+                    <img src="images/beachrun.jpg" alt="its no ok" />
+                    <div class="purchase">购买
+                        <div class="triangle"></div>
+                    </div>
+                    <p>夜雨泛心远</p>
+                    <button>￥120.00</button>
+                    <span>￥200.00</span>
+                </div>
+            </div>
+            <div class="ruffle">
+                <div class="left_l"></div>
+                <div class="left_rectangle"><img src="images/left_arrow.png" /></div>
+                <div class="right_rectangle"><img src="images/right_arrow.png" /></div>
+                <div class="right_l"></div>
+            </div>
+        </div>
+        <div class="video" id="mod_player">
+            <video  src="https://v.qq.com/x/cover/zb6xe9rh1kpj179/g0014dvzsfj.html" poster="images/video.jpg">
+            </video>
+            <div class="v_control" id="v_control">
+                <img src="images/v_control.png">
+            </div>
+        </div>
+        <div class="combo" id="combo">
+            <h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+            <h2>套餐优惠</h2>
+            <div class="title">
+                <div class="promotion">
+                        <img src="images/promition_arrow.png">促销活动
+                </div>
+                <div class="call_p">
+                    <p>
+                        想了解更多信息请致电<br/>
+                        CUSTOM PLANS PLEASE CALL
+                    </p>
+                    <h3>0200-123-45678</h3>
+                    <div class="c_triangle">
+                    </div>
+                </div>
+            </div>
+            <div class="c_group">
+                <div class="box">
+                    <div class="left">
+                        <h1>
+                            1周
+                        </h1>
+                        <div class="price">
+                            ￥69.00
+                            <img src="images/check.png">
+                        </div>
+                    </div>
+                    <div class="middle">
+                        <div class="item">
+                            <h3>2</h3>
+                            <p>运动项目<br />
+                                PRACTICES
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>6</h3>
+                            <p>经典实战<br />
+                                PERWEEK
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>1</h3>
+                            <p>私人教练<br />
+                                TRAINER
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>2</h3>
+                            <p>早课<br />
+                                CLASSES
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>0</h3>
+                            <p>折扣卷<br />
+                                DISCOUNTS
+                            </p>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span>详情</span>
+                        <i>some other info</i>
+                    </div>
+                </div>
+                <div class="box">
+                    <div class="left">
+                        <h1>
+                            1月
+                        </h1>
+                        <div class="price">
+                            ￥119.00
+                            <img src="images/check.png">
+                        </div>
+                    </div>
+                    <div class="middle">
+                        <div class="item">
+                            <h3>4</h3>
+                            <p>运动项目<br />
+                                PRACTICES
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>6</h3>
+                            <p>经典实战<br />
+                                PERWEEK
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>3</h3>
+                            <p>私人教练<br />
+                                TRAINER
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>6</h3>
+                            <p>早课<br />
+                                CLASSES
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>5</h3>
+                            <p>折扣卷<br />
+                                DISCOUNTS
+                            </p>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span>详情</span>
+                        <i>some other info</i>
+                    </div>
+                </div>
+                <div class="box">
+                    <div class="left">
+                        <h1>
+                            6月
+                        </h1>
+                        <div class="price">
+                            ￥149.00
+                            <img src="images/check.png">
+                        </div>
+                    </div>
+                    <div class="middle">
+                        <div class="item">
+                            <h3>6</h3>
+                            <p>运动项目<br />
+                                PRACTICES
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>8</h3>
+                            <p>经典实战<br />
+                                PERWEEK
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>5</h3>
+                            <p>私人教练<br />
+                                TRAINER
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>10</h3>
+                            <p>早课<br />
+                                CLASSES
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>9</h3>
+                            <p>折扣卷<br />
+                                DISCOUNTS
+                            </p>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span>详情</span>
+                        <i>some other info</i>
+                    </div>
+                </div>
+                <div class="box">
+                    <div class="left">
+                        <h1>
+                            1年
+                        </h1>
+                        <div class="price">
+                            ￥299.00
+                            <img src="images/check.png">
+                        </div>
+                    </div>
+                    <div class="middle">
+                        <div class="item">
+                            <h3>10</h3>
+                            <p>运动项目<br />
+                                PRACTICES
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>12</h3>
+                            <p>经典实战<br />
+                                PERWEEK
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>9</h3>
+                            <p>私人教练<br />
+                                TRAINER
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>12</h3>
+                            <p>早课<br />
+                                CLASSES
+                            </p>
+                        </div>
+                        <div class="item">
+                            <h3>20</h3>
+                            <p>折扣卷<br />
+                                DISCOUNTS
+                            </p>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span>详情</span>
+                        <i>some other info</i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="weibo">
+            <h1>
+                <div class="left_l"></div>
+                <div class="circle">
+                    <img src="images/weibo_small.png">
+                </div>
+                <div class="right_l"></div>
+            </h1>
+            <p>
+                <span>@xtremeSportsClub:</span>  Praesent volutpat dictum risus. Suspendisse potent. Nulla facilisi. Ut ornare. Morbi proin est.<br />
+                Curabitur varius cursus ante. Mauris ut tellus sit amet suspendisse a purus id sapien
+            </p>
+            <h3>
+                两小时以前 <i>ABOUT 2 HOURS AGO</i>
+            </h3>
+            <div class="ruffle">
+                <div class="left_l"></div>
+                <div class="left_rectangle"><img src="images/left_arrow.png" /></div>
+                <div class="right_rectangle"><img src="images/right_arrow.png" /></div>
+                <div class="right_l"></div>
+            </div>
+        </div>
+        <div class="contact_us" id="contact_us">
+            <h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+            <h2>联系我们</h2>
+            <div class="note">WE'RE ALL ABOUT XTREAM SPORTS</div>
+            <p>
+                Lacus sit amet aliquet cons equate metus eros volutpat leo id ms auctor elit lorem eu orci. Suspendisse ante. Cras pedey Mauris<br /> lectus quam facilisis ad condimentum sit amet condm entum eudel justo. Sed eget nulla at quam.
+            </p>
+            <div class="c_method">
+                <form>
+                    <div class="left">
+                        <input type="text" placeholder="*姓名" />
+                        <input type="text" placeholder="*电子邮件" />
+                        <input class="not" type="text" placeholder="*电话号码" />
+                    </div>
+                    <div class="right">
+                        <textarea>*信息</textarea>
+                        <button>即刻发送
+                            <div class="b_triangle">
+                            </div>
+                        </button>
+                    </div>
+                </form>
+                <address>
+                    <div class="box">
+                        <img src="images/location.png" />
+                        <p>
+                        青岛市市北区<br/>
+                        向南500m左转50步抬头
+                        </p>
+                    </div>
+                    <div class="box">
+                        <img src="images/message.png" />
+                        <p>
+                        nfo@xtremesp.org<br />
+                        support@xtremesp.org
+                        </p>
+                    </div>
+                    <div class="box not">
+                        <img src="images/phone_call.png" />
+                        <p>
+                        0800 123 4567<br />
+                        +86 234 56789-0
+                        </p>
+                    </div>
+                </address>
+        </div>
+            <div class="feedback">
+                <h1><img src="images/middlelogo.png" alt="网速不佳"  title="hi"></h1>
+                <h2>向我们反馈<span>TO CLUB NEWSLETTER</span></h2>
+                <P>Lacus sit amet aliquet cons equate metus eros volutpat leo id ms auctor elit lorem eu orci. Suspendisse ante cras pedey
+                </P>
+                <div class="bottom">
+                    <input type="text" placeholder="请输入您的电子邮件地址" />
+                    <img src="images/feed_msg.png">
+                    <button>提交<div class="f_triangle">
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="map">
+                    <iframe src="map.html"></iframe>
+                    <img src="images/map_header.png" />
+        </div>
+    </div>
+    <footer>
+        <div class="wrap">
+            <dl>
+                <dt>营业时间</dt>
+                <dd class="not">MOMDAY<span>09:00AM-06:00PM</span></dd>
+                <dd>TUESDAY<span>09:00AM-06:00PM</span></dd>
+                <dd>WEDNESDAY<span>09:00AM-06:00PM</span></dd>
+                <dd>THURSDAY<span>09:00AM-06:00PM</span></dd>
+                <dd>FRIDAY<span>09:00AM-06:00PM</span></dd>
+                <dd>SATURSDAY<span>09:00AM-06:00PM</span></dd>
+            </dl>
+            <div class="middle">
+                <img src="images/w_x.png">
+                <h1>XTREME SPORTS CLUB</h1>
+                <p>ALL RIGHTS RESERVED (C) 2016</p>
+                <div class="img_group">
+                    <img src="images/f_contacter.png">
+                    <img src="images/f_wechat.png">
+                    <img src="images/f_weibo.png">
+                    <img src="images/f_t_weibo.png">
+                    <img src="images/f_wifi.png">
+                    <img src="images/f_qq.png">
+                </div>
+            </div>
+            <img class="X" src="images/X.png" title="we're best!!!">
+        </div>
+    </footer>
+    <div class="back_top">
+        ↑
+    </div>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?key=&v=1.1&services=true"></script><!--百度地图-->
+    <script src="js/jquery-3.1.1.min.js" type="text/javascript" language="javascript"></script>
+    <script src="js/jq.js"  type="text/javascript" language="javascript"></script>
+    <script src="js/main.js" type="text/javascript" language="javascript"></script>
+    <script src="http://imgcache.qq.com/tencentvideo_v1/tvp/js/tvp.player_v2.js" language="javascript"></script><!--腾讯视频-->
+</body>
+</html>
