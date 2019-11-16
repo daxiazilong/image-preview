@@ -4,6 +4,10 @@
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
+enum client{
+    pc = "pc",
+    mobile = 'mobile'
+}
 export class ImagePreview{
     [key:string]: any;
     public showTools: boolean  = true;
@@ -55,6 +59,8 @@ export class ImagePreview{
         rotateLeft: 'handleRotateLeft',
         rotateRight: 'handleRotateRight'
     }
+
+    public envClient:client;
     
     constructor( 
         public options: {
@@ -66,23 +72,34 @@ export class ImagePreview{
         if( options.selector ){
             this.bindTrigger();
         }
+
+        this.envClient = this.testEnv();
+
         this.genFrame();
         this.handleReausetAnimate();//requestAnimationFrame兼容性
 
         this.threshold = this.screenWidth / 4;
         this.imgContainer = this.ref.querySelector(`.${this.prefix}imgContainer`);
         this.imgItems = this.imgContainer.querySelectorAll(`.${this.prefix}item`);
-
-        this.reCordInitialData( this.imgItems );
+        this[this.envClient + 'RecordInitialData' ](this.imgItems);
         
         this.maxMoveX = this.screenWidth / 2;
         this.minMoveX = -this.screenWidth * (this.imgsNumber - 0.5);
         
+        this[this.envClient + 'Initial' ]();
+
+        
+        
+    }
+    pcInitial(){
+        this.ref.addEventListener('click',this.handlePcClick.bind(this));
+        this.ref.querySelector(`.${this.prefix}close`).addEventListener('click',this.close.bind(this))
+    }
+    mobileInitial(){
         this.ref.addEventListener('touchstart',this.handleTouchStart.bind(this));
         this.ref.addEventListener('touchmove',this.handleMove.bind(this));
         this.ref.addEventListener('touchend',this.handleToucnEnd.bind(this));
         this.ref.querySelector(`.${this.prefix}close`).addEventListener('touchstart',this.close.bind(this))
-        
     }
     bindTrigger(){
         let images: Array<string> = [];
@@ -106,7 +123,7 @@ export class ImagePreview{
         })
         
     }
-    reCordInitialData( els:  NodeListOf < HTMLElement > ){
+    mobileRecordInitialData( els:  NodeListOf < HTMLElement > ){
         /**
          * 记录并设置初始top，left值
          */
@@ -216,6 +233,110 @@ export class ImagePreview{
 
         })
 
+    }
+    pcRecordInitialData( els:  NodeListOf < HTMLElement > ){
+        /**
+         * 记录并设置初始top，left值
+         */
+        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+        let imgContainerHeight: number = imgContainerRect.height;
+    
+        els.forEach( ( el,key,parent) => {
+            const img: HTMLImageElement = el.querySelector('img');
+            const imgRect: ClientRect = img.getBoundingClientRect();
+            if( img.complete ){
+                let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+                let imgContainerHeight: number = imgContainerRect.height;
+                let imgContainerWidth: number = imgContainerRect.width;
+                let styleObj: ClientRect = el.getBoundingClientRect();
+               
+                
+                styleObj = el.getBoundingClientRect();
+                const top: number = (imgContainerHeight - styleObj.height) / 2;
+                const left: number = (imgContainerWidth - styleObj.width) / 2;
+
+                el.dataset.initialWidth = styleObj.width.toString();
+                el.dataset.initialHeight =  styleObj.height.toString();
+                el.dataset.top = top.toString();
+                el.dataset.initialTop = top.toString();
+                el.dataset.left = left.toString();
+                el.dataset.initialLeft = left.toString();
+                el.dataset.viewTopInitial = styleObj.top.toString();
+                el.dataset.viewLeftInitial = styleObj.left.toString();
+                el.dataset.loaded = "true";
+
+                el.style.top = `${top}px`;
+                el.style.left=`${left}px`;
+            }else{
+                el.dataset.loaded = "false";
+                img.onload = (function(el){
+                    
+                    return function(){
+                        
+                        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+                        let imgContainerHeight: number = imgContainerRect.height;
+                        let imgContainerWidth: number = imgContainerRect.width;
+                        let styleObj: ClientRect = el.getBoundingClientRect();
+                        
+                        styleObj = el.getBoundingClientRect();
+                        const top: number = (imgContainerHeight - styleObj.height) / 2;
+                        const left: number = (imgContainerWidth - styleObj.width) / 2;
+
+                        el.dataset.initialWidth = styleObj.width.toString();
+                        el.dataset.initialHeight =  styleObj.height.toString();
+                        el.dataset.top = top.toString();
+                        el.dataset.initialTop = top.toString();
+                        el.dataset.left = left.toString();
+                        el.dataset.initialLeft = left.toString();
+                        el.dataset.viewTopInitial = styleObj.top.toString();
+                        el.dataset.viewLeftInitial = styleObj.left.toString();
+                        el.dataset.loaded = "true";
+
+                        el.style.top = `${top}px`;
+                        el.style.left=`${left}px`;
+
+                    }
+                    
+                })(el).bind(this)
+                img.onerror=(function(el){
+                    return function(e: Event ){
+                        
+                        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+                        let imgContainerHeight: number = imgContainerRect.height;
+                        const styleObj: ClientRect = el.getBoundingClientRect();
+
+                        const top: number = (imgContainerHeight - styleObj.height) / 2;
+
+                        el.dataset.initialWidth = styleObj.width.toString();
+                        el.dataset.initialHeight =  styleObj.height.toString();
+                        el.dataset.top = top.toString();
+                        el.dataset.initialTop = top.toString();
+                        
+                        el.dataset.loaded = "false";
+
+                        el.style.top = `${top}px`;
+                      
+                        (<HTMLImageElement>(e.currentTarget)).alt = "图片加载错误"
+                    }
+                })(el).bind(this)
+            }
+            
+            
+
+        })
+
+    }
+    handlePcClick(e:  MouseEvent): void{
+        /**
+         * 这里把操作派发
+         */
+
+        const type : string = (<HTMLElement>(e.target)).dataset.type;
+    
+        if( this.operateMaps[type] ){
+            this[this.operateMaps[type]](e);
+            return
+        }
     }
     handleTouchStart(e: TouchEvent & MouseEvent){
         // preventDefault is very import, because if not do this, we will get 
@@ -1733,6 +1854,36 @@ export class ImagePreview{
             </div>
             `
         } )
+
+        let genStyle = ( prop: string)  =>  {
+            switch( prop ){
+                case 'conBackground':
+                    if( this.envClient == 'pc'  ) {
+                        return 'rgba(0,0,0,0.8)'
+                    }else{
+                        return 'rgba(0,0,0,1)'
+                    }
+                case 'itemWidth':
+                    if( this.envClient == 'pc'  ) {
+                        return '85%'
+                    }else{
+                        return '100%'
+                    };
+                case 'itemScroll':
+                        if( this.envClient == 'pc'  ) {
+                            return 'auto '
+                        }else{
+                            return 'hidden'
+                        };
+                case 'itemHeight':
+                        if( this.envClient == 'pc'  ) {
+                            return '100% '
+                        }else{
+                            return 'auto'
+                        };
+                default: return ''
+            }
+        }
         let html : string = `
                 <div class="${this.prefix}close">
                     <svg t="1563161688682" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5430">
@@ -1759,7 +1910,7 @@ export class ImagePreview{
                 left: 100%;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,1);
+                background: ${genStyle('conBackground')};
                 color:#fff;
                 transform: translate3d(0,0,0);
                 transition: left 0.5s;
@@ -1805,15 +1956,17 @@ export class ImagePreview{
                 box-sizing:border-box;
                 position: relative;
                 display:inline-block;
-                width: 100%;
+                width: 100% ;
                 height: 100%;
-                overflow:hidden;
+                overflow: hidden;
             }
             .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item{
                 box-sizing:border-box;
                 position: absolute;
-                width: 100%;
-                height: auto;
+                width: ${ genStyle('itemWidth') } ;
+                height: ${genStyle('itemHeight')};
+                overflow-x: ${genStyle('itemScroll')};
+                overflow-y:${genStyle('itemScroll')};
                 font-size: 0;
                 white-space: normal;
                 transition: transform 0.5s;
@@ -1904,5 +2057,12 @@ export class ImagePreview{
     }
     destroy() : void{
         this.ref.parentNode.removeChild(this.ref);
+    }
+    testEnv(): client{
+        if(/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {
+            return client.mobile
+        } else {
+            return client.pc
+        }
     }
 }
