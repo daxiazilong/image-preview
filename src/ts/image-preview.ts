@@ -94,6 +94,17 @@ export class ImagePreview{
     pcInitial(){
         this.ref.addEventListener('click',this.handlePcClick.bind(this));
         this.ref.querySelector(`.${this.prefix}close`).addEventListener('click',this.close.bind(this))
+        let timer;
+        window.addEventListener('resize', (e) => {
+            clearTimeout(timer)
+            setTimeout( ()=> {
+                this.screenWidth = window.innerWidth;
+                let index = this.curIndex ;
+                this.imgContainerMoveX = -index * this.screenWidth;
+
+                this.imgContainer.style.left = `${this.imgContainerMoveX}px`;
+            },17)
+        })
     }
     mobileInitial(){
         this.ref.addEventListener('touchstart',this.handleTouchStart.bind(this));
@@ -243,17 +254,14 @@ export class ImagePreview{
     
         els.forEach( ( el,key,parent) => {
             const img: HTMLImageElement = el.querySelector('img');
-            const imgRect: ClientRect = img.getBoundingClientRect();
             if( img.complete ){
                 let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-                let imgContainerHeight: number = imgContainerRect.height;
-                let imgContainerWidth: number = imgContainerRect.width;
                 let styleObj: ClientRect = el.getBoundingClientRect();
                
                 
                 styleObj = el.getBoundingClientRect();
-                const top: number = (imgContainerHeight - styleObj.height) / 2;
-                const left: number = (imgContainerWidth - styleObj.width) / 2;
+                const top: number = 0;
+                const left: number = 0;
 
                 el.dataset.initialWidth = styleObj.width.toString();
                 el.dataset.initialHeight =  styleObj.height.toString();
@@ -273,14 +281,12 @@ export class ImagePreview{
                     
                     return function(){
                         
-                        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-                        let imgContainerHeight: number = imgContainerRect.height;
-                        let imgContainerWidth: number = imgContainerRect.width;
+
                         let styleObj: ClientRect = el.getBoundingClientRect();
                         
                         styleObj = el.getBoundingClientRect();
-                        const top: number = (imgContainerHeight - styleObj.height) / 2;
-                        const left: number = (imgContainerWidth - styleObj.width) / 2;
+                        const top: number = 0;
+                        const left: number = 0;
 
                         el.dataset.initialWidth = styleObj.width.toString();
                         el.dataset.initialHeight =  styleObj.height.toString();
