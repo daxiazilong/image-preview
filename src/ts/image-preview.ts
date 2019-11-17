@@ -1863,23 +1863,24 @@ export class ImagePreview{
                     }else{
                         return 'rgba(0,0,0,1)'
                     }
-                case 'itemWidth':
+                case 'imgWidth':
                     if( this.envClient == 'pc'  ) {
                         return '85%'
                     }else{
                         return '100%'
+                    };
+                    
+                case 'itemHeight':
+                    if( this.envClient == 'pc'  ) {
+                        return '100%'
+                    }else{
+                        return 'auto'
                     };
                 case 'itemScroll':
                         if( this.envClient == 'pc'  ) {
                             return 'auto '
                         }else{
                             return 'hidden'
-                        };
-                case 'itemHeight':
-                        if( this.envClient == 'pc'  ) {
-                            return '100% '
-                        }else{
-                            return 'auto'
                         };
                 default: return ''
             }
@@ -1963,16 +1964,17 @@ export class ImagePreview{
             .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item{
                 box-sizing:border-box;
                 position: absolute;
-                width: ${ genStyle('itemWidth') } ;
+                width: 100% ;
                 height: ${genStyle('itemHeight')};
                 overflow-x: ${genStyle('itemScroll')};
                 overflow-y:${genStyle('itemScroll')};
                 font-size: 0;
+                text-align: center;
                 white-space: normal;
                 transition: transform 0.5s;
             }
             .${this.prefix}imagePreviewer .${this.prefix}item img{
-                width: 100%;
+                width: ${ genStyle('imgWidth') };
                 height: auto;
             }
             .${this.prefix}imagePreviewer .${this.prefix}bottom{
@@ -2027,15 +2029,26 @@ export class ImagePreview{
     close(e: MouseEvent & TouchEvent){
         e.stopImmediatePropagation();
         clearTimeout(this.performerClick)
-
+        this[ this.envClient + 'BeforeClose']();
         this.toggleClass( this.ref, this.defToggleClass )
     }
+    pcBeforeClose(){
+        document.body.style['overflow'] = document.body.dataset['imgPreOverflow']
+    }
+    mobileBeforeClose(){}
     show( index: number ){
         this.curIndex = index;
         this.imgContainerMoveX = -index * this.screenWidth;
 
         this.imgContainer.style.left = `${this.imgContainerMoveX}px`;
+        this[ this.envClient + 'ReadyShow' ]();
         this.toggleClass( this.ref,this.defToggleClass )
+    }
+    mobileReadyShow(){}
+    pcReadyShow(){
+        let styleDesc: CSSStyleDeclaration = window.getComputedStyle(document.body);
+        document.body.dataset['imgPreOverflow'] = styleDesc.overflow;
+        document.body.style['overflow'] = 'hidden';
     }
     toggleClass( ref:HTMLElement,className: string){
         let classes:Array<string> = ref.className.split(' ');
