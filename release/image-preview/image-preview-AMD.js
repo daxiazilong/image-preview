@@ -2,11 +2,16 @@ define(["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     /**
-     * image-preview 1.0.0
+     * image-preview 1.0.1
      * author:zilong
      * https://github.com/daxiazilong
      * Released under the MIT License
      */
+    var client;
+    (function (client) {
+        client["pc"] = "pc";
+        client["mobile"] = "mobile";
+    })(client || (client = {}));
     var ImagePreview = /** @class */ (function () {
         function ImagePreview(options) {
             this.options = options;
@@ -35,19 +40,38 @@ define(["require", "exports"], function (require, exports) {
             if (options.selector) {
                 this.bindTrigger();
             }
+            this.envClient = this.testEnv();
             this.genFrame();
             this.handleReausetAnimate(); //requestAnimationFrame兼容性
             this.threshold = this.screenWidth / 4;
             this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
             this.imgItems = this.imgContainer.querySelectorAll("." + this.prefix + "item");
-            this.reCordInitialData(this.imgItems);
+            this[this.envClient + 'RecordInitialData'](this.imgItems);
             this.maxMoveX = this.screenWidth / 2;
             this.minMoveX = -this.screenWidth * (this.imgsNumber - 0.5);
+            this[this.envClient + 'Initial']();
+        }
+        ImagePreview.prototype.pcInitial = function () {
+            var _this = this;
+            this.ref.addEventListener('click', this.handlePcClick.bind(this));
+            this.ref.querySelector("." + this.prefix + "close").addEventListener('click', this.close.bind(this));
+            var timer;
+            window.addEventListener('resize', function (e) {
+                clearTimeout(timer);
+                setTimeout(function () {
+                    _this.screenWidth = window.innerWidth;
+                    var index = _this.curIndex;
+                    _this.imgContainerMoveX = -index * _this.screenWidth;
+                    _this.imgContainer.style.left = _this.imgContainerMoveX + "px";
+                }, 17);
+            });
+        };
+        ImagePreview.prototype.mobileInitial = function () {
             this.ref.addEventListener('touchstart', this.handleTouchStart.bind(this));
             this.ref.addEventListener('touchmove', this.handleMove.bind(this));
             this.ref.addEventListener('touchend', this.handleToucnEnd.bind(this));
             this.ref.querySelector("." + this.prefix + "close").addEventListener('touchstart', this.close.bind(this));
-        }
+        };
         ImagePreview.prototype.bindTrigger = function () {
             var images = [];
             var triggerItems = document.querySelectorAll(this.options.selector);
@@ -66,7 +90,7 @@ define(["require", "exports"], function (require, exports) {
                 });
             });
         };
-        ImagePreview.prototype.reCordInitialData = function (els) {
+        ImagePreview.prototype.mobileRecordInitialData = function (els) {
             var _this = this;
             /**
              * 记录并设置初始top，left值
@@ -145,6 +169,82 @@ define(["require", "exports"], function (require, exports) {
                     })(el).bind(_this);
                 }
             });
+        };
+        ImagePreview.prototype.pcRecordInitialData = function (els) {
+            var _this = this;
+            /**
+             * 记录并设置初始top，left值
+             */
+            var imgContainerRect = this.imgContainer.getBoundingClientRect();
+            var imgContainerHeight = imgContainerRect.height;
+            els.forEach(function (el, key, parent) {
+                var img = el.querySelector('img');
+                if (img.complete) {
+                    var imgContainerRect_2 = _this.imgContainer.getBoundingClientRect();
+                    var styleObj = el.getBoundingClientRect();
+                    styleObj = el.getBoundingClientRect();
+                    var top_2 = 0;
+                    var left = 0;
+                    el.dataset.initialWidth = styleObj.width.toString();
+                    el.dataset.initialHeight = styleObj.height.toString();
+                    el.dataset.top = top_2.toString();
+                    el.dataset.initialTop = top_2.toString();
+                    el.dataset.left = left.toString();
+                    el.dataset.initialLeft = left.toString();
+                    el.dataset.viewTopInitial = styleObj.top.toString();
+                    el.dataset.viewLeftInitial = styleObj.left.toString();
+                    el.dataset.loaded = "true";
+                    el.style.top = top_2 + "px";
+                    el.style.left = left + "px";
+                }
+                else {
+                    el.dataset.loaded = "false";
+                    img.onload = (function (el) {
+                        return function () {
+                            var styleObj = el.getBoundingClientRect();
+                            styleObj = el.getBoundingClientRect();
+                            var top = 0;
+                            var left = 0;
+                            el.dataset.initialWidth = styleObj.width.toString();
+                            el.dataset.initialHeight = styleObj.height.toString();
+                            el.dataset.top = top.toString();
+                            el.dataset.initialTop = top.toString();
+                            el.dataset.left = left.toString();
+                            el.dataset.initialLeft = left.toString();
+                            el.dataset.viewTopInitial = styleObj.top.toString();
+                            el.dataset.viewLeftInitial = styleObj.left.toString();
+                            el.dataset.loaded = "true";
+                            el.style.top = top + "px";
+                            el.style.left = left + "px";
+                        };
+                    })(el).bind(_this);
+                    img.onerror = (function (el) {
+                        return function (e) {
+                            var imgContainerRect = this.imgContainer.getBoundingClientRect();
+                            var imgContainerHeight = imgContainerRect.height;
+                            var styleObj = el.getBoundingClientRect();
+                            var top = (imgContainerHeight - styleObj.height) / 2;
+                            el.dataset.initialWidth = styleObj.width.toString();
+                            el.dataset.initialHeight = styleObj.height.toString();
+                            el.dataset.top = top.toString();
+                            el.dataset.initialTop = top.toString();
+                            el.dataset.loaded = "false";
+                            el.style.top = top + "px";
+                            (e.currentTarget).alt = "图片加载错误";
+                        };
+                    })(el).bind(_this);
+                }
+            });
+        };
+        ImagePreview.prototype.handlePcClick = function (e) {
+            /**
+             * 这里把操作派发
+             */
+            var type = (e.target).dataset.type;
+            if (this.operateMaps[type]) {
+                this[this.operateMaps[type]](e);
+                return;
+            }
         };
         ImagePreview.prototype.handleTouchStart = function (e) {
             // preventDefault is very import, because if not do this, we will get 
@@ -443,13 +543,13 @@ define(["require", "exports"], function (require, exports) {
                 case 0:
                     var centerX = curItemWidth / 2;
                     var centerY = curItemHeight / 2;
-                    var top_2 = Number(curItem.dataset.top) || 0;
+                    var top_3 = Number(curItem.dataset.top) || 0;
                     var left = Number(curItem.dataset.left) || 0;
                     var viewTopInitial = Number(curItem.dataset.initialTop);
                     var viewLeftInitial = Number(curItem.dataset.initialLeft);
-                    var disteanceY = curItemViewTop + (centerY) * (1 - scaleY) - top_2 - viewTopInitial;
+                    var disteanceY = curItemViewTop + (centerY) * (1 - scaleY) - top_3 - viewTopInitial;
                     var distanceX = curItemViewLeft + (centerX) * (1 - scaleX) - left - viewLeftInitial;
-                    curItem.style.cssText = ";\n                    top:" + curItem.dataset.top + "px;\n                    left:" + curItem.dataset.left + "px;\n                    width: " + toWidth + "px;\n                    height: " + toHeight + "px;\n                    transform-origin: " + centerX + "px " + centerY + "px;\n                    transform: \n                        rotateZ(" + rotateDeg + "deg) \n                        scale3d(" + scaleX + "," + scaleY + ",1) \n                        translateX(" + -(left + distanceX) / scaleX + "px) \n                        translateY(" + -(top_2 + disteanceY) / scaleY + "px)\n                    ;\n                ";
+                    curItem.style.cssText = ";\n                    top:" + curItem.dataset.top + "px;\n                    left:" + curItem.dataset.left + "px;\n                    width: " + toWidth + "px;\n                    height: " + toHeight + "px;\n                    transform-origin: " + centerX + "px " + centerY + "px;\n                    transform: \n                        rotateZ(" + rotateDeg + "deg) \n                        scale3d(" + scaleX + "," + scaleY + ",1) \n                        translateX(" + -(left + distanceX) / scaleX + "px) \n                        translateY(" + -(top_3 + disteanceY) / scaleY + "px)\n                    ;\n                ";
                     break;
                 case 180:
                 case -180:
@@ -458,11 +558,11 @@ define(["require", "exports"], function (require, exports) {
                         var centerY_1 = curItemHeight / 2;
                         var viewTopInitial_1 = Number(curItem.dataset.initialTop);
                         var viewLeftInitial_1 = Number(curItem.dataset.initialLeft);
-                        var top_3 = Number(curItem.dataset.top);
+                        var top_4 = Number(curItem.dataset.top);
                         var left_1 = Number(curItem.dataset.left) || 0;
-                        var disteanceY_1 = curItemViewTop + (centerY_1) * (1 - scaleY) - top_3 - viewTopInitial_1;
+                        var disteanceY_1 = curItemViewTop + (centerY_1) * (1 - scaleY) - top_4 - viewTopInitial_1;
                         var distanceX_1 = curItemViewLeft + (centerX_1) * (1 - scaleX) - left_1 - viewLeftInitial_1;
-                        curItem.style.cssText = ";\n                        top:" + top_3 + "px;\n                        left:" + left_1 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_1 + "px " + centerY_1 + "px;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + (left_1 + distanceX_1) / scaleX + "px) \n                            translateY(" + (top_3 + disteanceY_1) / scaleY + "px)\n                        ;\n                    ";
+                        curItem.style.cssText = ";\n                        top:" + top_4 + "px;\n                        left:" + left_1 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_1 + "px " + centerY_1 + "px;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + (left_1 + distanceX_1) / scaleX + "px) \n                            translateY(" + (top_4 + disteanceY_1) / scaleY + "px)\n                        ;\n                    ";
                     }
                     break;
                 case -90:
@@ -478,7 +578,7 @@ define(["require", "exports"], function (require, exports) {
                         // next case-expression is same.
                         var viewTopInitial_2 = (conHeight - intialItemWidth) / 2;
                         var viewLeftInitial_2 = (conWidth - intialItemHeight) / 2;
-                        var top_4 = Number(curItem.dataset.top);
+                        var top_5 = Number(curItem.dataset.top);
                         var left_2 = Number(curItem.dataset.left);
                         /**
                          * 缩小的时候要时的图像的位置向原始位置靠近
@@ -490,9 +590,9 @@ define(["require", "exports"], function (require, exports) {
                          * 这个时候就能得到缩小之后图像距离视口顶部的距离，然后再减去原始的高度（变形前的高度）
                          * 就得到了我们最终需要使其在y轴上偏移的距离
                          */
-                        var disteanceY_2 = curItemViewTop + (centerX_2) * (1 - scaleY) - top_4 - viewTopInitial_2;
+                        var disteanceY_2 = curItemViewTop + (centerX_2) * (1 - scaleY) - top_5 - viewTopInitial_2;
                         var distanceX_2 = curItemViewLeft + (centerY_2) * (1 - scaleX) - left_2 - viewLeftInitial_2;
-                        curItem.style.cssText = ";\n                        top:" + top_4 + "px;\n                        left:" + left_2 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_2 + "px " + centerY_2 + "px 0;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + (top_4 + disteanceY_2) / scaleY + "px) \n                            translateY(" + -(left_2 + distanceX_2) / scaleX + "px)\n                        ;\n\n                    ";
+                        curItem.style.cssText = ";\n                        top:" + top_5 + "px;\n                        left:" + left_2 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_2 + "px " + centerY_2 + "px 0;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + (top_5 + disteanceY_2) / scaleY + "px) \n                            translateY(" + -(left_2 + distanceX_2) / scaleX + "px)\n                        ;\n\n                    ";
                     }
                     break;
                 case 90:
@@ -506,11 +606,11 @@ define(["require", "exports"], function (require, exports) {
                         var conHeight = imgContainerRect.height;
                         var viewTopInitial_3 = (conHeight - intialItemWidth) / 2;
                         var viewLeftInitial_3 = (conWidth - intialItemHeight) / 2;
-                        var top_5 = Number(curItem.dataset.top);
+                        var top_6 = Number(curItem.dataset.top);
                         var left_3 = Number(curItem.dataset.left);
-                        var disteanceY_3 = curItemViewTop + (centerX_3) * (1 - scaleY) - top_5 - viewTopInitial_3;
+                        var disteanceY_3 = curItemViewTop + (centerX_3) * (1 - scaleY) - top_6 - viewTopInitial_3;
                         var distanceX_3 = curItemViewLeft + (centerY_3) * (1 - scaleX) - left_3 - viewLeftInitial_3;
-                        curItem.style.cssText = ";\n                        top:" + top_5 + "px;\n                        left:" + left_3 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_3 + "px " + centerY_3 + "px 0;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + -(top_5 + disteanceY_3) / scaleY + "px) \n                            translateY(" + (left_3 + distanceX_3) / scaleX + "px)\n                        ;\n\n                    ";
+                        curItem.style.cssText = ";\n                        top:" + top_6 + "px;\n                        left:" + left_3 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_3 + "px " + centerY_3 + "px 0;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + -(top_6 + disteanceY_3) / scaleY + "px) \n                            translateY(" + (left_3 + distanceX_3) / scaleX + "px)\n                        ;\n\n                    ";
                     }
                     break;
                 default:
@@ -645,8 +745,8 @@ define(["require", "exports"], function (require, exports) {
                         // 放大的时候的移动是查看放大后的图片
                         // 放大的时候,如果到达边界还是进行正常的切屏操作
                         // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                        var imgContainerRect_2 = _this.imgContainer.getBoundingClientRect();
-                        var conWidth_1 = imgContainerRect_2.width;
+                        var imgContainerRect_3 = _this.imgContainer.getBoundingClientRect();
+                        var conWidth_1 = imgContainerRect_3.width;
                         var curItemViewLeft_1 = curItem.getBoundingClientRect().left;
                         var curItemViewRight_1 = curItem.getBoundingClientRect().right;
                         // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
@@ -1317,8 +1417,44 @@ define(["require", "exports"], function (require, exports) {
             images.forEach(function (src) {
                 imagesHtml += "\n            <div class=\"" + _this.prefix + "itemWraper\">\n                <div class=\"" + _this.prefix + "item\">\n                    <img src=\"" + src + "\">\n                </div>\n            </div>\n            ";
             });
+            var genStyle = function (prop) {
+                switch (prop) {
+                    case 'conBackground':
+                        if (_this.envClient == 'pc') {
+                            return 'rgba(0,0,0,0.8)';
+                        }
+                        else {
+                            return 'rgba(0,0,0,1)';
+                        }
+                    case 'imgWidth':
+                        if (_this.envClient == 'pc') {
+                            return '85%';
+                        }
+                        else {
+                            return '100%';
+                        }
+                        ;
+                    case 'itemHeight':
+                        if (_this.envClient == 'pc') {
+                            return '100%';
+                        }
+                        else {
+                            return 'auto';
+                        }
+                        ;
+                    case 'itemScroll':
+                        if (_this.envClient == 'pc') {
+                            return 'auto ';
+                        }
+                        else {
+                            return 'hidden';
+                        }
+                        ;
+                    default: return '';
+                }
+            };
             var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\">\n                    " + imagesHtml + "\n                </div>\n                <div class=\"" + this.prefix + "bottom\">\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\" t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
-            var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: rgba(0,0,0,1);\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 1;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                transform: translateX( " + this.imgContainerMoveX + "px );\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100%;\n                height: 100%;\n                overflow:hidden;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item{\n                box-sizing:border-box;\n                position: absolute;\n                width: 100%;\n                height: auto;\n                font-size: 0;\n                white-space: normal;\n                transition: transform 0.5s;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "item img{\n                width: 100%;\n                height: auto;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: 0;\n                left: 20px;\n                right: 20px;\n                padding:10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 22px;\n                height: 22px;\n                margin-right: 10px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                width: 100%;\n                height: 100%;\n            }\n        ";
+            var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: " + genStyle('conBackground') + ";\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 1;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                transform: translateX( " + this.imgContainerMoveX + "px );\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100% ;\n                height: 100%;\n                overflow: hidden;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item{\n                box-sizing:border-box;\n                position: absolute;\n                width: 100% ;\n                height: " + genStyle('itemHeight') + ";\n                overflow-x: " + genStyle('itemScroll') + ";\n                overflow-y:" + genStyle('itemScroll') + ";\n                font-size: 0;\n                text-align: center;\n                white-space: normal;\n                transition: transform 0.5s;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "item img{\n                width: " + genStyle('imgWidth') + ";\n                height: auto;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: 0;\n                left: 20px;\n                right: 20px;\n                padding:10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 22px;\n                height: 22px;\n                margin-right: 10px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                width: 100%;\n                height: 100%;\n            }\n        ";
             this.ref = document.createElement('div');
             this.ref.className = this.prefix + "imagePreviewer";
             this.ref.innerHTML = html;
@@ -1344,13 +1480,25 @@ define(["require", "exports"], function (require, exports) {
         ImagePreview.prototype.close = function (e) {
             e.stopImmediatePropagation();
             clearTimeout(this.performerClick);
+            this[this.envClient + 'BeforeClose']();
             this.toggleClass(this.ref, this.defToggleClass);
         };
+        ImagePreview.prototype.pcBeforeClose = function () {
+            document.body.style['overflow'] = document.body.dataset['imgPreOverflow'];
+        };
+        ImagePreview.prototype.mobileBeforeClose = function () { };
         ImagePreview.prototype.show = function (index) {
             this.curIndex = index;
             this.imgContainerMoveX = -index * this.screenWidth;
             this.imgContainer.style.left = this.imgContainerMoveX + "px";
+            this[this.envClient + 'ReadyShow']();
             this.toggleClass(this.ref, this.defToggleClass);
+        };
+        ImagePreview.prototype.mobileReadyShow = function () { };
+        ImagePreview.prototype.pcReadyShow = function () {
+            var styleDesc = window.getComputedStyle(document.body);
+            document.body.dataset['imgPreOverflow'] = styleDesc.overflow;
+            document.body.style['overflow'] = 'hidden';
         };
         ImagePreview.prototype.toggleClass = function (ref, className) {
             var classes = ref.className.split(' ');
@@ -1371,6 +1519,14 @@ define(["require", "exports"], function (require, exports) {
         };
         ImagePreview.prototype.destroy = function () {
             this.ref.parentNode.removeChild(this.ref);
+        };
+        ImagePreview.prototype.testEnv = function () {
+            if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {
+                return client.mobile;
+            }
+            else {
+                return client.pc;
+            }
         };
         return ImagePreview;
     }());

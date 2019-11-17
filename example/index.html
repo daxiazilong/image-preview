@@ -50,12 +50,10 @@
     let isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
     if(!isMobile){
         if(confirm(`
-            请务必使用移动端模式打开本项目
-            Be sure to open this project in mobile mode
+            主要适配移动端项目
+            Mainly suitable for mobile terminal
         `)){
-            location.reload();   
         }else{
-            document.body.innerHTML = '';
         };
     }
 </script>

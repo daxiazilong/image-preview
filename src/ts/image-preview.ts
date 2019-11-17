@@ -1,5 +1,5 @@
 /**
- * image-preview 1.0.0
+ * image-preview 1.0.1
  * author:zilong
  * https://github.com/daxiazilong
  * Released under the MIT License
