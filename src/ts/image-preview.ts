@@ -1888,6 +1888,13 @@ export class ImagePreview{
                         }else{
                             return 'hidden'
                         };
+                        
+                case 'item-text-align':
+                    if( this.envClient == 'pc'  ) {
+                        return 'center '
+                    }else{
+                        return 'initial'
+                    };
                 default: return ''
             }
         }
@@ -1975,7 +1982,7 @@ export class ImagePreview{
                 overflow-x: ${genStyle('itemScroll')};
                 overflow-y:${genStyle('itemScroll')};
                 font-size: 0;
-                text-align: center;
+                text-align: ${genStyle('item-text-align')};
                 white-space: normal;
                 transition: transform 0.5s;
             }
