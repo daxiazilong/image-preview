@@ -61,7 +61,7 @@ export class ImagePreview{
     }
 
     public envClient:client;
-    
+    public supportTransitionEnd: String;
     constructor( 
         public options: {
             curImg?: string,
@@ -74,7 +74,7 @@ export class ImagePreview{
         }
 
         this.envClient = this.testEnv();
-
+        this.supportTransitionEnd = this.transitionEnd();
         this.genFrame();
         this.handleReausetAnimate();//requestAnimationFrame兼容性
 
@@ -421,8 +421,16 @@ export class ImagePreview{
             transition: transform 0.5s;
             transform: rotateZ( ${rotateDeg}deg );
         `;
+        if( this.supportTransitionEnd ){
+            let end:string = <string>this.supportTransitionEnd;
+            curItem.addEventListener(end,function(){
+                curItem.dataset.rotateDeg = rotateDeg.toString();
         
-        
+                this.isAnimating = false;
+            },{once:true})
+            return;
+        }
+
         setTimeout(()=>{
             curItem.dataset.rotateDeg = rotateDeg.toString();
         
@@ -451,6 +459,15 @@ export class ImagePreview{
             transition: transform 0.5s;
             transform: rotateZ( ${rotateDeg}deg );
         `
+        if( this.supportTransitionEnd ){
+            let end:string = <string>this.supportTransitionEnd;
+            curItem.addEventListener(end,function(){
+                curItem.dataset.rotateDeg = rotateDeg.toString();
+        
+                this.isAnimating = false;
+            },{once:true})
+            return;
+        }
         setTimeout(()=>{
             curItem.dataset.rotateDeg = rotateDeg.toString();
             
@@ -681,7 +698,37 @@ export class ImagePreview{
             // = mouseY - ( mouseY- curItemTop)*scaleY
             //  = - (scaledY - mouseY)
         }
-
+        if( this.supportTransitionEnd ){
+            let end:string = <string>this.supportTransitionEnd;
+            curItem.addEventListener(end,() => {
+                if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg);
+                        width: ${ toHeight }px;
+                        height: ${ toWidth }px;
+                        left: ${ -(scaledX - mouseX)  }px;
+                        top: ${ -(scaledY - mouseY)  }px;
+                        transition: none;
+                    `;
+                }else{
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg);
+                        width: ${ toWidth }px;
+                        height: ${ toHeight }px;
+                        left: ${ -(scaledX - mouseX)  }px;
+                        top: ${ -(scaledY - mouseY)  }px;
+                        transition: none;
+                    `;
+                }
+                
+                curItem.dataset.top = `${ -(scaledY - mouseY)  }`;
+                curItem.dataset.left = `${ -(scaledX -mouseX)  }`;
+                curItem.dataset.isEnlargement = 'enlargement';
+                
+                this.isAnimating = false;
+            },{once:true})
+            return;
+        }
         setTimeout(() => {
             if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
                 curItem.style.cssText = `;
@@ -880,7 +927,40 @@ export class ImagePreview{
         curItem.dataset.top = curItem.dataset.initialTop;
         curItem.dataset.left =  curItem.dataset.initialLeft;
 
-        
+        if( this.supportTransitionEnd ){
+                let end:string = <string>this.supportTransitionEnd;
+                curItem.addEventListener(end,(e) => {
+                    curItem.style.cssText = `;
+                        transform: rotateZ(${rotateDeg}deg);
+                        top:${Number(curItem.dataset.initialTop)}px;
+                        left: ${Number(curItem.dataset.initialLeft)}px;
+                        width: ${curItem.dataset.initialWidth}px;
+                        height: ${curItem.dataset.initialHeight}px;
+                        transition: none; 
+                        `
+                    ;
+                    {
+                        /**
+                         * bug fix on ios,
+                         * frequent zoom with double-click may
+                         * cause img fuzzy
+                         */
+                        let curImg: HTMLElement = curItem.querySelector(`img`);
+                        let preImgStyle: string = curImg.style.cssText;
+
+                        curImg.style.cssText = `
+                            width: 100%;
+                            height: 100%;
+                        `            
+                        setTimeout(function(){ 
+                            curImg.style.cssText = preImgStyle; 
+                        },10)
+                    }
+                    curItem.dataset.isEnlargement = 'shrink';
+                    this.isAnimating = false;
+            },{once:true})
+            return;
+        }
         setTimeout(() => {
             curItem.style.cssText = `;
                                 transform: rotateZ(${rotateDeg}deg);
@@ -2090,5 +2170,26 @@ export class ImagePreview{
         } else {
             return client.pc
         }
+    }
+    // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
+    // ============================================================
+
+   transitionEnd() {
+        var el = document.createElement('bootstrap')
+
+        var transEndEventNames = {
+        'WebkitTransition' : 'webkitTransitionEnd',
+        'MozTransition'    : 'transitionend',
+        'OTransition'      : 'oTransitionEnd otransitionend',
+        'transition'       : 'transitionend'
+        }
+
+        for (var name in transEndEventNames) {
+            if (el.style[name] !== undefined) {
+                return  transEndEventNames[name];
+            }
+        }
+
+        return '' // explicit for ie8 (  ._.)
     }
 }
