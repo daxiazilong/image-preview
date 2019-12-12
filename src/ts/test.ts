@@ -1,5 +1,6 @@
 import {ImagePreview}  from './image-preview'
 import {ImagePreviewVue} from '../vueComponent/index'
+import { stat } from 'fs';
 
 const Vue = require('vue');
 new ImagePreview({
@@ -46,9 +47,10 @@ new Vue({
         }
     }
 })
+var statShow = document.querySelector('#stat');
+
 window.onerror=function(message, source, lineno, colno, error){
-    var stat = document.querySelector('#stat');
-    stat.innerHTML=`
+    statShow.innerHTML=`
         ${message}
         ${source}
         ${lineno}

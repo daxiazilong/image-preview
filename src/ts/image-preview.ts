@@ -1,5 +1,5 @@
 /**
- * image-preview 1.0.1
+ * image-preview [1.0.2]
  * author:zilong
  * https://github.com/daxiazilong
  * Released under the MIT License
@@ -378,7 +378,7 @@ export class ImagePreview{
          */
 
         const type : string = (<HTMLElement>(e.target)).dataset.type;
-    
+            
         if( this.operateMaps[type] ){
             this[this.operateMaps[type]](e);
             return
@@ -404,28 +404,32 @@ export class ImagePreview{
         this.getMovePoints(e);
     }
     handleRotateLeft(e: TouchEvent & MouseEvent ) :void{
+        if( this.isAnimating ){
+            return;
+        }
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         let rotateDeg:number;
         if( curItem.dataset.loaded == 'false'){
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
+        this.isAnimating = true;
+
         if( curItem.dataset.rotateDeg ){
             rotateDeg = Number(curItem.dataset.rotateDeg)
         }else{
             rotateDeg = 0
         }
+
         rotateDeg -= 90;
-        this.isAnimating = true;
         curItem.style.cssText += `
             transition: transform 0.5s;
             transform: rotateZ( ${rotateDeg}deg );
         `;
         if( this.supportTransitionEnd ){
             let end:string = <string>this.supportTransitionEnd;
-            curItem.addEventListener(end,function(){
+            curItem.addEventListener(end,() => {
                 curItem.dataset.rotateDeg = rotateDeg.toString();
-        
                 this.isAnimating = false;
             },{once:true})
             return;
@@ -433,27 +437,28 @@ export class ImagePreview{
 
         setTimeout(()=>{
             curItem.dataset.rotateDeg = rotateDeg.toString();
-        
             this.isAnimating = false;
         },550)
 
     }
     handleRotateRight(e: TouchEvent & MouseEvent ) :void{
+        if( this.isAnimating ){
+            return;
+        }
         const curItem: HTMLElement = this.imgItems[this.curIndex];
         let rotateDeg:number;
-
+        
         if( curItem.dataset.loaded == 'false'){
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
-
+        this.isAnimating = true;
         if( curItem.dataset.rotateDeg ){
             rotateDeg = Number(curItem.dataset.rotateDeg)
         }else{
             rotateDeg = 0
         }
         rotateDeg += 90;
-        this.isAnimating = true;
 
         curItem.style.cssText += `
             transition: transform 0.5s;
@@ -461,7 +466,7 @@ export class ImagePreview{
         `
         if( this.supportTransitionEnd ){
             let end:string = <string>this.supportTransitionEnd;
-            curItem.addEventListener(end,function(){
+            curItem.addEventListener(end,() => {
                 curItem.dataset.rotateDeg = rotateDeg.toString();
         
                 this.isAnimating = false;
@@ -479,7 +484,9 @@ export class ImagePreview{
         let close: HTMLElement = <HTMLElement> (this.ref.querySelector(`.${this.prefix}close`));
         let bottom: HTMLElement = <HTMLElement>(this.ref.querySelector(`.${this.prefix}bottom`));
         this.showTools = !this.showTools
-
+        if( this.isAnimating){
+            return;
+        }
         if( this.showTools ){
             close.style.display = 'block';
             bottom.style.display = 'block';
@@ -1781,19 +1788,27 @@ export class ImagePreview{
 
     }
     slideNext(){
-        let endX = -(this.curIndex * this.screenWidth);
+        let endX:number = -(this.curIndex * this.screenWidth);
         if( endX < -(this.screenWidth * this.imgsNumber - 1) ){
             endX = -(this.screenWidth * this.imgsNumber - 1);
             this.curIndex = this.imgsNumber -1 ;
         }
         let step: number = this.computeStep( Math.abs( endX - this.imgContainerMoveX ),this.slideTime )
+        if( this.imgContainerMoveX < endX ){/* infinite move */
+            this.slideSelf();
+            return;
+        }
         this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, -step )
     }
     slidePrev(){
-        let endX = -(this.curIndex * this.screenWidth);
+        let endX:number = -(this.curIndex * this.screenWidth);
         if( endX > 0 ){
             endX = 0;
             this.curIndex = 0;
+        }
+        if( this.imgContainerMoveX > endX ){/* infinite move */
+            this.slideSelf();
+            return;
         }
         let step: number = this.computeStep( Math.abs( endX - this.imgContainerMoveX ),this.slideTime )
         this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, step )
@@ -1993,10 +2008,16 @@ export class ImagePreview{
                         <svg data-type="rotateLeft" t="1563884004339" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1099" width="200" height="200"><path d="M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z" p-id="1100" fill="#ffffff"></path></svg>
                     </div>
                     <div class="${this.prefix}item">
-                        <svg data-type="rotateRight" t="1563884064737" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1251" width="200" height="200"><path d="M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z" p-id="1252" fill="#ffffff"></path></svg>
+                        <svg data-type="rotateRight"  t="1563884064737" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1251" width="200" height="200"><path d="M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z" p-id="1252" fill="#ffffff"></path></svg>
                     </div>
                 </div>
         `;
+        let isIPhoneX:boolean = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 375 && window.screen.height === 812;
+        // iPhone XS Max
+        let isIPhoneXSMax:boolean = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 414 && window.screen.height === 896;
+        // iPhone XR
+        let isIPhoneXR:boolean = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 2 && window.screen.width === 414 && window.screen.height === 896;
+        let needHigher: boolean = isIPhoneX || isIPhoneXSMax || isIPhoneXR;
         let style: string =`
             .${this.prefix}imagePreviewer{
                 position: fixed;
@@ -2072,23 +2093,24 @@ export class ImagePreview{
             }
             .${this.prefix}imagePreviewer .${this.prefix}bottom{
                 position: absolute;
-                bottom: 0;
+                bottom: ${needHigher ? 20 : 0};
                 left: 20px;
                 right: 20px;
-                padding:10px;
+                padding: 0 10px;
                 text-align: center;
                 border-top: 1px solid rgba(255, 255, 255, .2);
             }
             .${this.prefix}imagePreviewer .${this.prefix}bottom .${this.prefix}item{
                 display:inline-block;
-                width: 22px;
-                height: 22px;
-                margin-right: 10px;
+                width: 42px;
+                height: 42px;
                 cursor:pointer;
             }
             .${this.prefix}imagePreviewer .${this.prefix}bottom .${this.prefix}item svg{
+                box-sizing: border-box;
                 width: 100%;
                 height: 100%;
+                padding:10px;
             }
         `;
         this.ref = document.createElement('div');

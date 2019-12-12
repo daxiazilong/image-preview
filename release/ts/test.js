@@ -42,7 +42,7 @@ new Vue({
         }
     }
 });
+var statShow = document.querySelector('#stat');
 window.onerror = function (message, source, lineno, colno, error) {
-    var stat = document.querySelector('#stat');
-    stat.innerHTML = "\n        " + message + "\n        " + source + "\n        " + lineno + "\n        " + colno + "\n        " + error + "\n    ";
+    statShow.innerHTML = "\n        " + message + "\n        " + source + "\n        " + lineno + "\n        " + colno + "\n        " + error + "\n    ";
 };

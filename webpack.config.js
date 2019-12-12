@@ -1,7 +1,8 @@
+
   const path = require('path');
   const webpack = require('webpack');
   const HtmlWebpackPlugin = require('html-webpack-plugin');
-  const version = '1.0.0';
+  const version = process.env.npm_package_version;
   const dev = (process.argv[2].split('=')[1]) == "development";
   let compilePath = {
     imagePreview: './src/ts/image-preview-prd.ts'

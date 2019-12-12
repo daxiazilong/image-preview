@@ -1,12 +1,13 @@
 {
   "name": "image-preview",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "image-preview",
   "main": "index.js",
   "scripts": {
     "dev": "webpack-dev-server --mode=development",
-    "build": "tsc --project ./src",
-    "gen-module":"build.cmd"
+    "build": "node gen-version.js && tsc --project ./src",
+    "gen-module": "build.cmd",
+    "release": "standard-version"
   },
   "repository": {
     "url": "https://github.com/daxiazilong/image-preview"
@@ -16,6 +17,7 @@
   "dependencies": {},
   "devDependencies": {
     "html-webpack-plugin": "^3.2.0",
+    "standard-version": "^7.0.1",
     "ts-loader": "^6.0.4",
     "typescript": "^3.6.2",
     "vue": "^2.6.10",

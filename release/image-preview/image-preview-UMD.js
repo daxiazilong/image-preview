@@ -10,7 +10,7 @@
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     /**
-     * image-preview 1.0.1
+     * image-preview [1.0.2]
      * author:zilong
      * https://github.com/daxiazilong
      * Released under the MIT License
@@ -49,6 +49,7 @@
                 this.bindTrigger();
             }
             this.envClient = this.testEnv();
+            this.supportTransitionEnd = this.transitionEnd();
             this.genFrame();
             this.handleReausetAnimate(); //requestAnimationFrame兼容性
             this.threshold = this.screenWidth / 4;
@@ -309,12 +310,16 @@
         };
         ImagePreview.prototype.handleRotateLeft = function (e) {
             var _this = this;
+            if (this.isAnimating) {
+                return;
+            }
             var curItem = this.imgItems[this.curIndex];
             var rotateDeg;
             if (curItem.dataset.loaded == 'false') {
                 // 除了切屏之外对于加载错误的图片一律禁止其他操作
                 return;
             }
+            this.isAnimating = true;
             if (curItem.dataset.rotateDeg) {
                 rotateDeg = Number(curItem.dataset.rotateDeg);
             }
@@ -322,8 +327,15 @@
                 rotateDeg = 0;
             }
             rotateDeg -= 90;
-            this.isAnimating = true;
             curItem.style.cssText += "\n            transition: transform 0.5s;\n            transform: rotateZ( " + rotateDeg + "deg );\n        ";
+            if (this.supportTransitionEnd) {
+                var end = this.supportTransitionEnd;
+                curItem.addEventListener(end, function () {
+                    curItem.dataset.rotateDeg = rotateDeg.toString();
+                    _this.isAnimating = false;
+                }, { once: true });
+                return;
+            }
             setTimeout(function () {
                 curItem.dataset.rotateDeg = rotateDeg.toString();
                 _this.isAnimating = false;
@@ -331,12 +343,16 @@
         };
         ImagePreview.prototype.handleRotateRight = function (e) {
             var _this = this;
+            if (this.isAnimating) {
+                return;
+            }
             var curItem = this.imgItems[this.curIndex];
             var rotateDeg;
             if (curItem.dataset.loaded == 'false') {
                 // 除了切屏之外对于加载错误的图片一律禁止其他操作
                 return;
             }
+            this.isAnimating = true;
             if (curItem.dataset.rotateDeg) {
                 rotateDeg = Number(curItem.dataset.rotateDeg);
             }
@@ -344,8 +360,15 @@
                 rotateDeg = 0;
             }
             rotateDeg += 90;
-            this.isAnimating = true;
             curItem.style.cssText += "\n            transition: transform 0.5s;\n            transform: rotateZ( " + rotateDeg + "deg );\n        ";
+            if (this.supportTransitionEnd) {
+                var end = this.supportTransitionEnd;
+                curItem.addEventListener(end, function () {
+                    curItem.dataset.rotateDeg = rotateDeg.toString();
+                    _this.isAnimating = false;
+                }, { once: true });
+                return;
+            }
             setTimeout(function () {
                 curItem.dataset.rotateDeg = rotateDeg.toString();
                 _this.isAnimating = false;
@@ -355,6 +378,9 @@
             var close = (this.ref.querySelector("." + this.prefix + "close"));
             var bottom = (this.ref.querySelector("." + this.prefix + "bottom"));
             this.showTools = !this.showTools;
+            if (this.isAnimating) {
+                return;
+            }
             if (this.showTools) {
                 close.style.display = 'block';
                 bottom.style.display = 'block';
@@ -514,6 +540,22 @@
                 // = mouseY - ( mouseY- curItemTop)*scaleY
                 //  = - (scaledY - mouseY)
             }
+            if (this.supportTransitionEnd) {
+                var end = this.supportTransitionEnd;
+                curItem.addEventListener(end, function () {
+                    if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
+                        curItem.style.cssText = ";\n                        transform: rotateZ(" + rotateDeg + "deg);\n                        width: " + toHeight + "px;\n                        height: " + toWidth + "px;\n                        left: " + -(scaledX - mouseX) + "px;\n                        top: " + -(scaledY - mouseY) + "px;\n                        transition: none;\n                    ";
+                    }
+                    else {
+                        curItem.style.cssText = ";\n                        transform: rotateZ(" + rotateDeg + "deg);\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        left: " + -(scaledX - mouseX) + "px;\n                        top: " + -(scaledY - mouseY) + "px;\n                        transition: none;\n                    ";
+                    }
+                    curItem.dataset.top = "" + -(scaledY - mouseY);
+                    curItem.dataset.left = "" + -(scaledX - mouseX);
+                    curItem.dataset.isEnlargement = 'enlargement';
+                    _this.isAnimating = false;
+                }, { once: true });
+                return;
+            }
             setTimeout(function () {
                 if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
                     curItem.style.cssText = ";\n                    transform: rotateZ(" + rotateDeg + "deg);\n                    width: " + toHeight + "px;\n                    height: " + toWidth + "px;\n                    left: " + -(scaledX - mouseX) + "px;\n                    top: " + -(scaledY - mouseY) + "px;\n                    transition: none;\n                ";
@@ -626,6 +668,28 @@
             }
             curItem.dataset.top = curItem.dataset.initialTop;
             curItem.dataset.left = curItem.dataset.initialLeft;
+            if (this.supportTransitionEnd) {
+                var end = this.supportTransitionEnd;
+                curItem.addEventListener(end, function (e) {
+                    curItem.style.cssText = ";\n                        transform: rotateZ(" + rotateDeg + "deg);\n                        top:" + Number(curItem.dataset.initialTop) + "px;\n                        left: " + Number(curItem.dataset.initialLeft) + "px;\n                        width: " + curItem.dataset.initialWidth + "px;\n                        height: " + curItem.dataset.initialHeight + "px;\n                        transition: none; \n                        ";
+                    {
+                        /**
+                         * bug fix on ios,
+                         * frequent zoom with double-click may
+                         * cause img fuzzy
+                         */
+                        var curImg_1 = curItem.querySelector("img");
+                        var preImgStyle_1 = curImg_1.style.cssText;
+                        curImg_1.style.cssText = "\n                            width: 100%;\n                            height: 100%;\n                        ";
+                        setTimeout(function () {
+                            curImg_1.style.cssText = preImgStyle_1;
+                        }, 10);
+                    }
+                    curItem.dataset.isEnlargement = 'shrink';
+                    _this.isAnimating = false;
+                }, { once: true });
+                return;
+            }
             setTimeout(function () {
                 curItem.style.cssText = ";\n                                transform: rotateZ(" + rotateDeg + "deg);\n                                top:" + Number(curItem.dataset.initialTop) + "px;\n                                left: " + Number(curItem.dataset.initialLeft) + "px;\n                                width: " + curItem.dataset.initialWidth + "px;\n                                height: " + curItem.dataset.initialHeight + "px;\n                                transition: none; \n                                ";
                 {
@@ -634,11 +698,11 @@
                      * frequent zoom with double-click may
                      * cause img fuzzy
                      */
-                    var curImg_1 = curItem.querySelector("img");
-                    var preImgStyle_1 = curImg_1.style.cssText;
-                    curImg_1.style.cssText = "\n                    width: 100%;\n                    height: 100%;\n                ";
+                    var curImg_2 = curItem.querySelector("img");
+                    var preImgStyle_2 = curImg_2.style.cssText;
+                    curImg_2.style.cssText = "\n                    width: 100%;\n                    height: 100%;\n                ";
                     setTimeout(function () {
-                        curImg_1.style.cssText = preImgStyle_1;
+                        curImg_2.style.cssText = preImgStyle_2;
                     }, 10);
                 }
                 curItem.dataset.isEnlargement = 'shrink';
@@ -1298,6 +1362,10 @@
                 this.curIndex = this.imgsNumber - 1;
             }
             var step = this.computeStep(Math.abs(endX - this.imgContainerMoveX), this.slideTime);
+            if (this.imgContainerMoveX < endX) { /* infinite move */
+                this.slideSelf();
+                return;
+            }
             this.animate(this.imgContainer, 'transform', this.imgContainerMoveX, endX, -step);
         };
         ImagePreview.prototype.slidePrev = function () {
@@ -1305,6 +1373,10 @@
             if (endX > 0) {
                 endX = 0;
                 this.curIndex = 0;
+            }
+            if (this.imgContainerMoveX > endX) { /* infinite move */
+                this.slideSelf();
+                return;
             }
             var step = this.computeStep(Math.abs(endX - this.imgContainerMoveX), this.slideTime);
             this.animate(this.imgContainer, 'transform', this.imgContainerMoveX, endX, step);
@@ -1469,8 +1541,14 @@
                     default: return '';
                 }
             };
-            var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\">\n                    " + imagesHtml + "\n                </div>\n                <div class=\"" + this.prefix + "bottom\">\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\" t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
-            var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: " + genStyle('conBackground') + ";\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 1;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                transform: translateX( " + this.imgContainerMoveX + "px );\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100% ;\n                height: 100%;\n                overflow: hidden;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item{\n                box-sizing:border-box;\n                position: absolute;\n                width: 100% ;\n                height: " + genStyle('itemHeight') + ";\n                overflow-x: " + genStyle('itemScroll') + ";\n                overflow-y:" + genStyle('itemScroll') + ";\n                font-size: 0;\n                text-align: " + genStyle('item-text-align') + ";\n                white-space: normal;\n                transition: transform 0.5s;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "item img{\n                width: " + genStyle('imgWidth') + ";\n                height: auto;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: 0;\n                left: 20px;\n                right: 20px;\n                padding:10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 22px;\n                height: 22px;\n                margin-right: 10px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                width: 100%;\n                height: 100%;\n            }\n        ";
+            var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\">\n                    " + imagesHtml + "\n                </div>\n                <div class=\"" + this.prefix + "bottom\">\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\"  t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
+            var isIPhoneX = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 375 && window.screen.height === 812;
+            // iPhone XS Max
+            var isIPhoneXSMax = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 414 && window.screen.height === 896;
+            // iPhone XR
+            var isIPhoneXR = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 2 && window.screen.width === 414 && window.screen.height === 896;
+            var needHigher = isIPhoneX || isIPhoneXSMax || isIPhoneXR;
+            var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: " + genStyle('conBackground') + ";\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 1;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                transform: translateX( " + this.imgContainerMoveX + "px );\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100% ;\n                height: 100%;\n                overflow: hidden;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item{\n                box-sizing:border-box;\n                position: absolute;\n                width: 100% ;\n                height: " + genStyle('itemHeight') + ";\n                overflow-x: " + genStyle('itemScroll') + ";\n                overflow-y:" + genStyle('itemScroll') + ";\n                font-size: 0;\n                text-align: " + genStyle('item-text-align') + ";\n                white-space: normal;\n                transition: transform 0.5s;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "item img{\n                width: " + genStyle('imgWidth') + ";\n                height: auto;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: " + (needHigher ? 20 : 0) + ";\n                left: 20px;\n                right: 20px;\n                padding: 0 10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 42px;\n                height: 42px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                box-sizing: border-box;\n                width: 100%;\n                height: 100%;\n                padding:10px;\n            }\n        ";
             this.ref = document.createElement('div');
             this.ref.className = this.prefix + "imagePreviewer";
             this.ref.innerHTML = html;
@@ -1543,6 +1621,23 @@
             else {
                 return client.pc;
             }
+        };
+        // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
+        // ============================================================
+        ImagePreview.prototype.transitionEnd = function () {
+            var el = document.createElement('bootstrap');
+            var transEndEventNames = {
+                'WebkitTransition': 'webkitTransitionEnd',
+                'MozTransition': 'transitionend',
+                'OTransition': 'oTransitionEnd otransitionend',
+                'transition': 'transitionend'
+            };
+            for (var name in transEndEventNames) {
+                if (el.style[name] !== undefined) {
+                    return transEndEventNames[name];
+                }
+            }
+            return ''; // explicit for ie8 (  ._.)
         };
         return ImagePreview;
     }());
