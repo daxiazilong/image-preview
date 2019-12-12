@@ -1,6 +1,6 @@
 {
   "name": "image-preview",
-  "version": "1.0.3",
+  "version": "1.0.2",
   "description": "image-preview",
   "main": "index.js",
   "scripts": {
@@ -24,5 +24,10 @@
     "webpack": "^4.35.3",
     "webpack-cli": "^3.3.6",
     "webpack-dev-server": "^3.7.2"
+  },
+  "standard-version": {
+    "skip": {
+        "tag": true
+    }
   }
 }
