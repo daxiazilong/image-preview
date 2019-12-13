@@ -1674,7 +1674,6 @@ class ImagePreview{
 
             let dx: number = endPoint.x - startPoint.x;
             let dy:number = endPoint.y - startPoint.y;
-            let showDebugger = require('../tools')
             let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
             let touchTime = this.moveEndTime - this.moveStartTime;
             // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间

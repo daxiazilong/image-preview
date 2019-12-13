@@ -1244,7 +1244,6 @@ var ImagePreview = /** @class */ (function () {
             };
             var dx = endPoint.x - startPoint.x;
             var dy = endPoint.y - startPoint.y;
-            var showDebugger = require('../tools');
             var degree = Math.atan2(dy, dx) * 180 / Math.PI;
             var touchTime = this.moveEndTime - this.moveStartTime;
             // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
