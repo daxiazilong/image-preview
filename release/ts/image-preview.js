@@ -1242,11 +1242,13 @@ var ImagePreview = /** @class */ (function () {
             };
             var dx = endPoint.x - startPoint.x;
             var dy = endPoint.y - startPoint.y;
+            var showDebugger_1 = require('../tools');
             var degree = Math.atan2(dy, dx) * 180 / Math.PI;
             var touchTime = this.moveEndTime - this.moveStartTime;
             // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
+            // bug fix: on android , there dx,dy is 0,still trigger moveEvent, since add distance restrict
             // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
-            if (touchTime < 90) {
+            if (touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5)) {
                 var boundryObj = { maxTop: maxTop, minTop: minTop, maxLeft: maxLeft, minLeft: minLeft };
                 this.autoMove(curItem, degree, curItemLeft, curItemTop, boundryObj);
             }
