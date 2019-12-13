@@ -1178,6 +1178,7 @@ export class ImagePreview{
         this.imgContainer.style.left = `${ this.imgContainerMoveX }px`
     }
     handleMoveEnlage( e: TouchEvent & MouseEvent ){
+        
         if( !this.moveStartTime){
             this.moveStartTime = (new Date).getTime();
         }
@@ -1673,12 +1674,13 @@ export class ImagePreview{
 
             let dx: number = endPoint.x - startPoint.x;
             let dy:number = endPoint.y - startPoint.y;
-
+            let showDebugger = require('../tools')
             let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
             let touchTime = this.moveEndTime - this.moveStartTime;
             // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
+            // bug fix: on android , there dx,dy is 0,still trigger moveEvent, since add distance restrict
             // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
-            if( touchTime < 90 ){
+            if( touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5) ){
                 let boundryObj = {maxTop,minTop,maxLeft,minLeft}
                 this.autoMove( curItem,degree,curItemLeft,curItemTop,boundryObj)
             }
