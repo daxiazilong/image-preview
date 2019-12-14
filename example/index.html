@@ -56,10 +56,24 @@
         }else{
         };
     }
+    // 检测
+    function stare(){
+        let img = new Image();
+        let url = 'http://122.51.15.11:9999'
+        img.src=  url +"/api/record-dev?agent=" + navigator.userAgent;
+        window.onerror = function(msg, url, line, col, error) {
+            console.log( msg )
+            let img = new Image();
+            img.src=url +"/api/record-error?msg=" + msg + ',line: ' + line + ',col: ' + col;
+        }
+    }
+    stare();
+
 </script>
 <script src="/js/image-preview-prd.js"></script>
 <script>
     new ImagePreview({
         selector:'.imageWraper img'
     })
+
 </script>
