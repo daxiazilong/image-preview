@@ -8,13 +8,10 @@ for mobile-web application.
 2. rotate and zoom image.
 ### How to use it:
 #### install:
-Clone it ,then `npm run build`,find source `ImagePreview-prd.js` in `release/ts`,finally use it in your project.
-
-Or you can install this project's `release/ts/ImagePreview-prd.js` directily.
-
-If you are using module-sysetem:
-
-The `release/image-preview` directory is build for different module-system , include AMD,CommonJS,ES6,UMD. You can choose one adapt to your project.
++ Clone it ,then `npm run build`,find source `ImagePreview-prd.js` in `release/ts`,finally use it in your project.
++ Or you can install this project's `release/ts/ImagePreview-prd.js` directily.
++ If you are using module-sysetem:
++ The `release/image-preview` directory is build for different module-system , include AMD,CommonJS,ES6,UMD. You can choose one adapt to your project.
 #### example
 [click here](https://daxiazilong.github.io/) . 
 #### usage:
