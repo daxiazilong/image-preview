@@ -4,10 +4,7 @@
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
-enum client{
-    pc = "pc",
-    mobile = 'mobile'
-}
+
 class ImagePreview{
     [key:string]: any;
     public showTools: boolean  = true;
@@ -60,7 +57,7 @@ class ImagePreview{
         rotateRight: 'handleRotateRight'
     }
 
-    public envClient:client;
+    public envClient:string;
     public supportTransitionEnd: String;
     constructor( 
         public options: {
@@ -2187,11 +2184,11 @@ class ImagePreview{
     destroy() : void{
         this.ref.parentNode.removeChild(this.ref);
     }
-    testEnv(): client{
+    testEnv(): string{
         if(/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {
-            return client.mobile
+            return 'mobile'
         } else {
-            return client.pc
+            return 'pc'
         }
     }
     // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)

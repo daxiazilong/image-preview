@@ -58,12 +58,11 @@
     }
     // 检测
     function stare(){
-        let img = new Image();
-        let url = 'http://122.51.15.11:9999'
+        var img = new Image();
+        var url = 'http://122.51.15.11:9999'
         img.src=  url +"/api/record-dev?agent=" + navigator.userAgent;
         window.onerror = function(msg, url, line, col, error) {
-            console.log( msg )
-            let img = new Image();
+            var img = new Image();
             img.src=url +"/api/record-error?msg=" + msg + ',line: ' + line + ',col: ' + col;
         }
     }
