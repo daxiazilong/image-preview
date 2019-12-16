@@ -2090,7 +2090,7 @@ export class ImagePreview{
             }
             .${this.prefix}imagePreviewer .${this.prefix}bottom{
                 position: absolute;
-                bottom: ${needHigher ? 20 : 0};
+                bottom: ${needHigher ? 20 : 0}px;
                 left: 20px;
                 right: 20px;
                 padding: 0 10px;
