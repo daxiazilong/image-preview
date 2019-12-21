@@ -14,12 +14,20 @@
 #### 实例
 [点击这里](https://daxiazilong.github.io/) . 
 #### 代码:
+html:
+```html
+  <div class="imageWraper">
+    <img data-src="/images/IMG_0512.JPG" src="/images/IMG_0512.JPG">
+    <img data-src="/images/main_body3.png" src="/images/main_body3.png">
+</div>
+```
+javascript:
 ``` javascript
 //just
 let imgObj = new ImagePreview({
-  selector:``
+  selector:`.imageWraper img`
 })
-//or
+//or mvvm project
 
 let imgObj =  new ImagePreview({
   curImg:'imgsrc',

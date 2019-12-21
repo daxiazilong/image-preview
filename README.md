@@ -15,12 +15,20 @@ for mobile-web application.
 #### example
 [click here](https://daxiazilong.github.io/) . 
 #### usage:
+html:
+```html
+  <div class="imageWraper">
+    <img data-src="/images/IMG_0512.JPG" src="/images/IMG_0512.JPG">
+    <img data-src="/images/main_body3.png" src="/images/main_body3.png">
+</div>
+```
+javascript:
 ``` javascript
 //just
 let imgObj = new ImagePreview({
-  selector:``
+  selector:`.imageWraper img`
 })
-//or
+//or mvvm project
 
 let imgObj =  new ImagePreview({
   curImg:'imgsrc',
