@@ -4,7 +4,7 @@
   "description": "image-preview",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack-dev-server --mode=development",
+    "dev": "webpack-dev-server --mode=development --hide-modules --display none",
     "build": "node gen-version.js && tsc --project ./src",
     "gen-module": "build.cmd",
     "release": "standard-version"
