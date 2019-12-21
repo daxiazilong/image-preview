@@ -19,7 +19,7 @@ html:
   <div class="imageWraper">
     <img data-src="/images/IMG_0512.JPG" src="/images/IMG_0512.JPG">
     <img data-src="/images/main_body3.png" src="/images/main_body3.png">
-</div>
+  </div>
 ```
 javascript:
 ``` javascript
