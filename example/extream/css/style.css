@@ -61,6 +61,22 @@ header{
 		transition:all 1s;
 		position:relative;
 }
+#up .click-bear{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background:rgba(0,0,0,0);
+}
+#down .click-bear{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background:rgba(0,0,0,0);
+}
 .h_top .left1:hover .left{
 	transform:rotateX(-180deg);
 	position:absolute;

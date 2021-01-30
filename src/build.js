@@ -1,34 +1,24 @@
-const fs = require('fs')
 const childProcess = require('child_process')
+const path = require('path');
+let moduler = ['amd','cjs','esm','umd']
 
-let originName = './ts/image-preview.ts';
-let moduler = ['CommonJS','AMD','UMD','ES6']
-let curName = ``
-
+const releasePath = path.resolve(__dirname,'../release/image-preview')
 try{
     function compile(index){
         let mod = moduler[index];
-        let filename = './ts/image-preview.ts';
-        if(index){
-            filename = `./ts/image-preview-${moduler[index-1]}.ts`
-        }
-        curName = `./ts/image-preview-${mod}.ts`;
-        console.log(`正在编译 ./ts/image-preview-${mod}.ts`)
-        fs.renameSync(filename,`./ts/image-preview-${mod}.ts`)
-        childProcess.exec(`..\\node_modules\\.bin\\tsc -m ${mod} -t ES5 --outDir ../release/image-preview ./ts/image-preview-${mod}.ts`,(err)=>{
+        let filename = `${releasePath}/image-preview-${mod}.js`;
+        childProcess.exec(`..\\node_modules\\.bin\\rollup -c -f ${mod} -o ${filename}`,(err)=>{
             if(err){
                 console.log(err)
                 console.log('编译失败')
-                fs.renameSync(curName,originName)
 
                 return;
             }
-            console.log(` ./ts/image-preview-${mod}.ts 编译成功`)
+            console.log(` ${filename} 编译成功`)
             if( index + 1 < moduler.length){
                 compile(index+1)
             }else{
-                fs.renameSync(curName,originName)
-                console.log('success')
+                console.log('全部编译成功')
             }
         })
     }
@@ -37,7 +27,7 @@ try{
 }catch(ex){
     console.log(ex)
     console.log('编译失败')
-    fs.renameSync(curName,originName)
 }
+
 let index = 0;
 compile(index)

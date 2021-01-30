@@ -3,13 +3,13 @@ window.onload=function(){
 		 
 
 			//banner 开始
-			var up=document.getElementById("up");
-			var down=document.getElementById("down");
+			var up=document.querySelector('#up .click-bear');
+			var down=document.querySelector('#down .click-bear');
 			var banner=document.querySelector('.stage-area');
 			var deg=60;
 	
 			var y= 1;//rotateY(a)函数功能等同于rotate3d(0,1,0,a)
-			var ndeg=-60;
+			var ndeg= 0;
 			var count=0;
 			var stagearea=document.getElementsByClassName("stage-area")[0];
 			var bannertimer;
@@ -18,40 +18,54 @@ window.onload=function(){
 			var sname=document.getElementById("sname")
 
 
-			up.addEventListener("click",function(){
+			up.addEventListener("click",function(e){
+				if( animate ) return;
+				animate = true;
+				e.stopPropagation();
 				var orign=window.getComputedStyle(banner,null).transform;
 				var suber=orign.slice(9,orign.length-1);//这两个旋转方向他们之间的差值只要为60就好，只要 有60的差值就会旋转
-					ndeg=(deg-60);
-					//alert("deg和ndeg的值是："+deg+"  "+ndeg);
-					banner.style.transform=" rotateY("+deg+"deg)";
-					deg+=60;
-				//alert("deg和ndeg的值是："+deg+"  "+ndeg);
+
+				ndeg=(ndeg+60);
+				banner.style.transform=" rotateY(" + ndeg+"deg)";
 				sname.innerHTML=sproject[++count];
 				if(count==4)
 					count=0;
-				}
+
+				setTimeout(function(){
+					animate=false;
+
+				},1200)
+
+				},
+				true
 			)
+
 			up.addEventListener("mouseenter",function(){
 				clearInterval(bannertimer);
 				animate=false;
-				}
-			)
+			})
 
-			function downTo(){
+			function downTo(e){
+				e && e.stopPropagation();
 				if(animate)
 					return;
 				animate=true;
-				deg=(ndeg+60);
-				banner.style.transform=" rotateY("+ndeg+"deg)";
+
 				ndeg-=60;
+
+				banner.style.transform=" rotateY("+ndeg+"deg)";
 				if(count==0){
 					count=4;
 					sname.innerHTML=sproject[count];
 					count--;
+				}else{
+					sname.innerHTML=sproject[--count];
+
 				}
-				else
-				sname.innerHTML=sproject[--count];
-				animate=false;
+				setTimeout(function(){
+					animate=false;
+
+				},1200)
 				//alert("deg和ndeg的值是："+deg+"  "+ndeg);
 			}
 
@@ -66,27 +80,34 @@ window.onload=function(){
 				var oEvent=ev||event;                                                                        　
 				var oTo=oEvent.toElement||oEvent.relatedTarget;
 				if(this.contains(oTo))
-					return;
 					rotate();
 			}
-			down.addEventListener("click",downTo)//banner 上下箭头点击事件
+			down.addEventListener("click",downTo,true)//banner 上下箭头点击事件
 			down.addEventListener("mouseenter",function(){
 				clearInterval(bannertimer)
 				animate=false;
-				;})
-				var Circle=document.getElementById("Cgroup").childNodes;
+			})
+				var Circle=document.querySelectorAll("#Cgroup li")
 
 				function liActive(){
 					for(var n=0;n<Circle.lengrh;n++)
-							Circle[n].className="";
-							banner.style.transform=" rotateY("+ndeg*this.index+"deg)";
-							this.className="li_active";
-					}
-				for(var i=0;i<Circle.length;i++)
-					{
-						Circle[i].onclick=liActive;
-						Circle[i].index=i;
-					}//banner 结束
+						Circle[n].className="";
+					
+					var curInddex = Math.abs(( ndeg % 360 ) / 60)
+					console.log( this.index , curInddex )
+					var gap = Math.abs(this.index - curInddex) * 60;
+
+
+					ndeg += gap;
+
+					banner.style.transform=" rotateY("+ ndeg + "deg)";
+					this.className="li_active";
+				}
+
+				for(var i=0;i<Circle.length;i++){
+					Circle[i].onclick=liActive;
+					Circle[i].index=i;
+				}//banner 结束
 
 
 

@@ -1,6 +1,6 @@
 {
   "name": "image-preview",
-  "version": "1.0.4",
+  "version": "1.0.2",
   "description": "image-preview",
   "main": "index.js",
   "scripts": {
