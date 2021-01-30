@@ -1,12 +1,12 @@
 const childProcess = require('child_process')
 const path = require('path');
-let moduler = ['amd','cjs','esm','umd']
+let moduler = ['amd','cjs','esm','umd','iife']
 
 const releasePath = path.resolve(__dirname,'../release/image-preview')
 try{
     function compile(index){
         let mod = moduler[index];
-        let filename = `${releasePath}/image-preview-${mod}.js`;
+        let filename = `${releasePath}\\image-preview-${mod}.js`;
         childProcess.exec(`..\\node_modules\\.bin\\rollup -c -f ${mod} -o ${filename}`,(err)=>{
             if(err){
                 console.log(err)

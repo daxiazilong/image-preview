@@ -1,8 +1,8 @@
 export default {
-    input: '../release/esm/ts/image-preview.js',
+    input: '../release/source/ts/image-preview.js',
     output: {
       file: 'release/image-preview-umd.js',
       format: 'umd',
-      name:'image-preview'
+      name:'imagePreviewModule'
     }
   };
