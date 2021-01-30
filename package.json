@@ -1,13 +1,14 @@
 {
   "name": "image-preview",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "image-preview",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack-dev-server --mode=development --hide-modules --display none",
+    "start": "webpack-dev-server --mode=development --hide-modules --display none",
     "build": "node gen-version.js && tsc --project ./src",
-    "gen-module": "build.cmd",
-    "release": "standard-version"
+    "genModule": "build.cmd",
+    "release": "standard-version",
+    "rollup": "rollup -c"
   },
   "repository": {
     "url": "https://github.com/daxiazilong/image-preview"
@@ -17,6 +18,7 @@
   "dependencies": {},
   "devDependencies": {
     "html-webpack-plugin": "^3.2.0",
+    "rollup": "^2.32.0",
     "standard-version": "^7.0.1",
     "ts-loader": "^6.0.4",
     "typescript": "^3.6.2",
@@ -27,7 +29,7 @@
   },
   "standard-version": {
     "skip": {
-        "tag": true
+      "tag": true
     }
   }
 }
