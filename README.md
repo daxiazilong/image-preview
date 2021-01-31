@@ -9,11 +9,24 @@ for mobile-web application.
 ### How to use it:
 #### install:
 * Clone it ,then `npm run build`,find source `ImagePreview-prd.js` in `release/ts`,finally use it in your project.
-* Or you can install this project's `release/ts/ImagePreview-prd.js` directily.
-* If you are using module-sysetem:
-* The `release/image-preview` directory is built for different module-system , include AMD,CommonJS,ES6,UMD. You can choose one adapt to your project.
+* module-sysetem:
+* The `release/image-preview` directory is built for different module-system , include AMD,CommonJS,ES6,UMD,IIFE. You can choose one adapt to your project.
 #### example
-[click here](http://122.51.15.11:9999) . 
+[click here](https://daxiazilong.github.io/) . 
+#### import 
+  * script (in iife or umd module system,use namespace imagePreviewModule):
+    ``` html
+    <script src="js/image-preview-iife.js">
+    <script>
+      new imagePreviewModule.ImagePreview({
+        // something same with below usage
+      })
+    </script>
+    ```
+  * esmodule:
+    ```javascript
+     import {ImagePreview} from 'js/image-preview-esm.js'
+    ```
 #### usage:
 html:
 ```html

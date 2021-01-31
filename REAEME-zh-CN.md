@@ -7,12 +7,25 @@
 2. 旋转&缩放图片.
 ### 使用方法:
 #### 下载:
-* 克隆本项目，执行npm run build 命令 然后在`release/ts` 项目下找到`ImagePreview-prd.js`就可以直接使用了。
-* 或者直接下载github上的`release/ts/ImagePreview-prd.js` 。
-* 如果你的项目使用了模块管理系统：
-* `release/image-preview`目录下为不同的模块系统生成了不同的代码，你可以选择一个适合你的项目下载下来。
+* 不同模块系统的使用：
+* `release/image-preview`目录下为不同的模块系统生成了不同的代码，包括AMD,CommonJS,ES6,UMD,IIFE，你可以选择一个适合你的项目下载下来。
 #### 实例
-[点击这里](http://122.51.15.11:9999) . 
+[点击这里](https://daxiazilong.github.io/) . 
+#### 引入 
+  * script（在iife或者umd模块系统中使用imagePreviewModule）:
+    ``` html
+    <script src="js/image-preview-iife.js">
+    <script>
+      new imagePreviewModule.ImagePreview({
+        // 这些配置和下面的是一样的
+      })
+    </script>
+    ```
+  * esmodule:
+    ```javascript
+     import {ImagePreview} from 'js/image-preview-esm.js'
+    ```
+
 #### 代码:
 html:
 ```html

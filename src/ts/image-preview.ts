@@ -1,15 +1,13 @@
 /**
- * image-preview [1.0.2]
+ * image-preview [1.1.0]
  * author:zilong
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
-enum client{
-    pc = "pc",
-    mobile = 'mobile'
-}
-export class ImagePreview{
-    [key:string]: any;
+import { Move } from '../action/move';
+import { Zoom } from '../action/zoom';
+import { Rotate } from '../action/rotate';
+class ImagePreview implements Move,Zoom {
     public showTools: boolean  = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
     public performerClick: any;// 单击事件执行计时器
@@ -21,7 +19,7 @@ export class ImagePreview{
     public curIndex: number = 0;//当前第几个图片
     public imgContainerMoveX: number = 0;//图片容器x轴的移动距离
     public imgContainerMoveY: number = 0;//图片容器y轴的移动距离
-    public screenWidth: number = window.innerWidth;//屏幕宽度
+    public containerWidth: number = 0;//屏幕宽度
     public imgsNumber: number ;//图片数量
     public slideTime: number = 300; //切换至下一屏幕时需要的时间
     public zoomScale: number = 0.05;//缩放比例
@@ -60,7 +58,7 @@ export class ImagePreview{
         rotateRight: 'handleRotateRight'
     }
 
-    public envClient:client;
+    public envClient:string;
     public supportTransitionEnd: String;
     constructor( 
         public options: {
@@ -78,19 +76,27 @@ export class ImagePreview{
         this.genFrame();
         this.handleReausetAnimate();//requestAnimationFrame兼容性
 
-        this.threshold = this.screenWidth / 4;
+        this.threshold = this.containerWidth / 4;
         this.imgContainer = this.ref.querySelector(`.${this.prefix}imgContainer`);
+        this.containerWidth = this.imgContainer.getBoundingClientRect().width;
         this.imgItems = this.imgContainer.querySelectorAll(`.${this.prefix}item`);
         this[this.envClient + 'RecordInitialData' ](this.imgItems);
         
-        this.maxMoveX = this.screenWidth / 2;
-        this.minMoveX = -this.screenWidth * (this.imgsNumber - 0.5);
+        this.maxMoveX = this.containerWidth / 2;
+        this.minMoveX = -this.containerWidth * (this.imgsNumber - 0.5);
         
         this[this.envClient + 'Initial' ]();
-
-        
         
     }
+    setToNaturalImgSize(toWidth:number,toHeight:number,scaleX: number, scaleY: number, e: TouchEvent & MouseEvent): void {}
+    setToInitialSize(scaleX: number, scaleY: number, e: TouchEvent & MouseEvent): void {}
+    handleZoom(e: TouchEvent & MouseEvent): void {}
+    handleMove(e: TouchEvent & MouseEvent): void {}
+    handleMoveNormal(e: TouchEvent & MouseEvent): void {}
+    handleMoveEnlage(e: TouchEvent & MouseEvent): void {}
+    handleRotateLeft(e: TouchEvent & MouseEvent ) :void{}
+    handleRotateRight(e: TouchEvent & MouseEvent ) :void{}
+    autoMove(curItem: HTMLElement, deg: number, startX: number, startY: number, { maxTop, minTop, maxLeft, minLeft }: { maxTop: any; minTop: any; maxLeft: any; minLeft: any; }): void {}
     pcInitial(){
         this.ref.addEventListener('click',this.handlePcClick.bind(this));
         this.ref.querySelector(`.${this.prefix}close`).addEventListener('click',this.close.bind(this))
@@ -98,9 +104,9 @@ export class ImagePreview{
         window.addEventListener('resize', (e) => {
             clearTimeout(timer)
             setTimeout( ()=> {
-                this.screenWidth = window.innerWidth;
-                let index = this.curIndex ;
-                this.imgContainerMoveX = -index * this.screenWidth;
+                this.containerWidth = this.imgContainer.getBoundingClientRect().width;
+                let index = this.curIndex ; 
+                this.imgContainerMoveX = -index * this.containerWidth;
 
                 this.imgContainer.style.left = `${this.imgContainerMoveX}px`;
             },17)
@@ -114,12 +120,12 @@ export class ImagePreview{
     }
     bindTrigger(){
         let images: Array<string> = [];
-        let triggerItems: NodeListOf < HTMLElement > = document.querySelectorAll( this.options.selector )
+        let triggerItems: NodeListOf < HTMLElement & HTMLImageElement > = document.querySelectorAll( this.options.selector )
         if( !triggerItems.length ){
             // some operate
         }
         triggerItems.forEach( (element,index) => {
-            images.push( element.dataset.src );
+            images.push( element.dataset.src ||  element.src /** bug fix 2020.07.26 by luffy */ );
         })
 
         this.options.curImg = images[0];
@@ -251,59 +257,49 @@ export class ImagePreview{
          */
         let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
         let imgContainerHeight: number = imgContainerRect.height;
-    
-        els.forEach( ( el,key,parent) => {
+        
+        const record = (el: HTMLElement,img:HTMLImageElement) => {
+            let imgBoundingRect: ClientRect = img.getBoundingClientRect();
+                
+            let top: number = 0;
+            let left: number = 0;
+            let width: number =  imgBoundingRect.width;
+            let height: number = imgBoundingRect.height;
+
+            if( imgBoundingRect.width > img.naturalWidth ){
+                width = img.naturalWidth;
+                height = img.naturalHeight;
+            }
+
+            left = (this.containerWidth - width) / 2;
+            top = (imgContainerHeight - height) /2;
+            top < 0 && ( top = 0 )
+            el.style.width = width + 'px';
+
+            el.dataset.initialWidth = width.toString();
+            el.dataset.initialHeight = height.toString();
+            el.dataset.top = top.toString();
+            el.dataset.initialTop = top.toString();
+            el.dataset.left = left.toString();
+            el.dataset.initialLeft = left.toString();
+            el.dataset.viewTopInitial = imgBoundingRect.top.toString();
+            el.dataset.viewLeftInitial = imgBoundingRect.left.toString();
+            el.dataset.loaded = "true";
+
+            el.style.top = `${top}px`;
+            el.style.left=`${left}px`;
+        }
+        els.forEach( ( el ) => {
             const img: HTMLImageElement = el.querySelector('img');
             if( img.complete ){
-                let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-                let styleObj: ClientRect = el.getBoundingClientRect();
-               
-                
-                styleObj = el.getBoundingClientRect();
-                const top: number = 0;
-                const left: number = 0;
-
-                el.dataset.initialWidth = styleObj.width.toString();
-                el.dataset.initialHeight =  styleObj.height.toString();
-                el.dataset.top = top.toString();
-                el.dataset.initialTop = top.toString();
-                el.dataset.left = left.toString();
-                el.dataset.initialLeft = left.toString();
-                el.dataset.viewTopInitial = styleObj.top.toString();
-                el.dataset.viewLeftInitial = styleObj.left.toString();
-                el.dataset.loaded = "true";
-
-                el.style.top = `${top}px`;
-                el.style.left=`${left}px`;
+                record(el,img);
             }else{
                 el.dataset.loaded = "false";
-                img.onload = (function(el){
-                    
+                img.onload = (function(){
                     return function(){
-                        
-
-                        let styleObj: ClientRect = el.getBoundingClientRect();
-                        
-                        styleObj = el.getBoundingClientRect();
-                        const top: number = 0;
-                        const left: number = 0;
-
-                        el.dataset.initialWidth = styleObj.width.toString();
-                        el.dataset.initialHeight =  styleObj.height.toString();
-                        el.dataset.top = top.toString();
-                        el.dataset.initialTop = top.toString();
-                        el.dataset.left = left.toString();
-                        el.dataset.initialLeft = left.toString();
-                        el.dataset.viewTopInitial = styleObj.top.toString();
-                        el.dataset.viewLeftInitial = styleObj.left.toString();
-                        el.dataset.loaded = "true";
-
-                        el.style.top = `${top}px`;
-                        el.style.left=`${left}px`;
-
+                        record(el,img)
                     }
-                    
-                })(el).bind(this)
+                })().bind(this)
                 img.onerror=(function(el){
                     return function(e: Event ){
                         
@@ -403,82 +399,7 @@ export class ImagePreview{
         this.lastClick = (new Date()).getTime();
         this.getMovePoints(e);
     }
-    handleRotateLeft(e: TouchEvent & MouseEvent ) :void{
-        if( this.isAnimating ){
-            return;
-        }
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
-        let rotateDeg:number;
-        if( curItem.dataset.loaded == 'false'){
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            return;
-        }
-        this.isAnimating = true;
-
-        if( curItem.dataset.rotateDeg ){
-            rotateDeg = Number(curItem.dataset.rotateDeg)
-        }else{
-            rotateDeg = 0
-        }
-
-        rotateDeg -= 90;
-        curItem.style.cssText += `
-            transition: transform 0.5s;
-            transform: rotateZ( ${rotateDeg}deg );
-        `;
-        if( this.supportTransitionEnd ){
-            let end:string = <string>this.supportTransitionEnd;
-            curItem.addEventListener(end,() => {
-                curItem.dataset.rotateDeg = rotateDeg.toString();
-                this.isAnimating = false;
-            },{once:true})
-            return;
-        }
-
-        setTimeout(()=>{
-            curItem.dataset.rotateDeg = rotateDeg.toString();
-            this.isAnimating = false;
-        },550)
-
-    }
-    handleRotateRight(e: TouchEvent & MouseEvent ) :void{
-        if( this.isAnimating ){
-            return;
-        }
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
-        let rotateDeg:number;
-        
-        if( curItem.dataset.loaded == 'false'){
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            return;
-        }
-        this.isAnimating = true;
-        if( curItem.dataset.rotateDeg ){
-            rotateDeg = Number(curItem.dataset.rotateDeg)
-        }else{
-            rotateDeg = 0
-        }
-        rotateDeg += 90;
-
-        curItem.style.cssText += `
-            transition: transform 0.5s;
-            transform: rotateZ( ${rotateDeg}deg );
-        `
-        if( this.supportTransitionEnd ){
-            let end:string = <string>this.supportTransitionEnd;
-            curItem.addEventListener(end,() => {
-                curItem.dataset.rotateDeg = rotateDeg.toString();
-        
-                this.isAnimating = false;
-            },{once:true})
-            return;
-        }
-        setTimeout(()=>{
-            curItem.dataset.rotateDeg = rotateDeg.toString();
-            
-            this.isAnimating = false;
-        },550)
-    }
+    
     
     handleClick(e ? :TouchEvent & MouseEvent){
         let close: HTMLElement = <HTMLElement> (this.ref.querySelector(`.${this.prefix}close`));
@@ -538,6 +459,15 @@ export class ImagePreview{
             }else{
                 toHeight = curItemHeight;
             }
+
+            // 竖直状态下 长图的双击放大放大至设备的宽度大小，
+            if( curItemWidth < this.containerWidth )//长图的初始宽度应该小于屏幕宽度
+             if( toHeight > toWidth ){
+                if( toWidth >= this.containerWidth ){
+                    toWidth = this.containerWidth;
+                    toHeight = (curImg.naturalHeight / curImg.naturalWidth) * toWidth
+                }
+            }
         }
         
         let scaleX: number ;
@@ -571,845 +501,13 @@ export class ImagePreview{
 
         if( scaleX > 1 && scaleY > 1 ){//放大
 
-            this.setToNaturalImgSize( scaleX,scaleY,e);  
+            this.setToNaturalImgSize( toWidth,toHeight,scaleX,scaleY,e);  
             
         }else if( scaleX < 1 && scaleY < 1 ){ 
             this.setToInitialSize( scaleX,scaleY,e);
         }else{
             this.isAnimating = false;
         }
-    }
-    setToNaturalImgSize( scaleX: number , scaleY: number,e: TouchEvent & MouseEvent) :void{
-        /**
-         * 踩坑记
-         * transform-origin 的参考点始终时对其初始位置来说的
-         * scale之后的元素, 实际的偏移路径等于 translate 的位移等于 位移 * scale
-         */
-        let mouseX: number = e.touches[0].clientX;
-        let mouseY: number = e.touches[0].clientY;
-
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
-        const curImg: HTMLImageElement = curItem.querySelector('img');
-
-        // 以下为旋转之后缩放时需要用到的参数
-        const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
-        const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
-
-        const curItemTop: number = Number(curItem.dataset.top) || 0;
-        const curItemLeft: number = Number(curItem.dataset.left) || 0;
-
-        let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
-
-        const centerX: number =  Number(curItem.dataset.initialWidth) / 2;
-        const centerY: number = Number(curItem.dataset.initialHeight) / 2;
-
-        let toWidth: number ;
-        let toHeight: number ;
-
-        if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-                toWidth = curImg.naturalHeight
-                toHeight = curImg.naturalWidth;
-        }else{
-            toWidth = curImg.naturalWidth
-            toHeight = curImg.naturalHeight;
-        }
-       
-
-        switch( rotateDeg % 360 ){
-            case 0:
-                curItem.style.cssText = `;
-                    top:${curItemTop}px;
-                    left:${curItemLeft}px;
-                    transform-origin: ${ centerX }px ${ centerY }px;
-                    transform: 
-                        rotateZ(${rotateDeg}deg) 
-                        scale3d(${ scaleX },${ scaleY },1) 
-                        translateY(${ ( -(mouseY - curItemViewTop - centerY) * (scaleY -1 ) ) / scaleY }px) 
-                        translateX(${ ( -(mouseX - curItemViewLeft- centerX) * (scaleX-1 ) ) / scaleX   }px) 
-                    ;
-                `;
-                break;
-            case -180:
-            case 180:
-                curItem.style.cssText = `;
-                    top:${curItemTop}px;
-                    left: ${curItemLeft}px;
-                    transform-origin: ${ centerX }px ${ centerY }px;
-                    transform: 
-                        rotateZ(${rotateDeg}deg) scale3d(${ scaleX },${ scaleY },1) 
-                        translateY(${ ( (mouseY - curItemViewTop  - centerY) * (scaleY -1 ) ) / scaleY   }px) 
-                        translateX(${ ( (mouseX - curItemViewLeft -  centerX) * (scaleX-1 ) ) / scaleX   }px) 
-                    ;
-                `;
-                break;
-            case -90:
-            case 270:
-                /**
-                 * 笔记：
-                 * 以 y轴偏移距离，因为旋转 -90或270度之后，
-                 * y轴的位移实际又translateX控制，所以需要translateX控制其偏移
-                 * (mouseY - curItemViewTop - centerX) * (scaleX -1 ) 是一个点缩放前后产生的位移偏差
-                 * 再除以scaleX是因为啥呢，是因为上边可能讲过 translate x px 实际效果是 x * scaleX 的大小
-                 */
-                curItem.style.cssText = `;
-                    top: ${curItemTop}px;
-                    left: ${curItemLeft}px;
-                    transform-origin: ${ centerX }px ${ centerY }px ; 
-                    transform: 
-                        rotateZ(${rotateDeg}deg) 
-                        scale3d(${ scaleX },${ scaleY },1) 
-                        translateX(${ ( (mouseY - curItemViewTop - centerX) * (scaleX -1 ) ) / scaleX   }px) 
-                        translateY(${ ( -(mouseX - curItemViewLeft- centerY) * (scaleY -1 ) ) / scaleY   }px) 
-                    ;
-                    
-                `;
-                
-        
-                break;
-                
-            case -270:
-            case 90:
-                    curItem.style.cssText = `;
-                        top: ${curItemTop}px;
-                        left: ${curItemLeft}px;
-                        transform-origin: ${ centerX }px ${ centerY }px ; 
-                        transform: 
-                            rotateZ(${rotateDeg}deg) 
-                            scale3d(${ scaleX },${ scaleY },1) 
-                            translateX(${ ( -(mouseY - curItemViewTop - centerX) * (scaleX -1 ) ) / scaleX   }px) 
-                            translateY(${ ( (mouseX - curItemViewLeft- centerY) * (scaleY -1 ) ) / scaleY   }px) 
-                        ;
-                        
-                    `;
-                break;
-            default:
-                break;
-        } 
-        // 放大之后 图片相对视口位置不变
-
-        let scaledX: number ;
-        let scaledY: number ;
-
-        
-
-        if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-            scaledX = (mouseX - curItemLeft) * scaleY;
-            scaledY = ( mouseY - curItemTop ) * scaleX;
-        }else{
-            scaledX = (mouseX - curItemLeft )* scaleX;
-            scaledY =( mouseY - curItemTop ) * scaleY;
-            // 以y轴偏移的计算为例，以下是setTimout 计算时公式的推导
-            //- ( mouseY - curItemTop ) * (scaleY - 1) - curItemTop)
-            // = curItemTop -  (mouseY - curItemTop)  * (scaleY - 1)   ;
-            // = curItemTop - ( mouseY- curItemTop)*scaleY + (mouseY - curItemTop)   
-            // = mouseY - ( mouseY- curItemTop)*scaleY
-            //  = - (scaledY - mouseY)
-        }
-        if( this.supportTransitionEnd ){
-            let end:string = <string>this.supportTransitionEnd;
-            curItem.addEventListener(end,() => {
-                if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-                    curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg);
-                        width: ${ toHeight }px;
-                        height: ${ toWidth }px;
-                        left: ${ -(scaledX - mouseX)  }px;
-                        top: ${ -(scaledY - mouseY)  }px;
-                        transition: none;
-                    `;
-                }else{
-                    curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg);
-                        width: ${ toWidth }px;
-                        height: ${ toHeight }px;
-                        left: ${ -(scaledX - mouseX)  }px;
-                        top: ${ -(scaledY - mouseY)  }px;
-                        transition: none;
-                    `;
-                }
-                
-                curItem.dataset.top = `${ -(scaledY - mouseY)  }`;
-                curItem.dataset.left = `${ -(scaledX -mouseX)  }`;
-                curItem.dataset.isEnlargement = 'enlargement';
-                
-                this.isAnimating = false;
-            },{once:true})
-            return;
-        }
-        setTimeout(() => {
-            if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-                curItem.style.cssText = `;
-                    transform: rotateZ(${rotateDeg}deg);
-                    width: ${ toHeight }px;
-                    height: ${ toWidth }px;
-                    left: ${ -(scaledX - mouseX)  }px;
-                    top: ${ -(scaledY - mouseY)  }px;
-                    transition: none;
-                `;
-            }else{
-                curItem.style.cssText = `;
-                    transform: rotateZ(${rotateDeg}deg);
-                    width: ${ toWidth }px;
-                    height: ${ toHeight }px;
-                    left: ${ -(scaledX - mouseX)  }px;
-                    top: ${ -(scaledY - mouseY)  }px;
-                    transition: none;
-                `;
-            }
-            
-            curItem.dataset.top = `${ -(scaledY - mouseY)  }`;
-            curItem.dataset.left = `${ -(scaledX -mouseX)  }`;
-            curItem.dataset.isEnlargement = 'enlargement';
-            
-            this.isAnimating = false;
-        },550)
-    }
-    setToInitialSize( scaleX: number , scaleY: number,e: TouchEvent & MouseEvent ){
-
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
-        let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-        const curItemWidth: number = curItem.getBoundingClientRect().width;
-        const curItemHeight: number = curItem.getBoundingClientRect().height;
-
-        // 以下为旋转之后缩放时需要用到的参数
-        const curItemViewTop: number = curItem.getBoundingClientRect().top;//当前元素距离视口的top
-        const curItemViewLeft: number = curItem.getBoundingClientRect().left;//当前元素距离视口的left
-
-        let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0');
-
-        let toWidth: number ;
-        let toHeight: number ;
-
-        if( Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270 ){
-            toWidth = curItemHeight
-            toHeight = curItemWidth;
-            
-        }else{
-            toWidth = curItemWidth
-            toHeight = curItemHeight;
-            
-        }
-        switch( rotateDeg % 360 ){
-            case 0:
-                const centerX: number =  curItemWidth / 2;
-                const centerY: number = curItemHeight / 2;
-
-                let top: number = Number(curItem.dataset.top) || 0;
-                let left: number = Number(curItem.dataset.left) || 0;
-
-                const viewTopInitial:number =   Number(curItem.dataset.initialTop);
-                const viewLeftInitial:number =  Number(curItem.dataset.initialLeft);
-
-                let disteanceY: number =  curItemViewTop  + ( centerY )*(1 - scaleY) - top - viewTopInitial;
-                let distanceX:number = curItemViewLeft + (centerX)*( 1 - scaleX)  - left - viewLeftInitial;
-                curItem.style.cssText = `;
-                    top:${curItem.dataset.top}px;
-                    left:${curItem.dataset.left}px;
-                    width: ${toWidth}px;
-                    height: ${toHeight}px;
-                    transform-origin: ${ centerX }px ${ centerY }px;
-                    transform: 
-                        rotateZ(${rotateDeg}deg) 
-                        scale3d(${ scaleX },${ scaleY },1) 
-                        translateX(${ -(left + distanceX) / scaleX  }px) 
-                        translateY(${ -(  top + disteanceY )/scaleY }px)
-                    ;
-                `;
-                break;
-            case 180:
-            case -180:
-                {
-                    const centerX: number =  curItemWidth / 2;
-                    const centerY: number = curItemHeight / 2;
-
-                    const viewTopInitial:number = Number(curItem.dataset.initialTop);
-                    const viewLeftInitial:number = Number(curItem.dataset.initialLeft);
-
-                    let top: number = Number(curItem.dataset.top);
-                    let left: number = Number(curItem.dataset.left) || 0;
-
-                    let disteanceY: number =  curItemViewTop  + ( centerY )*(1 - scaleY) - top - viewTopInitial;
-                    let distanceX:number = curItemViewLeft + (centerX)*( 1 - scaleX)  - left - viewLeftInitial;
-                    
-                    curItem.style.cssText = `;
-                        top:${top}px;
-                        left:${left}px;
-                        width: ${toWidth}px;
-                        height: ${toHeight}px;
-                        transform-origin: ${ centerX }px ${ centerY }px;
-                        transform: 
-                            rotateZ(${rotateDeg}deg) 
-                            scale3d(${ scaleX },${ scaleY },1) 
-                            translateX(${ (left + distanceX) / scaleX  }px) 
-                            translateY(${ (  top + disteanceY )/scaleY }px)
-                        ;
-                    `;
-                }
-                break;
-            case -90:
-            case 270:
-                {  
-                    const centerX: number =  curItemHeight / 2;
-                    const centerY: number = curItemWidth / 2;
-
-                    let intialItemWidth: number = Number(curItem.dataset.initialWidth);
-                    let intialItemHeight: number = Number( curItem.dataset.initialHeight);
-                    let conWidth : number = imgContainerRect.width;
-                    let conHeight: number = imgContainerRect.height;
-                    // 90 and 270 deg is derived from 0 deg state
-                    // next case-expression is same.
-                    const viewTopInitial:number =  (conHeight - intialItemWidth) / 2;
-                    const viewLeftInitial:number = (conWidth - intialItemHeight) / 2;
-
-                    let top: number = Number(curItem.dataset.top);
-                    let left: number = Number(curItem.dataset.left);
-
-                    /**
-                     * 缩小的时候要时的图像的位置向原始位置靠近
-                     * 以y轴得位移举例
-                     * 放大之后 再缩小时 图像顶部移动的距离  centerX*(1-scaleY)
-                     *  这个式子是这么推导而来的  Math.abs(centerX* scaleY - centerX)
-                     * (这是缩放前后产生的位移距离)，
-                     * 减去top（这是使用translate抵消top时产生的y轴位移，使其位置和top等于0时的位置一样）
-                     * 这个时候就能得到缩小之后图像距离视口顶部的距离，然后再减去原始的高度（变形前的高度）
-                     * 就得到了我们最终需要使其在y轴上偏移的距离
-                     */
-                    let disteanceY: number =  curItemViewTop  + ( centerX )* (1 -scaleY )  - top - viewTopInitial;
-                    let distanceX:number = curItemViewLeft + (centerY)*(1-scaleX) - left - viewLeftInitial;
-                    curItem.style.cssText = `;
-                        top:${top}px;
-                        left:${left}px;
-                        width: ${toWidth}px;
-                        height: ${toHeight}px;
-                        transform-origin: ${centerX}px ${centerY}px 0;
-                        transform: 
-                            rotateZ(${rotateDeg}deg) 
-                            scale3d(${ scaleX },${ scaleY },1) 
-                            translateX(${ (  top + disteanceY )/scaleY }px) 
-                            translateY(${ -(left + distanceX) / scaleX  }px)
-                        ;
-
-                    `;
-                    }
-                break;
-            case 90:   
-            case -270:
-                {
-                    const centerX: number =  curItemHeight / 2;
-                    const centerY: number = curItemWidth / 2;
-
-                    let intialItemWidth: number = Number(curItem.dataset.initialWidth);
-                    let intialItemHeight: number = Number( curItem.dataset.initialHeight);
-                    let conWidth : number = imgContainerRect.width;
-                    let conHeight: number = imgContainerRect.height;
-                    
-                    const viewTopInitial:number =  (conHeight - intialItemWidth) / 2;
-                    const viewLeftInitial:number = (conWidth - intialItemHeight) / 2;
-
-                    let top: number = Number(curItem.dataset.top);
-                    let left: number = Number(curItem.dataset.left);
-
-                    let disteanceY: number =  curItemViewTop  + ( centerX )*( 1 - scaleY ) - top - viewTopInitial;
-                    let distanceX:number = curItemViewLeft + (centerY)*( 1 -scaleX ) - left - viewLeftInitial;
-
-                    curItem.style.cssText = `;
-                        top:${top}px;
-                        left:${left}px;
-                        width: ${toWidth}px;
-                        height: ${toHeight}px;
-                        transform-origin: ${centerX}px ${centerY}px 0;
-                        transform: 
-                            rotateZ(${rotateDeg}deg) 
-                            scale3d(${ scaleX },${ scaleY },1) 
-                            translateX(${ -(  top + disteanceY )/scaleY }px) 
-                            translateY(${ (left + distanceX) / scaleX  }px)
-                        ;
-
-                    `;
-                }
-                break;
-            default:
-                break;
-        }  
-        curItem.dataset.top = curItem.dataset.initialTop;
-        curItem.dataset.left =  curItem.dataset.initialLeft;
-
-        if( this.supportTransitionEnd ){
-                let end:string = <string>this.supportTransitionEnd;
-                curItem.addEventListener(end,(e) => {
-                    curItem.style.cssText = `;
-                        transform: rotateZ(${rotateDeg}deg);
-                        top:${Number(curItem.dataset.initialTop)}px;
-                        left: ${Number(curItem.dataset.initialLeft)}px;
-                        width: ${curItem.dataset.initialWidth}px;
-                        height: ${curItem.dataset.initialHeight}px;
-                        transition: none; 
-                        `
-                    ;
-                    {
-                        /**
-                         * bug fix on ios,
-                         * frequent zoom with double-click may
-                         * cause img fuzzy
-                         */
-                        let curImg: HTMLElement = curItem.querySelector(`img`);
-                        let preImgStyle: string = curImg.style.cssText;
-
-                        curImg.style.cssText = `
-                            width: 100%;
-                            height: 100%;
-                        `            
-                        setTimeout(function(){ 
-                            curImg.style.cssText = preImgStyle; 
-                        },10)
-                    }
-                    curItem.dataset.isEnlargement = 'shrink';
-                    this.isAnimating = false;
-            },{once:true})
-            return;
-        }
-        setTimeout(() => {
-            curItem.style.cssText = `;
-                                transform: rotateZ(${rotateDeg}deg);
-                                top:${Number(curItem.dataset.initialTop)}px;
-                                left: ${Number(curItem.dataset.initialLeft)}px;
-                                width: ${curItem.dataset.initialWidth}px;
-                                height: ${curItem.dataset.initialHeight}px;
-                                transition: none; 
-                                `
-            ;
-            {
-                /**
-                 * bug fix on ios,
-                 * frequent zoom with double-click may
-                 * cause img fuzzy
-                 */
-                let curImg: HTMLElement = curItem.querySelector(`img`);
-                let preImgStyle: string = curImg.style.cssText;
-
-                curImg.style.cssText = `
-                    width: 100%;
-                    height: 100%;
-                `            
-                setTimeout(function(){ 
-                    curImg.style.cssText = preImgStyle; 
-                },10)
-            }
-            curItem.dataset.isEnlargement = 'shrink';
-            this.isAnimating = false;
-        },550)
-    }
-    handleMove(e: TouchEvent & MouseEvent){
-        e.preventDefault();
-        if( this.isAnimating ){
-            return;
-        } 
-
-        // 双指缩放时的处理
-        if( e.touches.length == 2 ){
-            clearTimeout(this.performerRecordMove); 
-            clearTimeout( this.performerClick )
-
-            this.performerRecordMove = 0;
-            this.handleZoom( e );
-            return;
-        }
-
-        if( this.isZooming ){
-            // 执行了缩放操作，则不进行任何移动
-            // 这个值会在手指全部离开屏幕后重置
-            return;
-        }
-        let curTouchX: number = e.touches[0].clientX;
-        let curTouchY: number = e.touches[0].clientY;
-        if( (this.touchStartX - curTouchX) > 2 && Math.abs( this.touchStartY - curTouchY ) > 2 ){
-            clearTimeout( this.performerClick )
-        }
-       
-
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
-     
-        let isBoundaryLeft: boolean = curItem.dataset.toLeft == 'true';
-        let isBoundaryRight: boolean = curItem.dataset.toRight == 'true'
-        let direction: string = e.touches[0].clientX - this.startX > 0 ? 'right':'left';
-
-        const curItemViewLeft: number = curItem.getBoundingClientRect().left;
-        const curItemViewRight: number = curItem.getBoundingClientRect().right;
-        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
-        const conWidth: number = imgContainerRect.width;
-
-        /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
-         * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
-         * 并启动一个计时器 一定时间之后处理移动方向
-         **/
-        if( this.fingerDirection ){
-            this.performerRecordMove = 0;
-            if( curItem.dataset.isEnlargement == 'enlargement' ){
-                // 放大的时候的移动是查看放大后的图片
-
-                // 放大的时候,如果到达边界还是进行正常的切屏操作
-                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                
-                // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
-
-                if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
-                    if( 
-                        (
-                            (isBoundaryLeft && direction == 'right') ||
-                             (isBoundaryRight && direction == 'left') || 
-                             (this.isEnlargeMove)
-                        ) && 
-                        (this.fingerDirection == 'horizontal')  ){
-                        this.isEnlargeMove = true;
-                        this.handleMoveNormal(e)
-                    }else{
-                        this.handleMoveEnlage(e);
-                    }
-                }else{
-                    if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove) ){
-                        this.isEnlargeMove = true;
-                        this.handleMoveNormal(e)
-                    }else{
-                        this.handleMoveEnlage(e);
-                    }
-                }
-                
-            }else{
-                //正常情况下的移动是图片左右切换
-                this.handleMoveNormal(e)
-            }
-            this.isMotionless = false;
-
-
-        }else{
-
-            // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
-            if( 
-                ( curItem.dataset.isEnlargement == 'enlargement' &&  curItemViewLeft < 0 && curItemViewRight > conWidth )
-                 ||
-                ( curItem.dataset.isEnlargement !== 'enlargement' )
-            
-            ){
-                if( curItem.dataset.isEnlargement == 'enlargement' &&  curItemViewLeft < 0 && curItemViewRight > conWidth ){
-                    this.handleMoveEnlage(e);
-                }else if(curItem.dataset.isEnlargement !== 'enlargement'){
-                    this.handleMoveNormal(e)
-
-                }
-                this.isMotionless = false;
-
-                return;
-            }
-
-            this.getMovePoints( e );
-            if( this.performerRecordMove ){
-                return;
-            }
-            this.performerRecordMove = setTimeout( () => {
-                let L: number = this.movePoints.length;
-                if( L == 0 ) return;
-                let endPoint:{x:number,y:number} = this.movePoints[L-1];
-                let startPoint: { x:number,y:number } = this.movePoints[0];
-
-                let dx: number = endPoint.x - startPoint.x;
-                let dy:number = endPoint.y - startPoint.y;
-
-                let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
-                
-                if( Math.abs( 90 - Math.abs(degree) ) < 30 ){
-                    this.fingerDirection = 'vertical'
-                }else{
-                    this.fingerDirection ='horizontal'
-                }
-                if( curItem.dataset.isEnlargement == 'enlargement' ){
-                    // 放大的时候的移动是查看放大后的图片
-
-                    // 放大的时候,如果到达边界还是进行正常的切屏操作
-                    // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                    const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
-                    const conWidth: number = imgContainerRect.width;
-
-                    const curItemViewLeft: number = curItem.getBoundingClientRect().left;
-                    const curItemViewRight: number = curItem.getBoundingClientRect().right;
-                    // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
-
-                    if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
-                        if( 
-                            (
-                                (isBoundaryLeft && direction == 'right') ||
-                                (isBoundaryRight && direction == 'left') || 
-                                (this.isEnlargeMove)
-                            ) && 
-                            (this.fingerDirection == 'horizontal')  ){
-                            this.isEnlargeMove = true;
-                            this.handleMoveNormal(e)
-                        }else{
-                            this.handleMoveEnlage(e);
-                        }
-                    }else{
-                        if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove) ){
-                            this.isEnlargeMove = true;
-                            this.handleMoveNormal(e)
-                        }else{
-                            this.handleMoveEnlage(e);
-                        }
-                    }
-                    
-                }else{
-                    //正常情况下的移动是图片左右切换
-                    this.handleMoveNormal(e)
-                }
-                this.isMotionless = false;
-            },25)
-        }     
-    }
-    handleMoveNormal( e: TouchEvent & MouseEvent ){
-        let curX: number = Math.round(e.touches[0].clientX);
-
-        let offset = curX - this.startX;
-        this.imgContainerMoveX += offset;
-        if( this.imgContainerMoveX > this.maxMoveX  ){
-            this.imgContainerMoveX = this.maxMoveX;
-        }else if( this.imgContainerMoveX < this.minMoveX ){
-            this.imgContainerMoveX = this.minMoveX;
-        }
-        this.startX = curX;
-
-        this.imgContainer.style.left = `${ this.imgContainerMoveX }px`
-    }
-    handleMoveEnlage( e: TouchEvent & MouseEvent ){
-        
-        if( !this.moveStartTime){
-            this.moveStartTime = (new Date).getTime();
-        }
-        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
-        const conWidth: number = imgContainerRect.width;
-        const conHeight: number = imgContainerRect.height;
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
-
-        if( curItem.dataset.loaded == 'false'){
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            return;
-        }
-
-        const curItemWidth: number = curItem.getBoundingClientRect().width;
-        const curItemHeihgt: number = curItem.getBoundingClientRect().height;
-
-        const viewLeft: number = curItem.getBoundingClientRect().left;
-        const viewRight: number = curItem.getBoundingClientRect().right;
-        let curX: number = Math.round(e.touches[0].clientX);
-        let curY: number = Math.round(e.touches[0].clientY);
-
-        let offsetX: number  = curX - this.startX;
-        let offsetY: number  = curY - this.startY;
-
-        const curItemTop: number  = Number(curItem.dataset.top);
-        const curItemLeft: number  = Number(curItem.dataset.left);
-
-        
-
-        let curTop: number ;
-        let curLeft: number;
-        // 如果容器内能完整展示图片就不需要移动
-        if( viewLeft < 0 || viewRight > conWidth ){
-            curLeft = curItemLeft + offsetX;
-        }else{
-            curLeft = curItemLeft;
-        }
-
-        if( curItemHeihgt > conHeight ){
-            curTop = curItemTop + offsetY
-        }else{
-            curTop = curItemTop
-        }
-
-        curItem.style.cssText += `
-            top: ${curTop}px;
-            left: ${ curLeft }px;
-        `
-        curItem.dataset.top = (curTop).toString();
-        curItem.dataset.left = (curLeft).toString();
-        this.startX = curX;
-        this.startY = curY;
-
-        
-
-    }
-    handleZoom(e: TouchEvent & MouseEvent ) :void{
-        if( !this.isZooming ){
-            this.curStartPoint1 = {
-                x: this.curPoint1.x,
-                y: this.curPoint1.y
-            }
-            this.curStartPoint2 = {
-                x: this.curPoint2.x,
-                y: this.curPoint2.y
-            }
-        }
-        this.isZooming = true;
-        this.isAnimating = true;
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
-
-        if( curItem.dataset.loaded == 'false'){
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            this.isAnimating = false;
-            return;
-        }
-
-        
-        const curItemWidth: number = curItem.getBoundingClientRect().width;
-        const curItemHeihgt: number = curItem.getBoundingClientRect().height;
-
-        const distaceBefore: number = 
-            Math.sqrt( Math.pow( this.curPoint1.x - this.curPoint2.x,2) + Math.pow( this.curPoint1.y - this.curPoint2.y,2) );
-
-        const distanceNow: number = 
-            Math.sqrt( Math.pow( e.touches[0].clientX - e.touches[1].clientX,2) + Math.pow( e.touches[0].clientY - e.touches[1].clientY,2) );
-        
-        let top: number = Number(curItem.dataset.top) || 0;
-        let left: number = Number(curItem.dataset.left) || 0;
-        
-        const centerX: number = ( this.curStartPoint1.x + this.curStartPoint2.x ) / 2 - left;
-        const centerY: number = ( this.curStartPoint1.y + this.curStartPoint2.y ) / 2 - top;
-        
-        this.curPoint1.x = e.touches[0].clientX;
-        this.curPoint1.y = e.touches[0].clientY;
-        this.curPoint2.x = e.touches[1].clientX;
-        this.curPoint2.y = e.touches[1].clientY;
-        
-
-        let rotateDeg: number = Number(curItem.dataset.rotateDeg || '0')
-
-        /**
-         * 踩坑记：
-         * 因为双指所确定的中心坐标 其参考起点始终是
-         * 相对于视口的，那么在图片不断放大之后 其所确定的中心坐标必然会较实际有所误差
-         * 所以这里在  放大的时候 同时需要在xy坐标加上其实际已经偏移的距离
-         * 因为放大之后偏移值必为负值，所以要减 负负得正嘛
-         */
-        if( distaceBefore > distanceNow ){//缩小
-            const centerX: number = ( this.curStartPoint1.x + this.curStartPoint2.x ) / 2 - left;
-            const centerY: number = ( this.curStartPoint1.y + this.curStartPoint2.y ) / 2 - top;
-            
-            curItem.dataset.top = (top + (this.zoomScale)*centerY ).toString();
-            curItem.dataset.left = (left + (this.zoomScale)*centerX ).toString();
-            let width: number = curItemWidth * (1 - this.zoomScale);
-            let height: number = curItemHeihgt * (1 - this.zoomScale);
-            
-            
-            switch( Math.abs(rotateDeg % 360) ){
-                case 0:
-                case 180:
-                        if( width <= Number(curItem.dataset.initialWidth) ){
-                            width = Number(curItem.dataset.initialWidth);
-                            height = Number(curItem.dataset.initialHeight)
-                            curItem.dataset.top = curItem.dataset.initialTop;
-                            curItem.dataset.left = curItem.dataset.initialLeft;
-                            curItem.dataset.isEnlargement = 'shrink';
-                        }
-                    
-                    break;
-                case 90:
-                case 270:
-                        if( height <= Number(curItem.dataset.initialWidth) ){
-                            width = Number(curItem.dataset.initialHeight);
-                            height = Number(curItem.dataset.initialWidth);
-                            curItem.dataset.top = curItem.dataset.initialTop;
-                            curItem.dataset.left = curItem.dataset.initialLeft;
-                            curItem.dataset.isEnlargement = 'shrink';
-                        }
-                    
-                    break;
-            }
-            
-            
-            
-            /**
-             * 采坑记：
-             * 旋转 90 270 这些体位的时候 ，width和height得交换下位置
-             * 下同
-             */
-            
-            switch( Math.abs(rotateDeg % 360) ){
-                case 0:
-                case 180:
-                    curItem.style.cssText = `
-                            transform: rotateZ(${rotateDeg}deg); 
-                            width: ${width}px;
-                            height: ${height}px;
-                            top: ${ curItem.dataset.top }px;
-                            left: ${ curItem.dataset.left }px;
-                    `
-                    break;
-                case 90:
-                case 270:
-                    curItem.style.cssText = `
-                            transform: rotateZ(${rotateDeg}deg); 
-                            height: ${width}px;
-                            width: ${height}px;
-                            left: ${ curItem.dataset.left }px;
-                            top: ${ curItem.dataset.top }px;
-                    `
-                    ;
-                    break;
-                default:
-                    break;
-            }
-            
-
-        }else if( distaceBefore < distanceNow ){//放大
-            
-            curItem.dataset.isEnlargement = 'enlargement';
-
-            switch( Math.abs(rotateDeg % 360) ){
-                case 0:
-                case 180:{
-                    // biggest width for zoom in
-                    let maxWidth = this.screenWidth * 4;
-                    if( curItemWidth*(1+this.zoomScale) > maxWidth ){
-                        this.isAnimating = false;
-                        return;
-                    }
-                    curItem.dataset.top = (top - (this.zoomScale)*centerY ).toString();
-                    curItem.dataset.left = (left - (this.zoomScale)*centerX ).toString();
-                    curItem.style.cssText += `
-                            width: ${curItemWidth*(1+this.zoomScale)}px;
-                            height: ${curItemHeihgt*(1+this.zoomScale)}px;
-                            top: ${ curItem.dataset.top }px;
-                            left: ${ curItem.dataset.left }px;
-                    `
-                }
-                    
-                break;
-                case 90:
-                case 270:{
-                    // biggest width for zoom in
-                    let maxWidth = this.screenWidth * 4;
-                    if( curItemHeihgt*(1+this.zoomScale) > maxWidth ){
-                        this.isAnimating = false;
-                        return;
-                    }
-                    curItem.dataset.top = (top - (this.zoomScale)*centerY ).toString();
-                    curItem.dataset.left = (left - (this.zoomScale)*centerX ).toString();
-                    curItem.style.cssText += `
-                            height: ${curItemWidth*(1+this.zoomScale)}px;
-                            width: ${curItemHeihgt*(1+this.zoomScale)}px;
-                            left: ${ curItem.dataset.left }px;
-                            top: ${ curItem.dataset.top }px;
-                    `
-                    ;
-                }
-                    
-                break;
-                default:
-                    break;
-            }
-            
-            
-
-        }
-
-        this.isAnimating = false;
     }
     handleToucnEnd(e: TouchEvent & MouseEvent){
         e.preventDefault();
@@ -1678,7 +776,8 @@ export class ImagePreview{
             let touchTime = this.moveEndTime - this.moveStartTime;
             // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
             // bug fix: on android , there dx,dy is 0,still trigger moveEvent, since add distance restrict
-            // 上边确定的degree时以y轴上半轴 从0 - 180 变化，y轴下半轴从 0 - -180变化
+            // 上边确定的degree时 Math.atan2会返回这个向量相对原点的偏移角度，我们借此拿到直线的斜率进而根据直线方程确定
+            // 要滑动的x y的值
             if( touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5) ){
                 let boundryObj = {maxTop,minTop,maxLeft,minLeft}
                 this.autoMove( curItem,degree,curItemLeft,curItemTop,boundryObj)
@@ -1710,88 +809,10 @@ export class ImagePreview{
             this.slideSelf();
         }
     }
-    autoMove(curItem:HTMLElement,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}):void{
-        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
-        const conWidth: number = imgContainerRect.width;
-        const conHeight: number = imgContainerRect.height;
-
-        const curItemViewTop: number = curItem.getBoundingClientRect().top;
-        const curItemViewBottom: number = curItem.getBoundingClientRect().bottom;
-        const curItemViewLeft: number = curItem.getBoundingClientRect().left;
-        const curItemViewRight: number = curItem.getBoundingClientRect().right;
-        deg = (deg / 180) * Math.PI;
-        let distance: number = 500;
-        let offsetX: number = Math.round(distance * Math.cos( deg ))
-        let offsetY: number = Math.round(distance * Math.sin(deg));
-
-        let endX = startX + offsetX;
-        let endY = startY + offsetY;
-        if( endX > maxLeft ){
-            endX = maxLeft
-        }else if( endX < minLeft ){
-            endX = minLeft
-        }
-
-        if( endY > maxTop){
-            endY = maxTop
-        }else if( endY < minTop ){
-            endY = minTop
-        }
-
-        let stepX: number = this.computeStep( startX - endX,300 );
-        let stepY: number = this.computeStep( startY - endY ,300 );
-
-        // 容器宽度能容纳图片宽度，则水平方向不需要移动，
-        // 容器高度能容纳图片高度，则垂直方向不需要移动。
-
-        let moveStyles: Array<{
-            prop: string,
-            start: number,
-            end: number,
-            step: number
-        }> = [];
-        if( !(curItemViewLeft >= 0 && curItemViewRight <= conWidth) ){
-            moveStyles.push({
-                prop: 'left',
-                start: startX,
-                end: endX,
-                step: -stepX
-            })
-            curItem.dataset.left = `${endX}`;
-        }
-        if( !( curItemViewTop >= 0 && curItemViewBottom <= conHeight ) ){
-            moveStyles.push({
-                prop:'top',
-                start: startY,
-                end: endY,
-                step: -stepY
-            })
-            curItem.dataset.top = `${endY}`;
-        }
-        this.animateMultiValue(curItem,moveStyles)
-        if( endX == maxLeft ){
-            //toLeft 即为到达左边界的意思下同
-            curItem.dataset.toLeft = 'true';
-            curItem.dataset.toRight = 'false';
-            
-        }else if( endX == minLeft ){
-            curItem.dataset.toLeft = 'false';
-            curItem.dataset.toRight = 'true';
-        }
-
-        if( endY == maxTop ){
-            curItem.dataset.toTop = 'true';
-            curItem.dataset.toBottom = 'false';
-        }else if( endY == minTop ){
-            curItem.dataset.toTop = 'false';
-            curItem.dataset.toBottom = 'true';
-        }
-
-    }
     slideNext(){
-        let endX:number = -(this.curIndex * this.screenWidth);
-        if( endX < -(this.screenWidth * this.imgsNumber - 1) ){
-            endX = -(this.screenWidth * this.imgsNumber - 1);
+        let endX:number = -(this.curIndex * this.containerWidth);
+        if( endX < -(this.containerWidth * this.imgsNumber - 1) ){
+            endX = -(this.containerWidth * this.imgsNumber - 1);
             this.curIndex = this.imgsNumber -1 ;
         }
         let step: number = this.computeStep( Math.abs( endX - this.imgContainerMoveX ),this.slideTime )
@@ -1802,7 +823,7 @@ export class ImagePreview{
         this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, -step )
     }
     slidePrev(){
-        let endX:number = -(this.curIndex * this.screenWidth);
+        let endX:number = -(this.curIndex * this.containerWidth);
         if( endX > 0 ){
             endX = 0;
             this.curIndex = 0;
@@ -1816,7 +837,7 @@ export class ImagePreview{
     }
     slideSelf(){
  
-        let endX = -(this.curIndex * this.screenWidth);
+        let endX = -(this.curIndex * this.containerWidth);
         if( endX < this.imgContainerMoveX ){
             let step: number = this.computeStep( Math.abs( endX - this.imgContainerMoveX ),this.slideTime )
             this.animate( this.imgContainer, 'transform',this.imgContainerMoveX, endX, -step )
@@ -1946,7 +967,7 @@ export class ImagePreview{
             index = 0;
         }
         this.curIndex = index;
-        this.imgContainerMoveX = -(index * this.screenWidth);
+        this.imgContainerMoveX = -(index * this.containerWidth);
         images.forEach( src => {
             imagesHtml += `
             <div class="${this.prefix}itemWraper">
@@ -1967,7 +988,7 @@ export class ImagePreview{
                     }
                 case 'imgWidth':
                     if( this.envClient == 'pc'  ) {
-                        return '85%'
+                        return '100%'
                     }else{
                         return '100%'
                     };
@@ -2033,6 +1054,7 @@ export class ImagePreview{
                 overflow:hidden;
                 user-select: none;
             }
+            
             .${this.prefix}imagePreviewer.${this.defToggleClass}{
                 left: 0%;
             }
@@ -2087,6 +1109,14 @@ export class ImagePreview{
                 text-align: ${genStyle('item-text-align')};
                 white-space: normal;
                 transition: transform 0.5s;
+            }
+            .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item::-webkit-scrollbar {
+                width: 5px;
+                height: 8px;
+                background-color: #aaa;
+            }
+            .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item::-webkit-scrollbar-thumb {
+                background: #000;
             }
             .${this.prefix}imagePreviewer .${this.prefix}item img{
                 width: ${ genStyle('imgWidth') };
@@ -2154,10 +1184,10 @@ export class ImagePreview{
     mobileBeforeClose(){}
     show( index: number ){
         this.curIndex = index;
-        this.imgContainerMoveX = -index * this.screenWidth;
-
-        this.imgContainer.style.left = `${this.imgContainerMoveX}px`;
         this[ this.envClient + 'ReadyShow' ]();
+        this.containerWidth = this.imgContainer.getBoundingClientRect().width;
+        this.imgContainerMoveX = -index * this.containerWidth;
+        this.imgContainer.style.left = `${this.imgContainerMoveX}px`;
         this.toggleClass( this.ref,this.defToggleClass )
     }
     mobileReadyShow(){}
@@ -2187,11 +1217,11 @@ export class ImagePreview{
     destroy() : void{
         this.ref.parentNode.removeChild(this.ref);
     }
-    testEnv(): client{
+    testEnv(): string{
         if(/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {
-            return client.mobile
+            return 'mobile'
         } else {
-            return client.pc
+            return 'pc'
         }
     }
     // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
@@ -2216,3 +1246,14 @@ export class ImagePreview{
         return '' // explicit for ie8 (  ._.)
     }
 }
+applyMixins(ImagePreview, [Move, Zoom,Rotate]);
+
+function applyMixins(derivedCtor: any, baseCtors: any[]) {
+    baseCtors.forEach(baseCtor => {
+        Object.getOwnPropertyNames(baseCtor.prototype).forEach(name => {
+            derivedCtor.prototype[name] = baseCtor.prototype[name];
+        })
+    });
+}
+
+export  { ImagePreview };

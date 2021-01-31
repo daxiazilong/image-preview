@@ -4,7 +4,7 @@
           "target": "es5",
           "suppressImplicitAnyIndexErrors":true,
           "removeComments":false,
-          "outDir":"../release",
-          "module": "ES6"
+          "outDir":"../release/source",
+          "module": "ES6",
       }
   }

@@ -10,9 +10,5 @@ source = source.replace(versionReg,version);
 fs.writeFileSync('./src/ts/image-preview.ts',source)
 console.log('source-code generate success!');
 
-let exportReg = /export /g
-source = source.replace(exportReg,'');
-fs.writeFileSync('./src/ts/image-preview-prd.ts',source);
-
 console.log('prd-source generate success!')
 

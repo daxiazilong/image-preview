@@ -17,12 +17,13 @@
         test: './src/ts/test.ts'
     }
     plugins = [
-        new webpack.HotModuleReplacementPlugin({
-            
-        }),
+        
         new HtmlWebpackPlugin({
           title: 'this is dev mode!',
           template:'./debug/template.html'
+      }),
+      new webpack.HotModuleReplacementPlugin({
+            
       }),
     ]
   }
@@ -49,7 +50,8 @@
           contentBase: './debug',
           hot: true,
           host: getIp(),
-          port: 9999
+          port: 9999,
+          open: true
       },
       plugins:plugins,
       resolve: {

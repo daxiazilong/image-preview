@@ -19,8 +19,9 @@ new ImagePreview({
 new ImagePreview({
     selector:'.imageWraper img'
 })
-
-
+new ImagePreview({
+    selector:'.noDataSrc img'
+})
 Vue.use(ImagePreviewVue)
 new Vue({
     el:'#el',
