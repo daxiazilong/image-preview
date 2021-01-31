@@ -12,7 +12,7 @@ for mobile-web application.
 * module-sysetem:
 * The `release/image-preview` directory is built for different module-system , include AMD,CommonJS,ES6,UMD,IIFE. You can choose one adapt to your project.
 #### example
-[click here](https://daxiazilong.github.io/) . 
+[click here](http://122.51.15.11:9999/) . 
 #### import 
   * script (in iife or umd module system,use namespace imagePreviewModule):
     ``` html
