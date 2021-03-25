@@ -746,9 +746,10 @@ var imagePreviewModule = (function (exports) {
             this.supportTransitionEnd = this.transitionEnd();
             this.genFrame();
             this.handleReausetAnimate(); //requestAnimationFrame兼容性
-            this.threshold = this.containerWidth / 4;
             this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
             this.containerWidth = this.imgContainer.getBoundingClientRect().width;
+            this.threshold = this.containerWidth / 4;
+            
             this.imgItems = this.imgContainer.querySelectorAll("." + this.prefix + "item");
             this[this.envClient + 'RecordInitialData'](this.imgItems);
             this.maxMoveX = this.containerWidth / 2;
