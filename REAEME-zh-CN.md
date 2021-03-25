@@ -10,7 +10,7 @@
 * 不同模块系统的使用：
 * `release/image-preview`目录下为不同的模块系统生成了不同的代码，包括AMD,CommonJS,ES6,UMD,IIFE，你可以选择一个适合你的项目下载下来。
 #### 实例
-[点击这里](http://122.51.15.11:9999/) . 
+[点击这里](https://daxiazilong.github.io/) . 
 #### 引入 
   * script（在iife或者umd模块系统中使用imagePreviewModule）:
     ``` html
