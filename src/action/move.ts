@@ -2,28 +2,27 @@
  * move action
  */
 import { ImagePreview } from '../ts/image-preview'
+import { showDebugger } from '../tools/index';
+
 export class Move{
     handleMove(this: ImagePreview,e: TouchEvent & MouseEvent){
         e.preventDefault();
-        if( this.isAnimating ){
-            return;
-        } 
-
-        // 双指缩放时的处理
+        // if( this.isAnimating ){
+        //     return;
+        // } 
+        // 双指缩放时的 处理 只移动和缩放。
         if( e.touches.length == 2 ){
             clearTimeout(this.performerRecordMove); 
             clearTimeout( this.performerClick )
 
             this.performerRecordMove = 0;
-            this.handleZoom( e );
+            this.handleZoom(e);
+            this.handleMoveEnlage(e);
+
             return;
         }
 
-        if( this.isZooming ){
-            // 执行了缩放操作，则不进行任何移动
-            // 这个值会在手指全部离开屏幕后重置
-            return;
-        }
+        
         let curTouchX: number = e.touches[0].clientX;
         let curTouchY: number = e.touches[0].clientY;
         if( (this.touchStartX - curTouchX) > 2 && Math.abs( this.touchStartY - curTouchY ) > 2 ){
@@ -55,7 +54,6 @@ export class Move{
                 // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
                 
                 // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
-
                 if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
                     if( 
                         (
@@ -70,7 +68,13 @@ export class Move{
                         this.handleMoveEnlage(e);
                     }
                 }else{
-                    if( (isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove) ){
+                    if( 
+                        ((isBoundaryLeft && direction == 'right') 
+                            || 
+                        (isBoundaryRight && direction == 'left') 
+                            || 
+                        (this.isEnlargeMove)) 
+                    ){
                         this.isEnlargeMove = true;
                         this.handleMoveNormal(e)
                     }else{
@@ -168,136 +172,129 @@ export class Move{
         }     
     }
     handleMoveNormal(this: ImagePreview, e: TouchEvent & MouseEvent ){
-        let curX: number = Math.round(e.touches[0].clientX);
+        if( this.isAnimating ){
+            return;
+        }
+        let curX: number = (e.touches[0].clientX);
 
         let offset = curX - this.startX;
         this.imgContainerMoveX += offset;
-        if( this.imgContainerMoveX > this.maxMoveX  ){
-            this.imgContainerMoveX = this.maxMoveX;
-        }else if( this.imgContainerMoveX < this.minMoveX ){
-            this.imgContainerMoveX = this.minMoveX;
-        }
+        
         this.startX = curX;
-
-        this.imgContainer.style.left = `${ this.imgContainerMoveX }px`
+        this.setTransitionProperty({
+            el: this.imgContainer,
+            time: 0,
+            timingFunction: ''
+        })
+        this.imgContainer.matrix = this.matrixMultipy( this.imgContainer.matrix,this.getTranslateMatrix({x:offset,y:0,z:0}))
+        this.imgContainer.style.transform = `${this.matrixTostr(this.imgContainer.matrix)}`
     }
     handleMoveEnlage( this: ImagePreview,e: TouchEvent & MouseEvent ){
-        
         if( !this.moveStartTime){
             this.moveStartTime = (new Date).getTime();
         }
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
+        const curItem = this.imgItems[this.curIndex] as interFaceElementMatrix;
 
         if( curItem.dataset.loaded == 'false'){
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
 
-        const curItemWidth: number = curItem.getBoundingClientRect().width;
-        const curItemHeihgt: number = curItem.getBoundingClientRect().height;
+        const curItemRect = curItem.getBoundingClientRect();
 
-        const viewLeft: number = curItem.getBoundingClientRect().left;
-        const viewRight: number = curItem.getBoundingClientRect().right;
-        let curX: number = Math.round(e.touches[0].clientX);
-        let curY: number = Math.round(e.touches[0].clientY);
+        const curItemHeihgt: number = curItemRect.height;
+        const viewLeft: number = curItemRect.left;
+        const viewRight: number = curItemRect.right;
+
+        let curX: number = (e.touches[0].clientX);
+        let curY: number = (e.touches[0].clientY);
 
         let offsetX: number  = curX - this.startX;
         let offsetY: number  = curY - this.startY;
 
-        const curItemTop: number  = Number(curItem.dataset.top);
-        const curItemLeft: number  = Number(curItem.dataset.left);
-
-        
-
         let curTop: number ;
         let curLeft: number;
         // 如果容器内能完整展示图片就不需要移动
-        if( viewLeft < 0 || viewRight > conWidth ){
-            curLeft = curItemLeft + offsetX;
+        showDebugger(`
+            viewLeft:${viewLeft}
+            viewRight:${viewRight}
+        `)
+        if( Math.round( viewLeft ) < 0 ||  Math.round(viewRight) > conWidth ){
+            curLeft = (offsetX);
         }else{
-            curLeft = curItemLeft;
+            curLeft = 0;
         }
 
         if( curItemHeihgt > conHeight ){
-            curTop = curItemTop + offsetY
+            curTop = (offsetY)
         }else{
-            curTop = curItemTop
+            curTop = 0
         }
 
-        curItem.style.cssText += `
-            top: ${curTop}px;
-            left: ${ curLeft }px;
-        `
-        curItem.dataset.top = (curTop).toString();
-        curItem.dataset.left = (curLeft).toString();
+        this.setTransitionProperty({
+            el: curItem,
+            time: 0,
+            timingFunction: ''
+        })
+        curItem.matrix = this.matrixMultipy( curItem.matrix , this.getTranslateMatrix({x:curLeft,y:curTop,z:1}))
+        curItem.style.transform = `${ this.matrixTostr(curItem.matrix) }`
+  
         this.startX = curX;
         this.startY = curY;
 
-        
-
     }
-    autoMove(this: ImagePreview,curItem:HTMLElement,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}):void{
+    autoMove(this: ImagePreview,curItem: interFaceElementMatrix,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}):void{
+        if( this.isAnimating ){
+            return;
+        }
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
-
-        const curItemViewTop: number = curItem.getBoundingClientRect().top;
-        const curItemViewBottom: number = curItem.getBoundingClientRect().bottom;
-        const curItemViewLeft: number = curItem.getBoundingClientRect().left;
-        const curItemViewRight: number = curItem.getBoundingClientRect().right;
+// debugger;
+        const curItemRect = curItem.getBoundingClientRect();
+        const curItemViewTop: number = curItemRect.top;
+        const curItemViewBottom: number = curItemRect.bottom;
+        const curItemViewLeft: number = curItemRect.left;
+        const curItemViewRight: number = curItemRect.right;
         deg = (deg / 180) * Math.PI;
         let distance: number = 500;
-        let offsetX: number = Math.round(distance * Math.cos( deg ))
-        let offsetY: number = Math.round(distance * Math.sin(deg));
-
+        let offsetX: number = (distance * Math.cos( deg ))
+        let offsetY: number = (distance * Math.sin(deg));
+// debugger;
         let endX = startX + offsetX;
         let endY = startY + offsetY;
-        if( endX > maxLeft ){
-            endX = maxLeft
+        if( endX + curItemViewLeft > maxLeft ){
+            endX = (maxLeft - curItemViewLeft)
         }else if( endX < minLeft ){
             endX = minLeft
         }
-
+// debugger;
         if( endY > maxTop){
-            endY = maxTop
+            endY = ( maxTop -curItemViewTop )
         }else if( endY < minTop ){
             endY = minTop
         }
-
-        let stepX: number = this.computeStep( startX - endX,300 );
-        let stepY: number = this.computeStep( startY - endY ,300 );
-
         // 容器宽度能容纳图片宽度，则水平方向不需要移动，
         // 容器高度能容纳图片高度，则垂直方向不需要移动。
-
-        let moveStyles: Array<{
-            prop: string,
-            start: number,
-            end: number,
-            step: number
-        }> = [];
+        let x = 0;
+        let y = 0;
         if( !(curItemViewLeft >= 0 && curItemViewRight <= conWidth) ){
-            moveStyles.push({
-                prop: 'left',
-                start: startX,
-                end: endX,
-                step: -stepX
-            })
-            curItem.dataset.left = `${endX}`;
+            x = endX;
         }
         if( !( curItemViewTop >= 0 && curItemViewBottom <= conHeight ) ){
-            moveStyles.push({
-                prop:'top',
-                start: startY,
-                end: endY,
-                step: -stepY
-            })
-            curItem.dataset.top = `${endY}`;
+            y = endY;
         }
-        this.animateMultiValue(curItem,moveStyles)
+        curItem.matrix = this.matrixMultipy(curItem.matrix,this.getTranslateMatrix({x,y,z:1}))
+        this.animate({
+            el:curItem,
+            prop:'transform',
+            timingFunction:'cubic-bezier(0, 0, 0, 0.93)',
+            endStr:this.matrixTostr(curItem.matrix),
+            duration: 1
+        })
         if( endX == maxLeft ){
             //toLeft 即为到达左边界的意思下同
             curItem.dataset.toLeft = 'true';

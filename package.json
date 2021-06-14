@@ -2,9 +2,8 @@
   "name": "image-preview",
   "version": "1.1.0",
   "description": "image-preview",
-  "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server --mode=development --hide-modules --display none",
+    "start": "webpack serve --open Chrome.exe --mode=development",
     "build": "node gen-version.js && tsc --project ./src",
     "genModule": "build.cmd",
     "release": "standard-version",
@@ -17,15 +16,16 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "html-webpack-plugin": "^3.2.0",
+    "@types/node": "^15.12.1",
+    "html-webpack-plugin": "^5.3.1",
     "rollup": "^2.32.0",
     "standard-version": "^7.0.1",
-    "ts-loader": "^6.0.4",
+    "ts-loader": "^9.2.3",
     "typescript": "^3.6.2",
     "vue": "^2.6.10",
-    "webpack": "^4.35.3",
-    "webpack-cli": "^3.3.6",
-    "webpack-dev-server": "^3.7.2"
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.0",
+    "webpack-dev-server": "^3.11.2"
   },
   "standard-version": {
     "skip": {

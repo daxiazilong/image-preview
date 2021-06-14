@@ -1,4 +1,38 @@
-declare enum client{
-    pc = "pc",
-    mobile = 'mobile'
+type interFaceElementMatrix =
+    HTMLElement & {
+        matrix: Array<Array<number>>,
+        intialMatrix: Array<Array<number>>,
+    } & transformParam;
+
+
+type transformParam = {
+    rotateDeg: number
+}
+
+type animateProps = {
+    el: HTMLElement,
+    prop: string,
+    endStr: string,//
+    timingFunction?: string,
+    callback?: () => any
+    duration?: number
+}
+type setTransitionPropertyProps = { 
+    el: HTMLElement, 
+    time: number, 
+    timingFunction?: string, prop?: string 
+}
+declare module "*.vert" {
+    const sourceVer: string;
+    export  {sourceVer};
+}
+declare module "*.frag" {
+    const sourceFrag: string;
+    export  {sourceFrag};
+}
+type createPlaneParam = {
+    x:number,
+    y:number
+    width: number,
+    height: number
 }

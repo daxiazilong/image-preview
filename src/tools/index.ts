@@ -5,6 +5,5 @@ function showDebugger(msg: string) : void{
     
     let stat = document.getElementById('stat');
     stat.innerHTML = `<pre style="word-break: break-all;white-space: pre-line;">${msg}</pre>` ;
-               
 }
-module.exports = showDebugger
+export { showDebugger };

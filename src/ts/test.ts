@@ -1,6 +1,5 @@
 import {ImagePreview}  from './image-preview'
 import {ImagePreviewVue} from '../vueComponent/index'
-import { stat } from 'fs';
 
 const Vue = require('vue');
 new ImagePreview({
