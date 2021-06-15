@@ -12,7 +12,7 @@ for mobile-web application.
 * module-sysetem:
 * The `release/image-preview` directory is built for different module-system , include AMD,CommonJS,ES6,UMD,IIFE. You can choose one adapt to your project.
 #### example
-[click here](https://daxiazilong.github.io/) . 
+[click here](http://122.51.15.11:9999/) . 
 #### import 
   * script (in iife or umd module system,use namespace imagePreviewModule):
     ``` html
@@ -28,12 +28,20 @@ for mobile-web application.
      import {ImagePreview} from 'js/image-preview-esm.js'
     ```
 #### usage:
+html:
+```html
+  <div class="imageWraper">
+    <img data-src="/images/IMG_0512.JPG" src="/images/IMG_0512.JPG">
+    <img data-src="/images/main_body3.png" src="/images/main_body3.png">
+  </div>
+```
+javascript:
 ``` javascript
 //just
 let imgObj = new ImagePreview({
-  selector:``
+  selector:`.imageWraper img`
 })
-//or
+//or mvvm project
 
 let imgObj =  new ImagePreview({
   curImg:'imgsrc',

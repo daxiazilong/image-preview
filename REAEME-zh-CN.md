@@ -1,7 +1,7 @@
 简体中文 | [English](./README.md)
 
 # image-preview(流畅 & 舒适)
-一个前端图片预览插件
+一个前端图片预览插件 绝佳的手势体验，如果有使用到，请给我一颗`star`，阿里嘎多😁
 ### 特点:
 1. 支持绝大部分的手势操作.
 2. 旋转&缩放图片.
@@ -10,7 +10,7 @@
 * 不同模块系统的使用：
 * `release/image-preview`目录下为不同的模块系统生成了不同的代码，包括AMD,CommonJS,ES6,UMD,IIFE，你可以选择一个适合你的项目下载下来。
 #### 实例
-[点击这里](https://daxiazilong.github.io/) . 
+[点击这里](http://122.51.15.11:9999/) . 
 #### 引入 
   * script（在iife或者umd模块系统中使用imagePreviewModule）:
     ``` html
@@ -27,12 +27,20 @@
     ```
 
 #### 代码:
+html:
+```html
+  <div class="imageWraper">
+    <img data-src="/images/IMG_0512.JPG" src="/images/IMG_0512.JPG">
+    <img data-src="/images/main_body3.png" src="/images/main_body3.png">
+  </div>
+```
+javascript:
 ``` javascript
 //just
 let imgObj = new ImagePreview({
-  selector:``
+  selector:`.imageWraper img`
 })
-//or
+//or mvvm project
 
 let imgObj =  new ImagePreview({
   curImg:'imgsrc',
