@@ -12,7 +12,10 @@ import { showDebugger } from '../tools/index';
 import { webGl } from '../webgl/index'
 
 if(!(window as any).webGl){
-    (window as any).webGl = new webGl();
+    (window as any).webGl = new webGl([
+        '/testImage/IMG_0512.JPG',
+        '/testImage/cubetexture.png'
+    ]);
 }
 
 

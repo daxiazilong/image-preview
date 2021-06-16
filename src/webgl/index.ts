@@ -1,7 +1,6 @@
-import { Console } from 'console';
 import { sourceFrag } from './fragment-shader.frag'
 import { sourceVer } from './vertext-shader.vert';
-
+import { matrix } from './matrix'
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
@@ -10,85 +9,94 @@ class webGl {
 
     viewWidth: number;
     viewHeight: number;
-    dpr: number = window.devicePixelRatio||1;
+    dpr: number = window.devicePixelRatio || 1;
     gl: WebGLRenderingContext;
     shaderProgram: WebGLProgram;
-    fieldOfViewInRadians = 90 * Math.PI / 180;
+    fieldOfViewInRadians = 0.25 * Math.PI
     zNear = 1.0;
     zFar = 1000.0;
-    constructor() {
+    curIndex = 0;
+    modelMatrixes: Array<number> = [];
+    initialModel: Array<number> = [
+        1.0, 0, 0, 0,
+        0, 1.0, 0, 0,
+        0, 0, 1.0, 0,
+        0, 0, 0, 1.0
+    ]
+    initialVertextes;
+    imgs: Array<HTMLImageElement> = [];
+    constructor(images: Array<string>) {
         this.gl = this.intialView();
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
         this.shaderProgram = this.bindShader(this.gl, sourceFrag, sourceVer)
-        this.draw();
-    }
-    async draw() {
-        let width, height;
-        let scaleX , scaleY;
-
-        let image: HTMLImageElement;
-        {
-            // const [err, img] = await this.loadImage('/testImage/cubetexture.png')
-            const [err, img] = await this.loadImage('/testImage/IMG_0512.JPG')
-            if (err) {
-                return;
-            }
-            image = img;
-            const { naturalWidth, naturalHeight } = img;
-            width = this.viewWidth;
-            height = naturalHeight / naturalWidth * width;
-        }
-        this.clear();
-        const positions = [
-            -width / 2, -height / 2, 0.0,
-            width / 2, -height / 2, 0.0,
-            width / 2, height / 2, 0.0,
-            -width / 2, height / 2, 0.0,
+        const projectionMatrix = this.createPerspectiveMatrix();
+        this.gl.useProgram(this.shaderProgram);
+        this.gl.uniformMatrix4fv(
+            this.gl.getUniformLocation(this.shaderProgram, 'uProjectionMatrix'),
+            false,
+            projectionMatrix
+        );
+        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2));
+        const modelViewMatrix = [
+            1.0, 0, 0, 0,
+            0, 1.0, 0, 0,
+            0, 0, 1.0, 0,
+            0, 0, z, 1.0
         ]
-        positions.forEach((item,index) => {
-            positions[index] = item * 1;
+        const deg = 1 * -Math.PI / 4;
+        const rotateModel = matrix.multiplyArrayOfMatrices([
+            matrix.rotateYMatrix(deg) ,// step 1
+            modelViewMatrix, // step 4
+        ]);
+        this.gl.uniformMatrix4fv(
+            this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
+            false,
+            rotateModel
+        );
+
+        this.initData(images);
+    }
+    initData(images: Array<string>) {
+        images.forEach((item, index) => {
+            this.modelMatrixes.push(...this.initialModel)
         })
+        this.drawIndex(this.curIndex)
+    }
+    async drawIndex(index: number) {
+        if (!this.imgs[index]) {
+            const [err, img] = await this.loadImage('/testImage/IMG_0512.JPG')
+            if (!err) {
+                this.imgs[index] = img;
+            }
+        }
+        this.draw(this.imgs[index], index);
+    }
+    bindPostion(width: number, height: number) {
+
+        const gl = this.gl;
+        const z = 0 //-(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
+        const positions = [
+            // front
+            -width / 2, -height / 2, z, 1.0,
+            width / 2, -height / 2, z, 1.0,
+            width / 2, height / 2, z, 1.0,
+            -width / 2, height / 2, z, 1.0,
+            // right
+            width / 2, -height / 2, -height/2, 1.0,
+            width / 2, height / 2, -height/2, 1.0,
+            width / 2, height / 2, height/2, 1.0,
+            width / 2, -height / 2,height/2, 1.0,
+    
+        ]
 
         const positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
 
-        const textureCoordBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureCoordBuffer);
-        const textureCoordinates = [
-            // Front
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0,
-        ];
-
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textureCoordinates), this.gl.STATIC_DRAW);
-
-        const indexBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-        const indices = [
-            0, 1, 2, 0, 2, 3,    // front
-        ];
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
-
-        const projectionMatrix = this.createPerspectiveMatrix();
-
-        let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
-        let scale = 1.0 ;
-        console.log(scaleY,scaleX)
-        const modelViewMatrix = [
-            scale, 0, 0, 0,
-            0, scale, 0, 0,
-            0, 0, 1.0, 0,
-            0, 0, -z, 1.0
-        ]
-
         // Tell WebGL how to pull out the positions from the position
         // buffer into the vertexPosition attribute
-        const gl = this.gl;
         {
-            const numComponents = 3;
+            const numComponents = 4;
             const type = gl.FLOAT;
             const normalize = false;
             const stride = 0;
@@ -96,7 +104,7 @@ class webGl {
             gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
             const aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
             gl.vertexAttribPointer(
-                aVerLocate ,
+                aVerLocate,
                 numComponents,
                 type,
                 normalize,
@@ -104,9 +112,26 @@ class webGl {
                 offset);
             gl.enableVertexAttribArray(aVerLocate);
         }
+    }
+    bindTexture(image: HTMLImageElement) {
+        const gl = this.gl;
 
-        // Tell WebGL how to pull out the texture coordinates from
-        // the texture coordinate buffer into the textureCoord attribute.
+        const textureCoordBuffer = this.gl.createBuffer();
+        gl.bindBuffer(this.gl.ARRAY_BUFFER, textureCoordBuffer);
+        const textureCoordinates = [
+            // Front
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            // // right
+            // 0.0, 0.0,
+            // 0.0, 1.0,
+            // 1.0, 1.0,
+            // 1.0, 0.0,
+        ];
+
+        gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textureCoordinates), this.gl.STATIC_DRAW);
         {
             const numComponents = 2;
             const type = gl.FLOAT;
@@ -114,7 +139,7 @@ class webGl {
             const stride = 0;
             const offset = 0;
             gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
-            const textureLocate =  gl.getAttribLocation(this.shaderProgram, 'aTextureCoord');
+            const textureLocate = gl.getAttribLocation(this.shaderProgram, 'aTextureCoord');
             gl.vertexAttribPointer(
                 textureLocate,
                 numComponents,
@@ -124,32 +149,6 @@ class webGl {
                 offset);
             gl.enableVertexAttribArray(textureLocate);
         }
-
-        // Tell WebGL which indices to use to index the vertices
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-        // Tell WebGL to use our program when drawing
-
-        gl.useProgram(this.shaderProgram);
-
-        // Set the shader uniforms
-
-        gl.uniformMatrix4fv(
-            gl.getUniformLocation(this.shaderProgram, 'uProjectionMatrix'),
-            false,
-            projectionMatrix
-        );
-        gl.uniformMatrix4fv(
-            gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
-            false,
-            modelViewMatrix
-        );
-
-        // Specify the texture to map onto the faces.
-
-        // Tell WebGL we want to affect texture unit 0
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-
         const level = 0;
         const internalFormat = gl.RGBA;
         const srcFormat = gl.RGBA;
@@ -159,41 +158,63 @@ class webGl {
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
 
         {
-
-
             // WebGL1 has different requirements for power of 2 images
             // vs non power of 2 images so check if the image is a
             // power of 2 in both dimensions.
             if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
                 // Yes, it's a power of 2. Generate mips.
                 gl.generateMipmap(gl.TEXTURE_2D);
-
             } else {
                 // No, it's not a power of 2. Turn of mips and set
                 // wrapping to clamp to edge
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER,gl.LINEAR );//gl.LINEAR_MIPMAP_LINE
-                
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);//gl.LINEAR_MIPMAP_LINE
             }
-            
-
-
         }
         // Bind the texture to texture unit 0
         gl.activeTexture(gl['TEXTURE0']);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         // Tell the shader we bound the texture to texture unit 0
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler'), 0);
+    }
+    bindIndex(index: number) {
+        const gl = this.gl;
+        const indexBuffer = this.gl.createBuffer();
+        gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
+        const indices = [
+            index, index + 1, index + 2, index, index + 2, index + 3,
+            // index+4,index + 5, index + 6, index + 4, index + 6, index + 7
+        ];
+        console.log(indices)
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
         {
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             const vertexCount = 6;
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
             gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
         }
+    }
+    async draw(image: HTMLImageElement, index: number) {
+        let width, height;
+        {
+            // const [err, img] = await this.loadImage('/testImage/cubetexture.png')
+            const { naturalWidth, naturalHeight } = image;
+            width = this.viewWidth;
+            height = naturalHeight / naturalWidth * width;
+        }
+        this.clear();
+        let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
 
+        this.bindPostion(width, height)
+        this.bindTexture(image)
+
+
+
+        this.bindIndex(index);
     }
     createPerspectiveMatrix() {
         const fieldOfViewInRadians = this.fieldOfViewInRadians;   // in radians
@@ -280,7 +301,7 @@ class webGl {
             height:${window.innerHeight}px;
         `;
         canvas.width = window.innerWidth * this.dpr;
-        canvas.height = window.innerHeight* this.dpr;
+        canvas.height = window.innerHeight * this.dpr;
         document.body.append(canvas);
 
         const gl = canvas.getContext('webgl')
