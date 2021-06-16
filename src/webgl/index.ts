@@ -13,8 +13,8 @@ class webGl {
     gl: WebGLRenderingContext;
     shaderProgram: WebGLProgram;
     fieldOfViewInRadians = 0.25 * Math.PI
-    zNear = 1.0;
-    zFar = 1000.0;
+    zNear = 100.0;
+    zFar = 10000.0;
     curIndex = 0;
     modelMatrixes: Array<number> = [];
     initialModel: Array<number> = [
@@ -36,17 +36,22 @@ class webGl {
             false,
             projectionMatrix
         );
-        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2));
+        let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2));
+        z > this.zFar && ( z = this.zFar )
+        console.log(z)
         const modelViewMatrix = [
             1.0, 0, 0, 0,
             0, 1.0, 0, 0,
             0, 0, 1.0, 0,
-            0, 0, z, 1.0
+            0, 0, 0, 1.0
         ]
-        const deg = 1 * -Math.PI / 4;
+        const deg = -Math.PI / 4;
         const rotateModel = matrix.multiplyArrayOfMatrices([
             matrix.rotateYMatrix(deg) ,// step 1
-            modelViewMatrix, // step 4
+            matrix.translateMatrix(0,0,-z),
+            // modelViewMatrix, // step 4
+            //  todo 平移y轴 旋转
+
         ]);
         this.gl.uniformMatrix4fv(
             this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
@@ -74,7 +79,7 @@ class webGl {
     bindPostion(width: number, height: number) {
 
         const gl = this.gl;
-        const z = 0 //-(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
+        const z = 0.0 //-(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
         const positions = [
             // front
             -width / 2, -height / 2, z, 1.0,
@@ -82,10 +87,15 @@ class webGl {
             width / 2, height / 2, z, 1.0,
             -width / 2, height / 2, z, 1.0,
             // right
-            width / 2, -height / 2, -height/2, 1.0,
-            width / 2, height / 2, -height/2, 1.0,
-            width / 2, height / 2, height/2, 1.0,
-            width / 2, -height / 2,height/2, 1.0,
+            width / 2, -height / 2, -width, 1.0,
+            width / 2, height / 2, -width, 1.0,
+            width / 2, height / 2,0, 1.0,
+            width / 2, -height / 2, 0, 1.0,
+            // left
+            -width / 2, -height / 2, -width, 1.0,
+            -width / 2, height / 2, -width, 1.0,
+            -width / 2, height / 2,0, 1.0,
+            -width / 2, -height / 2, 0, 1.0,
     
         ]
 
@@ -124,11 +134,17 @@ class webGl {
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            // // right
-            // 0.0, 0.0,
-            // 0.0, 1.0,
-            // 1.0, 1.0,
-            // 1.0, 0.0,
+            // right
+            0.0, 0.0,
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            // left
+            0.0, 0.0,
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+
         ];
 
         gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textureCoordinates), this.gl.STATIC_DRAW);
@@ -186,16 +202,18 @@ class webGl {
 
         const indices = [
             index, index + 1, index + 2, index, index + 2, index + 3,
-            // index+4,index + 5, index + 6, index + 4, index + 6, index + 7
+            index+4,index + 5, index + 6, index + 4, index + 6, index + 7,
+            index+8,index + 9, index + 10, index + 8, index + 10, index + 11,
         ];
-        console.log(indices)
+        // console.log(indices)
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
         {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-            const vertexCount = 6;
+            const vertexCount = 18;
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
             gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+            // gl.drawArrays(gl.TRIANGLE_STRIP,0,vertexCount)
         }
     }
     async draw(image: HTMLImageElement, index: number) {
@@ -208,7 +226,7 @@ class webGl {
         }
         this.clear();
         let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
-
+    
         this.bindPostion(width, height)
         this.bindTexture(image)
 

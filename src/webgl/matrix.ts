@@ -42,15 +42,15 @@ export const matrix = {
             0, 0, 0, 1
         ];
     },
-    rotateYMatrix(a: number) {
+    rotateYMatrix(deg: number) {
 
         var cos = Math.cos;
         var sin = Math.sin;
 
         return [
-            cos(a), 0, sin(a), 0,
+            cos(deg), 0, sin(deg), 0,
             0, 1, 0, 0,
-            -sin(a), 0, cos(a), 0,
+            -sin(deg), 0, cos(deg), 0,
             0, 0, 0, 1
         ];
     },
