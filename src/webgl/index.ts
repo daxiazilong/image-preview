@@ -12,7 +12,7 @@ class webGl {
     dpr: number = window.devicePixelRatio || 1;
     gl: WebGLRenderingContext;
     shaderProgram: WebGLProgram;
-    fieldOfViewInRadians = 0.25 * Math.PI
+    fieldOfViewInRadians = 0.12 * Math.PI
     zNear = 100.0;
     zFar = 10000.0;
     curIndex = 0;
@@ -36,28 +36,7 @@ class webGl {
             false,
             projectionMatrix
         );
-        let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2));
-        z > this.zFar && ( z = this.zFar )
-        console.log(z)
-        const modelViewMatrix = [
-            1.0, 0, 0, 0,
-            0, 1.0, 0, 0,
-            0, 0, 1.0, 0,
-            0, 0, 0, 1.0
-        ]
-        const deg = -Math.PI / 4;
-        const rotateModel = matrix.multiplyArrayOfMatrices([
-            matrix.rotateYMatrix(deg) ,// step 1
-            matrix.translateMatrix(0,0,-z),
-            // modelViewMatrix, // step 4
-            //  todo 平移y轴 旋转
 
-        ]);
-        this.gl.uniformMatrix4fv(
-            this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
-            false,
-            rotateModel
-        );
 
         this.initData(images);
     }
@@ -87,16 +66,15 @@ class webGl {
             width / 2, height / 2, z, 1.0,
             -width / 2, height / 2, z, 1.0,
             // right
-            width / 2, -height / 2, -width, 1.0,
+            width / 2, height / 2, z, 1.0,
             width / 2, height / 2, -width, 1.0,
-            width / 2, height / 2,0, 1.0,
-            width / 2, -height / 2, 0, 1.0,
+            width / 2, -height / 2, -width, 1.0,
+            width / 2, -height / 2, z, 1.0,
             // left
             -width / 2, -height / 2, -width, 1.0,
             -width / 2, height / 2, -width, 1.0,
-            -width / 2, height / 2,0, 1.0,
-            -width / 2, -height / 2, 0, 1.0,
-    
+            -width / 2, height / 2, z, 1.0,
+            -width / 2, -height / 2, z, 1.0,
         ]
 
         const positionBuffer = this.gl.createBuffer();
@@ -136,9 +114,9 @@ class webGl {
             0.0, 1.0,
             // right
             0.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0,
             1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
             // left
             0.0, 0.0,
             0.0, 1.0,
@@ -202,8 +180,8 @@ class webGl {
 
         const indices = [
             index, index + 1, index + 2, index, index + 2, index + 3,
-            index+4,index + 5, index + 6, index + 4, index + 6, index + 7,
-            index+8,index + 9, index + 10, index + 8, index + 10, index + 11,
+            index + 4, index + 5, index + 6, index + 4, index + 6, index + 7,
+            index + 8, index + 9, index + 10, index + 8, index + 10, index + 11,
         ];
         // console.log(indices)
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
@@ -226,11 +204,93 @@ class webGl {
         }
         this.clear();
         let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
-    
+
         this.bindPostion(width, height)
         this.bindTexture(image)
 
+        z > this.zFar && (z = this.zFar)
+        const modelViewMatrix = [
+            1.0, 0, 0, 0,
+            0, 1.0, 0, 0,
+            0, 0, 1.0, 0,
+            0, 0, 0, 1.0
+        ]
+        let deg = Math.PI / 20;
+        const toOrigin = this.viewWidth / 2;
+        const rotateModel = matrix.multiplyArrayOfMatrices([
+            matrix.translateMatrix(0, 0, toOrigin),// 平移到坐标原点
+            matrix.rotateYMatrix(deg),// 旋转
+            matrix.translateMatrix(0.0, 0.0, -z - toOrigin),// 移动到原位置
+        ]);
+        this.gl.uniformMatrix4fv(
+            this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
+            false,
+            rotateModel
+        );
+        let beginMove = false;
+        let startX = 0;
+        let startY = 0;
+        let degX = 0;
 
+        this.gl.canvas.addEventListener('mousedown', (e: MouseEvent) => {
+            beginMove = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        })
+        this.gl.canvas.addEventListener('mousemove', (e: MouseEvent) => {
+            if (beginMove) {
+                let offset = e.clientX - startX;
+                let offsetX = e.clientY - startY;
+                deg = -offset * 0.01;
+                degX = -offsetX * 0.01;
+                const rotateModel = matrix.multiplyArrayOfMatrices([
+                    matrix.translateMatrix(0, 0, toOrigin),// 平移到坐标原点
+                    matrix.rotateYMatrix(deg),// 旋转
+                    // matrix.rotateXMatrix(degX),
+                    matrix.translateMatrix(0, 0, -z - toOrigin - 500),// 移动到原位置
+                ]);
+                this.gl.uniformMatrix4fv(
+                    this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
+                    false,
+                    rotateModel
+                );
+                this.bindIndex(index);
+
+            }
+        })
+        this.gl.canvas.addEventListener('mouseup', (e) => {
+            beginMove = false;
+        })
+
+        this.gl.canvas.addEventListener('touchstart', (e: TouchEvent) => {
+            beginMove = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        })
+        this.gl.canvas.addEventListener('touchmove', (e: TouchEvent) => {
+            if (beginMove) {
+                let offset = e.touches[0].clientX - startX;
+                let offsetX = e.touches[0].clientY - startY;
+                deg = -offset * 0.01;
+                degX = -offsetX * 0.01;
+                const rotateModel = matrix.multiplyArrayOfMatrices([
+                    matrix.translateMatrix(0, 0, toOrigin),// 平移到坐标原点
+                    matrix.rotateYMatrix(deg),// 旋转
+                    // matrix.rotateXMatrix(degX),
+                    matrix.translateMatrix(0, 0, -z - toOrigin - 500),// 移动到原位置
+                ]);
+                this.gl.uniformMatrix4fv(
+                    this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
+                    false,
+                    rotateModel
+                );
+                this.bindIndex(index);
+
+            }
+        })
+        this.gl.canvas.addEventListener('touchend', (e) => {
+            beginMove = false;
+        })
 
         this.bindIndex(index);
     }
