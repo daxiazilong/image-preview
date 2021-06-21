@@ -4,7 +4,7 @@ import { matrix } from './matrix'
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
-
+const forDev = 4000
 class webGl {
 
     viewWidth: number;
@@ -12,7 +12,7 @@ class webGl {
     dpr: number = window.devicePixelRatio || 1;
     gl: WebGLRenderingContext;
     shaderProgram: WebGLProgram;
-    fieldOfViewInRadians = 0.12 * Math.PI
+    fieldOfViewInRadians = 0.1 * Math.PI
     zNear = 100.0;
     zFar = 10000.0;
     curIndex = 0;
@@ -24,6 +24,7 @@ class webGl {
         0, 0, 0, 1.0
     ]
     initialVertextes;
+    positions: Array<number> = [];
     imgs: Array<HTMLImageElement> = [];
     constructor(images: Array<string>) {
         this.gl = this.intialView();
@@ -36,7 +37,8 @@ class webGl {
             false,
             projectionMatrix
         );
-
+        
+        
 
         this.initData(images);
     }
@@ -58,21 +60,23 @@ class webGl {
     bindPostion(width: number, height: number) {
 
         const gl = this.gl;
-        const z = 0.0 //-(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
-        const positions = [
+        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev
+        // console.log(z)
+        const positions = this.positions = [
             // front
             -width / 2, -height / 2, z, 1.0,
             width / 2, -height / 2, z, 1.0,
             width / 2, height / 2, z, 1.0,
             -width / 2, height / 2, z, 1.0,
             // right
-            width / 2, height / 2, z, 1.0,
-            width / 2, height / 2, -width, 1.0,
-            width / 2, -height / 2, -width, 1.0,
             width / 2, -height / 2, z, 1.0,
+            width / 2, -height / 2, z-width, 1.0,
+            width / 2, height / 2, z-width, 1.0,
+            width / 2, height / 2, z, 1.0,
+
             // left
-            -width / 2, -height / 2, -width, 1.0,
-            -width / 2, height / 2, -width, 1.0,
+            -width / 2, -height / 2, z-width, 1.0,
+            -width / 2, height / 2, z-width, 1.0,
             -width / 2, height / 2, z, 1.0,
             -width / 2, -height / 2, z, 1.0,
         ]
@@ -80,6 +84,100 @@ class webGl {
         const positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
+
+        // Tell WebGL how to pull out the positions from the position
+        // buffer into the vertexPosition attribute
+        {
+            const numComponents = 4;
+            const type = gl.FLOAT;
+            const normalize = false;
+            const stride = 0;
+            const offset = 0;
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            const aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
+            gl.vertexAttribPointer(
+                aVerLocate,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset);
+            gl.enableVertexAttribArray(aVerLocate);
+        }
+    }
+    changePosition(offset:number){
+
+        const gl = this.gl;
+        const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
+        const positions = this.positions;
+        const firstPlane = positions.splice(0,16);
+        const result = [];;
+        const deg = offset * 0.01 ;
+        for( let i = 0 ; i < 16; i+= 4){
+            let x = firstPlane[i] , y = firstPlane[i+1], z = firstPlane[ i + 2], w = firstPlane[i+3];
+            // z = 0; // 移动到坐标原点；
+            // console.log([x,y,z,w])
+            console.log(z,zInitial)
+            const newPoint = matrix.multiplyPoint( matrix.scaleMatrix(1.5,1.5,1.0),[x,y,z,w] );
+            // console.log(newPoint)
+            // z = zInitial; //移动到原位置
+            for( let j = i ; j < 4 + i; j++ ){
+                firstPlane[j] = newPoint[j-i]
+            }
+        }
+        positions.splice(0,0,...firstPlane)
+        // console.log(positions)
+
+        const positionBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
+
+        // Tell WebGL how to pull out the positions from the position
+        // buffer into the vertexPosition attribute
+        {
+            const numComponents = 4;
+            const type = gl.FLOAT;
+            const normalize = false;
+            const stride = 0;
+            const offset = 0;
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            const aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
+            gl.vertexAttribPointer(
+                aVerLocate,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset);
+            gl.enableVertexAttribArray(aVerLocate);
+        }
+    }
+    rotatePosition(deg:number){
+
+        this.clear();
+
+        const gl = this.gl;
+        const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        const centerX = this.viewWidth / 2;
+        const positions = this.positions;
+        for( let i = 0 , L = positions.length; i < L; i += 4){
+            let x = positions[i] , y = positions[i+1], z = positions[ i + 2], w = positions[i+3];
+            const newPoint = matrix.multiplyPoint( 
+                [x,y,z,w],
+                matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
+                matrix.rotateYMatrix(deg), //开始旋转
+                matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
+            );
+            // z = zInitial; //移动到原位置
+            for( let j = i ; j < 4 + i; j++ ){
+                positions[j] = newPoint[j-i]
+            }
+        }
+        // console.log(positions)
+
+        const positionBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
 
         // Tell WebGL how to pull out the positions from the position
         // buffer into the vertexPosition attribute
@@ -116,7 +214,8 @@ class webGl {
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
-            0.0, 1.0,
+            0.0, 1.0, // 贴图纹理坐标始终是不变的 从左下角开始依次逆时针是 0 0  ，1 0 ，1 1 ，0 1  具体对应的时候 找到矩形的第一个点  然后和矩形的顺序一样逆时针贴图  一一对应上就好 
+
             // left
             0.0, 0.0,
             0.0, 1.0,
@@ -184,7 +283,7 @@ class webGl {
             index + 8, index + 9, index + 10, index + 8, index + 10, index + 11,
         ];
         // console.log(indices)
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.DYNAMIC_DRAW);
         {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             const vertexCount = 18;
@@ -217,47 +316,40 @@ class webGl {
         ]
         let deg = Math.PI / 20;
         const toOrigin = this.viewWidth / 2;
-        const rotateModel = matrix.multiplyArrayOfMatrices([
-            matrix.translateMatrix(0, 0, toOrigin),// 平移到坐标原点
-            matrix.rotateYMatrix(deg),// 旋转
-            matrix.translateMatrix(0.0, 0.0, -z - toOrigin),// 移动到原位置
-        ]);
+        // console.log(z)
+        // const rotateModel = matrix.multiplyArrayOfMatrices([
+        //     matrix.translateMatrix(0, 0, toOrigin - (-z-4000.0)),// 平移到坐标原点
+        //     matrix.rotateYMatrix(deg),// 旋转
+        //     matrix.translateMatrix(0.0, 0.0, -z - toOrigin - 4000),// 移动到原位置
+        // ]);
         this.gl.uniformMatrix4fv(
             this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
             false,
-            rotateModel
+            modelViewMatrix
         );
         let beginMove = false;
         let startX = 0;
         let startY = 0;
         let degX = 0;
-
+        // this.changePosition(0)
+        this.bindIndex(index);
         this.gl.canvas.addEventListener('mousedown', (e: MouseEvent) => {
             beginMove = true;
             startX = e.clientX;
             startY = e.clientY;
         })
-        this.gl.canvas.addEventListener('mousemove', (e: MouseEvent) => {
+        function handleMove(e: MouseEvent){
             if (beginMove) {
-                let offset = e.clientX - startX;
-                let offsetX = e.clientY - startY;
+                let offset = (e.clientX - startX) / this.dpr;
+                let offsetX = (e.clientY - startY) / this.dpr;
                 deg = -offset * 0.01;
                 degX = -offsetX * 0.01;
-                const rotateModel = matrix.multiplyArrayOfMatrices([
-                    matrix.translateMatrix(0, 0, toOrigin),// 平移到坐标原点
-                    matrix.rotateYMatrix(deg),// 旋转
-                    // matrix.rotateXMatrix(degX),
-                    matrix.translateMatrix(0, 0, -z - toOrigin - 500),// 移动到原位置
-                ]);
-                this.gl.uniformMatrix4fv(
-                    this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
-                    false,
-                    rotateModel
-                );
+                this.rotatePosition(deg);
                 this.bindIndex(index);
 
             }
-        })
+        }
+        this.gl.canvas.addEventListener('mousemove',handleMove )
         this.gl.canvas.addEventListener('mouseup', (e) => {
             beginMove = false;
         })
@@ -269,21 +361,14 @@ class webGl {
         })
         this.gl.canvas.addEventListener('touchmove', (e: TouchEvent) => {
             if (beginMove) {
-                let offset = e.touches[0].clientX - startX;
-                let offsetX = e.touches[0].clientY - startY;
+                let offset = (e.touches[0].clientX - startX) / this.dpr;
+                let offsetX = (e.touches[0].clientY - startY) / this.dpr;
                 deg = -offset * 0.01;
                 degX = -offsetX * 0.01;
-                const rotateModel = matrix.multiplyArrayOfMatrices([
-                    matrix.translateMatrix(0, 0, toOrigin),// 平移到坐标原点
-                    matrix.rotateYMatrix(deg),// 旋转
-                    // matrix.rotateXMatrix(degX),
-                    matrix.translateMatrix(0, 0, -z - toOrigin - 500),// 移动到原位置
-                ]);
-                this.gl.uniformMatrix4fv(
-                    this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
-                    false,
-                    rotateModel
-                );
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY ;
+                this.rotatePosition(deg);
+
                 this.bindIndex(index);
 
             }
@@ -292,7 +377,7 @@ class webGl {
             beginMove = false;
         })
 
-        this.bindIndex(index);
+        
     }
     createPerspectiveMatrix() {
         const fieldOfViewInRadians = this.fieldOfViewInRadians;   // in radians
@@ -377,6 +462,8 @@ class webGl {
             left:0;
             width:${window.innerWidth}px;
             height:${window.innerHeight}px;
+            user-select:none;
+            font-size:0;
         `;
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
