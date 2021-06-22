@@ -20,7 +20,6 @@ module.exports = function(sourcs){
         exports.${exportsName} = void 0;
         var ${ exportsName } = \`${sourcs}\`
         exports.${exportsName} = ${exportsName}
-    `
-    console.log(result)
+    `;
     return result;
 }

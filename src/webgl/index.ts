@@ -1,10 +1,15 @@
-import { sourceFrag } from './fragment-shader.frag'
-import { sourceVer } from './vertext-shader.vert';
+import { sourceFrag } from './shaders/fragment-shader.frag'
+import { sourceVer } from './shaders/vertext-shader.vert';
 import { matrix } from './matrix'
+import { cubicBezier,linear } from '../animation/animateJs'
+
+
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
 const forDev = 4000
+
+
 class webGl {
 
     viewWidth: number;
@@ -16,6 +21,7 @@ class webGl {
     zNear = 100.0;
     zFar = 10000.0;
     curIndex = 0;
+    defaultAnimateTime = 300;
     modelMatrixes: Array<number> = [];
     initialModel: Array<number> = [
         1.0, 0, 0, 0,
@@ -26,6 +32,7 @@ class webGl {
     initialVertextes;
     positions: Array<number> = [];
     imgs: Array<HTMLImageElement> = [];
+    imgUrls: Array<string> = [];
     constructor(images: Array<string>) {
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -37,50 +44,94 @@ class webGl {
             false,
             projectionMatrix
         );
+        const modelViewMatrix = [
+            1.0, 0, 0, 0,
+            0, 1.0, 0, 0,
+            0, 0, 1.0, 0,
+            0, 0, 0, 1.0
+        ]
+        this.gl.uniformMatrix4fv(
+            this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
+            false,
+            modelViewMatrix
+        );
         
-        
-
-        this.initData(images);
+        this.imgUrls = images;
+        this.initData();
     }
-    initData(images: Array<string>) {
-        images.forEach((item, index) => {
-            this.modelMatrixes.push(...this.initialModel)
-        })
+    
+    initData() {
         this.drawIndex(this.curIndex)
     }
+    // place a substitute by subterfuge
+    placeAsubstituteBySubterfuge(){
+
+    }
+    slideNext(){
+        this.rotate(0.5 * Math.PI)
+    }
+    rotate(end){
+        this.animate({
+            allTime: this.defaultAnimateTime,
+            timingFun: linear,
+            end,
+            playGame: (() => {
+                /**
+                 矩阵旋转乘法时是累加的。因此直接通过timingFun计算出的结果直接应用的话最后的结果是个若
+                 干个某数列元素的和 所以需要前后值的差值来按步进行动画
+                 * 
+                 */
+                let beforePos = 0; 
+                const play = this.rotatePosition.bind(this);
+                return (curPos:number) => {
+                    let step = curPos - beforePos;
+                    play(step);
+                    this.bindIndex(0)
+                    beforePos = curPos;
+                }
+                
+            })()
+        })
+    }
+
     async drawIndex(index: number) {
-        if (!this.imgs[index]) {
-            const [err, img] = await this.loadImage('/testImage/IMG_0512.JPG')
-            if (!err) {
-                this.imgs[index] = img;
-            }
-        }
         this.draw(this.imgs[index], index);
     }
-    bindPostion(width: number, height: number) {
-
+    genPostion(width: number, height: number,index:number) {
+        if( this.positions[index * 16 ]  ){ // 顶点数据已经有缓存到该数据了 则无需再次初始化咯
+            return;
+        }
         const gl = this.gl;
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev
         // console.log(z)
-        const positions = this.positions = [
-            // front
-            -width / 2, -height / 2, z, 1.0,
-            width / 2, -height / 2, z, 1.0,
-            width / 2, height / 2, z, 1.0,
-            -width / 2, height / 2, z, 1.0,
-            // right
-            width / 2, -height / 2, z, 1.0,
-            width / 2, -height / 2, z-width, 1.0,
-            width / 2, height / 2, z-width, 1.0,
-            width / 2, height / 2, z, 1.0,
-
-            // left
-            -width / 2, -height / 2, z-width, 1.0,
-            -width / 2, height / 2, z-width, 1.0,
-            -width / 2, height / 2, z, 1.0,
-            -width / 2, -height / 2, z, 1.0,
+        const positionsMap = [
+            [// left
+                -width / 2, -height / 2, z-width, 1.0,
+                -width / 2, -height / 2, z, 1.0,
+                -width / 2, height / 2, z, 1.0,
+                -width / 2, height / 2, z-width, 1.0,
+            ],
+            [//fornt
+                -width / 2, -height / 2, z, 1.0,
+                width / 2, -height / 2, z, 1.0,
+                width / 2, height / 2, z, 1.0,
+                -width / 2, height / 2, z, 1.0,
+            ],
+            [// right
+                width / 2, -height / 2, z, 1.0,
+                width / 2, -height / 2, z-width, 1.0,
+                width / 2, height / 2, z-width, 1.0,
+                width / 2, height / 2, z, 1.0,
+            ]
         ]
-
+        let key = index - this.curIndex; // -1 , 0 , 1;
+        key  += 1; // -1,0,1 -> 0,1,2
+        this.positions.push( ...positionsMap[key] )
+        // console.log(this.positions)
+    }
+    bindPostion(){
+        const gl = this.gl;
+        const positions = this.positions;
         const positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
@@ -153,9 +204,7 @@ class webGl {
         }
     }
     rotatePosition(deg:number){
-
         this.clear();
-
         const gl = this.gl;
         const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         const centerX = this.viewWidth / 2;
@@ -210,16 +259,16 @@ class webGl {
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            // right
+            //  right
+            0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0, // 贴图纹理坐标始终是不变的 从左下角开始依次逆时针是 0 0  ，1 0 ，1 1 ，0 1  具体对应的时候 找到矩形的第一个点  然后和矩形的顺序一样逆时针贴图  一一对应上就好 
-
             // left
             0.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0,
             1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
 
         ];
 
@@ -285,7 +334,7 @@ class webGl {
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.DYNAMIC_DRAW);
         {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-            const vertexCount = 18;
+            const vertexCount = 12;
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
             gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
@@ -294,58 +343,54 @@ class webGl {
     }
     async draw(image: HTMLImageElement, index: number) {
         let width, height;
-        {
-            // const [err, img] = await this.loadImage('/testImage/cubetexture.png')
-            const { naturalWidth, naturalHeight } = image;
-            width = this.viewWidth;
-            height = naturalHeight / naturalWidth * width;
-        }
+        
         this.clear();
         let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
+        const imgLength = this.imgUrls.length;
+        for( let i = index - 1; i <= index + 2; i++ ){
+            if( i !== -1 && i !== imgLength ){
+                {   
+                    console.log(this.imgUrls[i],i,imgLength)
+                    const [err, img] = await this.loadImage(this.imgUrls[i])
+                    const { naturalWidth, naturalHeight } = img;
+                    image = img;
+                    width = this.viewWidth;
+                    height = naturalHeight / naturalWidth * width;
+                    this.genPostion(width, height,i)
+                }
+            }
+        }
+        this.bindPostion();
+        this.bindTexture(image);
 
-        this.bindPostion(width, height)
-        this.bindTexture(image)
-
-        z > this.zFar && (z = this.zFar)
-        const modelViewMatrix = [
-            1.0, 0, 0, 0,
-            0, 1.0, 0, 0,
-            0, 0, 1.0, 0,
-            0, 0, 0, 1.0
-        ]
+        (z > this.zFar) && (z = this.zFar)
+        
         let deg = Math.PI / 20;
-        const toOrigin = this.viewWidth / 2;
-        // console.log(z)
-        // const rotateModel = matrix.multiplyArrayOfMatrices([
-        //     matrix.translateMatrix(0, 0, toOrigin - (-z-4000.0)),// 平移到坐标原点
-        //     matrix.rotateYMatrix(deg),// 旋转
-        //     matrix.translateMatrix(0.0, 0.0, -z - toOrigin - 4000),// 移动到原位置
-        // ]);
-        this.gl.uniformMatrix4fv(
-            this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
-            false,
-            modelViewMatrix
-        );
+
         let beginMove = false;
         let startX = 0;
         let startY = 0;
         let degX = 0;
-        // this.changePosition(0)
         this.bindIndex(index);
         this.gl.canvas.addEventListener('mousedown', (e: MouseEvent) => {
             beginMove = true;
             startX = e.clientX;
             startY = e.clientY;
+
+            // this.slideNext();
         })
-        function handleMove(e: MouseEvent){
+        const handleMove = (e: MouseEvent) =>{
             if (beginMove) {
                 let offset = (e.clientX - startX) / this.dpr;
                 let offsetX = (e.clientY - startY) / this.dpr;
                 deg = -offset * 0.01;
                 degX = -offsetX * 0.01;
+
+                startX = e.clientX;
+                startY = e.clientY;
+
                 this.rotatePosition(deg);
                 this.bindIndex(index);
-
             }
         }
         this.gl.canvas.addEventListener('mousemove',handleMove )
@@ -367,7 +412,6 @@ class webGl {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY ;
                 this.rotatePosition(deg);
-
                 this.bindIndex(index);
 
             }
@@ -404,6 +448,9 @@ class webGl {
                 res([true, img])
             }
             img.src = src;
+            if( img.complete ){
+                res([false, img]);
+            }
         })
     }
     clear() {
@@ -479,6 +526,37 @@ class webGl {
         // gl.viewport(0,0,this.viewWidth,this.viewHeight)
 
         return gl;
+    }
+    
+    animate({
+        allTime,
+        timingFun,
+        end,
+        playGame
+    }:{
+        allTime:number,
+        timingFun: cubicBezier,
+        end: number,
+        playGame: Function
+    }){
+        const startTime = new Date().getTime();
+        let curTime = startTime;
+        function run(){
+            let curT = (curTime - startTime) / allTime ;
+
+            curT > 1 && (curT == 1 )
+            let curEnd = timingFun.solve( curT )
+            if( curEnd >= 1 ){
+                curEnd = 1;
+            }
+            playGame( curEnd * end );
+        
+            if( curT <= 1 ){
+                requestAnimationFrame(run)
+            }
+            curTime = new Date().getTime();
+        }
+        run();
     }
 }
 
