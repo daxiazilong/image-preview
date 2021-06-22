@@ -1,11 +1,14 @@
 type matrixType = Array<number>;
 export const matrix = {
-    multiplyPoint(matrix: matrixType, point: matrixType) {
+    multiplyPoint(point: matrixType,rowMatrix: matrixType,...rest: Array< matrixType >) {;
         var result = [];
-        for (var row = 0; row < 4; row++) {
-            result[row] = matrix[row * 4] * point[0] + matrix[row * 4 + 1] * point[1]
+        for (var col = 0; col < 4; col++) {
+            result[col] = rowMatrix[col] * point[0] + rowMatrix[col + 4] * point[1]
                 +
-                matrix[row * 4 + 2] * point[2] + matrix[row * 4 + 3] * point[3]
+                rowMatrix[col + 8] * point[2] + rowMatrix[col + 12] * point[3]
+        }
+        if(rest.length > 0){
+            return matrix.multiplyPoint(result,rest.splice(0,1)[0],...rest)
         }
         return result;
     },
@@ -21,8 +24,19 @@ export const matrix = {
         }
         return result;
     },
-
-
+    // https://www.songho.ca/opengl/gl_rotate.html
+    rotateByArbitrayAxis(x:number,y:number,z:number,deg:number){
+    
+        var {cos,sin,pow} = Math;
+        var aNumber = (1-cos(deg));
+        var c = cos(deg),s = sin(deg)
+        return[
+            aNumber*pow(x,2) + c, aNumber*x*y-s*z ,      aNumber*x*z + s*y,    0,
+            aNumber*x*y+s*z     , aNumber*pow(y,2) + c,  aNumber*y*z - s*x,    0,
+            aNumber*x*z-s*y     , aNumber*y*z + s*x   ,  aNumber*pow(z,2) + c, 0,
+            0                   ,     0               ,         0            , 1
+        ]
+    },
     multiplyArrayOfMatrices(matrices: Array<matrixType>) {
         var inputMatrix = matrices[0];
         for (var i = 1; i < matrices.length; i++) {
