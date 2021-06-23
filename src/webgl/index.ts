@@ -3,7 +3,6 @@ import { sourceVer } from './shaders/vertext-shader.vert';
 import { matrix } from './matrix'
 import { cubicBezier,linear } from '../animation/animateJs'
 
-
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
@@ -23,6 +22,7 @@ class webGl {
     curIndex = 0;
     defaultAnimateTime = 300;
     modelMatrixes: Array<number> = [];
+    textures: Array<WebGLTexture> = [];
     initialModel: Array<number> = [
         1.0, 0, 0, 0,
         0, 1.0, 0, 0,
@@ -55,11 +55,106 @@ class webGl {
             false,
             modelViewMatrix
         );
+
+        this.gl.uniform4fv(
+            this.gl.getUniformLocation(this.shaderProgram,'bgdColor'), 
+            new Float32Array([0, 0, 0, 0.1])
+        );
         
         this.imgUrls = images;
+        this.setTextureCordinate();
         this.initData();
+
+        this.initEvent();
     }
-    
+    initEvent(){
+        
+        let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2));
+
+        (z > this.zFar) && (z = this.zFar)
+        
+        let deg = Math.PI / 20;
+
+        let beginMove = false;
+        let startX = 0;
+        let startY = 0;
+        let degX = 0;
+        this.gl.canvas.addEventListener('mousedown', (e: MouseEvent) => {
+            beginMove = true;
+            startX = e.clientX;
+            startY = e.clientY;
+
+            // this.slideNext();
+        })
+        const handleMove = (e: MouseEvent) =>{
+            if (beginMove) {
+                let offset = (e.clientX - startX) / this.dpr;
+                let offsetX = (e.clientY - startY) / this.dpr;
+                deg = -offset * 0.01;
+                degX = -offsetX * 0.01;
+
+                startX = e.clientX;
+                startY = e.clientY;
+                this.clear();
+
+                this.rotatePosition(deg);
+                this.bindPostion();
+
+                const index = this.curIndex;
+                const imgLength = this.imgs.length;
+                for( let i = index - 1; i <= index + 1; i++ ){
+                    if( i !== -1 && i !== imgLength ){
+                        {   
+                            const img = this.imgs[i]
+                            this.updateTexture(i);
+                            this.bindIndex(i*4)
+                        }
+                    }
+                }
+            }
+        }
+        this.gl.canvas.addEventListener('mousemove',handleMove )
+        this.gl.canvas.addEventListener('mouseup', (e) => {
+            beginMove = false;
+        })
+        this.gl.canvas.addEventListener('click', (e) => {
+            this.slideNext();
+        })
+        this.gl.canvas.addEventListener('touchstart', (e: TouchEvent) => {
+            beginMove = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        })
+        this.gl.canvas.addEventListener('touchmove', (e: TouchEvent) => {
+            if (beginMove) {
+                this.clear();
+                let offset = (e.touches[0].clientX - startX) / this.dpr;
+                let offsetX = (e.touches[0].clientY - startY) / this.dpr;
+                deg = -offset * 0.01;
+                degX = -offsetX * 0.01;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY ;
+                this.rotatePosition(deg);
+                this.bindPostion();
+
+                const index = this.curIndex;
+                const imgLength = this.imgs.length;
+                for( let i = index - 1; i <= index + 1; i++ ){
+                    if( i !== -1 && i !== imgLength ){
+                        {   
+                            const img = this.imgs[i]
+                            this.updateTexture(i);
+                            this.bindIndex(i*4)
+                        }
+                    }
+                }
+
+            }
+        })
+        this.gl.canvas.addEventListener('touchend', (e) => {
+            beginMove = false;
+        })
+    }
     initData() {
         this.drawIndex(this.curIndex)
     }
@@ -84,9 +179,21 @@ class webGl {
                 let beforePos = 0; 
                 const play = this.rotatePosition.bind(this);
                 return (curPos:number) => {
+                    this.clear();
                     let step = curPos - beforePos;
                     play(step);
-                    this.bindIndex(0)
+                    this.bindPostion();
+                    const index = this.curIndex;
+                    const imgLength = this.imgs.length;
+                    for( let i = index - 1; i <= index + 1; i++ ){
+                        if( i !== -1 && i !== imgLength ){
+                            {   
+                                const img = this.imgs[i]
+                                this.updateTexture(i);
+                                this.bindIndex(i*4)
+                            }
+                        }
+                    }
                     beforePos = curPos;
                 }
                 
@@ -95,7 +202,7 @@ class webGl {
     }
 
     async drawIndex(index: number) {
-        this.draw(this.imgs[index], index);
+        this.draw( index) ;
     }
     genPostion(width: number, height: number,index:number) {
         if( this.positions[index * 16 ]  ){ // 顶点数据已经有缓存到该数据了 则无需再次初始化咯
@@ -134,98 +241,6 @@ class webGl {
         const positions = this.positions;
         const positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
-
-        // Tell WebGL how to pull out the positions from the position
-        // buffer into the vertexPosition attribute
-        {
-            const numComponents = 4;
-            const type = gl.FLOAT;
-            const normalize = false;
-            const stride = 0;
-            const offset = 0;
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-            const aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
-            gl.vertexAttribPointer(
-                aVerLocate,
-                numComponents,
-                type,
-                normalize,
-                stride,
-                offset);
-            gl.enableVertexAttribArray(aVerLocate);
-        }
-    }
-    changePosition(offset:number){
-
-        const gl = this.gl;
-        const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
-        const positions = this.positions;
-        const firstPlane = positions.splice(0,16);
-        const result = [];;
-        const deg = offset * 0.01 ;
-        for( let i = 0 ; i < 16; i+= 4){
-            let x = firstPlane[i] , y = firstPlane[i+1], z = firstPlane[ i + 2], w = firstPlane[i+3];
-            // z = 0; // 移动到坐标原点；
-            // console.log([x,y,z,w])
-            console.log(z,zInitial)
-            const newPoint = matrix.multiplyPoint( matrix.scaleMatrix(1.5,1.5,1.0),[x,y,z,w] );
-            // console.log(newPoint)
-            // z = zInitial; //移动到原位置
-            for( let j = i ; j < 4 + i; j++ ){
-                firstPlane[j] = newPoint[j-i]
-            }
-        }
-        positions.splice(0,0,...firstPlane)
-        // console.log(positions)
-
-        const positionBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
-
-        // Tell WebGL how to pull out the positions from the position
-        // buffer into the vertexPosition attribute
-        {
-            const numComponents = 4;
-            const type = gl.FLOAT;
-            const normalize = false;
-            const stride = 0;
-            const offset = 0;
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-            const aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
-            gl.vertexAttribPointer(
-                aVerLocate,
-                numComponents,
-                type,
-                normalize,
-                stride,
-                offset);
-            gl.enableVertexAttribArray(aVerLocate);
-        }
-    }
-    rotatePosition(deg:number){
-        this.clear();
-        const gl = this.gl;
-        const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
-        const centerX = this.viewWidth / 2;
-        const positions = this.positions;
-        for( let i = 0 , L = positions.length; i < L; i += 4){
-            let x = positions[i] , y = positions[i+1], z = positions[ i + 2], w = positions[i+3];
-            const newPoint = matrix.multiplyPoint( 
-                [x,y,z,w],
-                matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
-                matrix.rotateYMatrix(deg), //开始旋转
-                matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
-            );
-            // z = zInitial; //移动到原位置
-            for( let j = i ; j < 4 + i; j++ ){
-                positions[j] = newPoint[j-i]
-            }
-        }
-        // console.log(positions)
-
-        const positionBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
 
         // Tell WebGL how to pull out the positions from the position
@@ -248,7 +263,27 @@ class webGl {
             gl.enableVertexAttribArray(aVerLocate);
         }
     }
-    bindTexture(image: HTMLImageElement) {
+    rotatePosition(deg:number){
+        const gl = this.gl;
+        const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        const centerX = this.viewWidth / 2;
+        const positions = this.positions;
+        for( let i = 0 , L = positions.length; i < L; i += 4){
+            let x = positions[i] , y = positions[i+1], z = positions[ i + 2], w = positions[i+3];
+            const newPoint = matrix.multiplyPoint( 
+                [x,y,z,w],
+                matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
+                matrix.rotateYMatrix(deg), //开始旋转
+                matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
+            );
+            // z = zInitial; //移动到原位置
+            for( let j = i ; j < 4 + i; j++ ){
+                positions[j] = newPoint[j-i]
+            }
+        }
+        // console.log(positions)
+    }
+    setTextureCordinate(){
         const gl = this.gl;
 
         const textureCoordBuffer = this.gl.createBuffer();
@@ -290,11 +325,22 @@ class webGl {
                 offset);
             gl.enableVertexAttribArray(textureLocate);
         }
+
+        // Bind the texture to texture unit 0
+        gl.activeTexture(gl['TEXTURE0']);
+        // Tell the shader we bound the texture to texture unit 0
+        gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler0'), 0);
+    }
+    bindTexture(image: HTMLImageElement,index:number) {
+        const gl = this.gl;
         const level = 0;
         const internalFormat = gl.RGBA;
         const srcFormat = gl.RGBA;
         const srcType = gl.UNSIGNED_BYTE;
         const texture = gl.createTexture();
+
+        this.textures[index] = texture;
+
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
 
@@ -314,11 +360,13 @@ class webGl {
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);//gl.LINEAR_MIPMAP_LINE
             }
         }
-        // Bind the texture to texture unit 0
-        gl.activeTexture(gl['TEXTURE0']);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        // Tell the shader we bound the texture to texture unit 0
-        gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler'), 0);
+        
+        // gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+    updateTexture(index:number){
+        const gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D,this.textures[index])
+
     }
     bindIndex(index: number) {
         const gl = this.gl;
@@ -326,99 +374,47 @@ class webGl {
         gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
         const indices = [
-            index, index + 1, index + 2, index, index + 2, index + 3,
-            index + 4, index + 5, index + 6, index + 4, index + 6, index + 7,
-            index + 8, index + 9, index + 10, index + 8, index + 10, index + 11,
+            index, index + 1, index + 2, 
+            index, index + 2, index + 3,
         ];
         // console.log(indices)
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.DYNAMIC_DRAW);
         {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-            const vertexCount = 12;
+            const vertexCount = indices.length;
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
             gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
             // gl.drawArrays(gl.TRIANGLE_STRIP,0,vertexCount)
         }
     }
-    async draw(image: HTMLImageElement, index: number) {
+    async draw( index: number) {
         let width, height;
-        
         this.clear();
-        let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2))
         const imgLength = this.imgUrls.length;
-        for( let i = index - 1; i <= index + 2; i++ ){
+        for( let i = index - 1; i <= index + 1; i++ ){
             if( i !== -1 && i !== imgLength ){
                 {   
                     console.log(this.imgUrls[i],i,imgLength)
                     const [err, img] = await this.loadImage(this.imgUrls[i])
+                    this.imgs[i] = img;
                     const { naturalWidth, naturalHeight } = img;
-                    image = img;
                     width = this.viewWidth;
                     height = naturalHeight / naturalWidth * width;
-                    this.genPostion(width, height,i)
+                    this.genPostion(width, height,i);
                 }
             }
         }
         this.bindPostion();
-        this.bindTexture(image);
-
-        (z > this.zFar) && (z = this.zFar)
-        
-        let deg = Math.PI / 20;
-
-        let beginMove = false;
-        let startX = 0;
-        let startY = 0;
-        let degX = 0;
-        this.bindIndex(index);
-        this.gl.canvas.addEventListener('mousedown', (e: MouseEvent) => {
-            beginMove = true;
-            startX = e.clientX;
-            startY = e.clientY;
-
-            // this.slideNext();
-        })
-        const handleMove = (e: MouseEvent) =>{
-            if (beginMove) {
-                let offset = (e.clientX - startX) / this.dpr;
-                let offsetX = (e.clientY - startY) / this.dpr;
-                deg = -offset * 0.01;
-                degX = -offsetX * 0.01;
-
-                startX = e.clientX;
-                startY = e.clientY;
-
-                this.rotatePosition(deg);
-                this.bindIndex(index);
+        for( let i = index - 1; i <= index + 1; i++ ){
+            if( i !== -1 && i !== imgLength ){
+                {   
+                    const img = this.imgs[i]
+                    this.bindTexture(img,i);
+                    this.bindIndex(i*4)
+                }
             }
         }
-        this.gl.canvas.addEventListener('mousemove',handleMove )
-        this.gl.canvas.addEventListener('mouseup', (e) => {
-            beginMove = false;
-        })
-
-        this.gl.canvas.addEventListener('touchstart', (e: TouchEvent) => {
-            beginMove = true;
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-        })
-        this.gl.canvas.addEventListener('touchmove', (e: TouchEvent) => {
-            if (beginMove) {
-                let offset = (e.touches[0].clientX - startX) / this.dpr;
-                let offsetX = (e.touches[0].clientY - startY) / this.dpr;
-                deg = -offset * 0.01;
-                degX = -offsetX * 0.01;
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY ;
-                this.rotatePosition(deg);
-                this.bindIndex(index);
-
-            }
-        })
-        this.gl.canvas.addEventListener('touchend', (e) => {
-            beginMove = false;
-        })
 
         
     }
