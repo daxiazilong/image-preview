@@ -208,8 +208,23 @@ class webGl {
         if( this.positions[index * 16 ]  ){ // 顶点数据已经有缓存到该数据了 则无需再次初始化咯
             return;
         }
+
+        
         const gl = this.gl;
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev
+
+        if( index == this.curIndex ){
+            // front 面加入一个黑色的底层
+            let width = this.viewWidth;
+            let height = this.viewHeight;
+            this.positions.push(...[
+                -width / 2, -height / 2, z, 1.0,
+                width / 2, -height / 2, z, 1.0,
+                width / 2, height / 2, z, 1.0,
+                -width / 2, height / 2, z, 1.0,
+            ])
+            this.imgs.splice(index - 1,null)
+        }
         // console.log(z)
         const positionsMap = [
             [// left
@@ -234,6 +249,7 @@ class webGl {
         let key = index - this.curIndex; // -1 , 0 , 1;
         key  += 1; // -1,0,1 -> 0,1,2
         this.positions.push( ...positionsMap[key] )
+        
         // console.log(this.positions)
     }
     bindPostion(){
@@ -342,6 +358,9 @@ class webGl {
         this.textures[index] = texture;
 
         gl.bindTexture(gl.TEXTURE_2D, texture);
+        if( image == null ){//front面的黑色的底面
+
+        }
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
 
         {
@@ -402,11 +421,12 @@ class webGl {
                     width = this.viewWidth;
                     height = naturalHeight / naturalWidth * width;
                     this.genPostion(width, height,i);
+                    // to do fornt面需要个底面去遮挡侧面的展示
                 }
             }
         }
         this.bindPostion();
-        for( let i = index - 1; i <= index + 1; i++ ){
+        for( let i = index - 1; i <= index + 2; i++ ){
             if( i !== -1 && i !== imgLength ){
                 {   
                     const img = this.imgs[i]
