@@ -14,6 +14,9 @@ import { webGl } from '../webgl/index'
 if(!(window as any).webGl){
     (window as any).webGl = new webGl([
         '/testImage/IMG_0512.JPG',
+        '/testImage/cubetexture.png',
+        '/testImage/share_success_20190619.png',
+        '/testImage/BBC82C020430AED149F8D18A0849D241.png',
         '/testImage/cubetexture.png'
     ]);
 }

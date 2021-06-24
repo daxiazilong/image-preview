@@ -22,7 +22,8 @@ class webGl {
     curIndex = 0;
     defaultAnimateTime = 300;
     modelMatrixes: Array<number> = [];
-    textures: Array<WebGLTexture> = [];
+    textures: Map<number,WebGLTexture> = new Map;
+    indinces: Map<number,WebGLTexture> = new Map;
     initialModel: Array<number> = [
         1.0, 0, 0, 0,
         0, 1.0, 0, 0,
@@ -73,18 +74,19 @@ class webGl {
 
         (z > this.zFar) && (z = this.zFar)
         
-        let deg = Math.PI / 20;
+        let deg = 0;
 
         let beginMove = false;
         let startX = 0;
         let startY = 0;
         let degX = 0;
+
+        let beginMoveX = 0;
         this.gl.canvas.addEventListener('mousedown', (e: MouseEvent) => {
             beginMove = true;
-            startX = e.clientX;
+            beginMoveX = startX = e.clientX;
             startY = e.clientY;
 
-            // this.slideNext();
         })
         const handleMove = (e: MouseEvent) =>{
             if (beginMove) {
@@ -99,30 +101,43 @@ class webGl {
 
                 this.rotatePosition(deg);
                 this.bindPostion();
+                this.drawPosition();
 
-                const index = this.curIndex;
-                const imgLength = this.imgs.length;
-                for( let i = index - 1; i <= index + 1; i++ ){
-                    if( i !== -1 && i !== imgLength ){
-                        {   
-                            const img = this.imgs[i]
-                            this.updateTexture(i);
-                            this.bindIndex(i*4)
-                        }
-                    }
-                }
             }
         }
         this.gl.canvas.addEventListener('mousemove',handleMove )
-        this.gl.canvas.addEventListener('mouseup', (e) => {
+        this.gl.canvas.addEventListener('mouseup', async (e:MouseEvent) => {
             beginMove = false;
+            let offsetX = (e.clientX - beginMoveX) / this.dpr;
+            degX = -offsetX * 0.01;
+            let throldDeg = Math.PI * 0.15;
+           
+            const plusOrMinus = degX / Math.abs(degX);
+            if( Math.abs(degX) >= throldDeg ){// 左右切换
+                let beforeIndex = this.curIndex;
+                let nextIndex = this.curIndex + ( plusOrMinus * 1 )
+                if( nextIndex == -1 || nextIndex == this.imgUrls.length ){// 第一张左切换或最后一张右切换时 也是复原
+                    this.curIndex = beforeIndex;
+                    this.rotate(0 - degX)
+                }else{
+                    let res = await this.rotate(plusOrMinus * Math.PI/2 - degX);
+                    this.curIndex = nextIndex;
+                    this.draw(nextIndex)
+                    
+                }
+                
+            }else{// 复原
+                this.rotate(0 - degX)
+            }
+            
+
         })
         this.gl.canvas.addEventListener('click', (e) => {
-            this.slideNext();
+            // this.slideNext();
         })
         this.gl.canvas.addEventListener('touchstart', (e: TouchEvent) => {
             beginMove = true;
-            startX = e.touches[0].clientX;
+            beginMoveX = startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
         })
         this.gl.canvas.addEventListener('touchmove', (e: TouchEvent) => {
@@ -136,27 +151,27 @@ class webGl {
                 startY = e.touches[0].clientY ;
                 this.rotatePosition(deg);
                 this.bindPostion();
-
-                const index = this.curIndex;
-                const imgLength = this.imgs.length;
-                for( let i = index - 1; i <= index + 1; i++ ){
-                    if( i !== -1 && i !== imgLength ){
-                        {   
-                            const img = this.imgs[i]
-                            this.updateTexture(i);
-                            this.bindIndex(i*4)
-                        }
-                    }
-                }
-
+                this.drawPosition();
             }
         })
-        this.gl.canvas.addEventListener('touchend', (e) => {
+        this.gl.canvas.addEventListener('touchend', async (e:TouchEvent) => {
+
             beginMove = false;
+            let offsetX = (e.changedTouches[0].clientX - beginMoveX) / this.dpr;
+            degX = -offsetX * 0.01;
+            let throldDeg = Math.PI * 0.15;
+            const plusOrMinus = degX / Math.abs(degX);
+            if( Math.abs(degX) >= throldDeg ){// 左右切换
+                let res = await this.rotate(plusOrMinus * Math.PI/2 - degX);
+                this.curIndex += ( plusOrMinus * 1 )
+                this.draw(this.curIndex)
+            }else{// 复原
+                this.rotate(0 - degX)
+            }
         })
     }
     initData() {
-        this.drawIndex(this.curIndex)
+        this.draw(this.curIndex)
     }
     // place a substitute by subterfuge
     placeAsubstituteBySubterfuge(){
@@ -165,8 +180,8 @@ class webGl {
     slideNext(){
         this.rotate(0.5 * Math.PI)
     }
-    rotate(end){
-        this.animate({
+    rotate(end) {
+        return this.animate({
             allTime: this.defaultAnimateTime,
             timingFun: linear,
             end,
@@ -176,55 +191,32 @@ class webGl {
                  干个某数列元素的和 所以需要前后值的差值来按步进行动画
                  * 
                  */
-                let beforePos = 0; 
+                let beforePos = 0;
                 const play = this.rotatePosition.bind(this);
-                return (curPos:number) => {
+                return (curPos: number) => {
                     this.clear();
                     let step = curPos - beforePos;
                     play(step);
                     this.bindPostion();
-                    const index = this.curIndex;
-                    const imgLength = this.imgs.length;
-                    for( let i = index - 1; i <= index + 1; i++ ){
-                        if( i !== -1 && i !== imgLength ){
-                            {   
-                                const img = this.imgs[i]
-                                this.updateTexture(i);
-                                this.bindIndex(i*4)
-                            }
-                        }
-                    }
+                    this.drawPosition();
                     beforePos = curPos;
                 }
-                
+
             })()
         })
+
+
     }
 
-    async drawIndex(index: number) {
-        this.draw( index) ;
-    }
     genPostion(width: number, height: number,index:number) {
-        if( this.positions[index * 16 ]  ){ // 顶点数据已经有缓存到该数据了 则无需再次初始化咯
-            return;
-        }
+        // if( this.positions[ 48 + index * 16 ]  ){ // 顶点数据已经有缓存到该数据了 则无需再次初始化咯
+        //     return;
+        // }
 
         
         const gl = this.gl;
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev
 
-        if( index == this.curIndex ){
-            // front 面加入一个黑色的底层
-            let width = this.viewWidth;
-            let height = this.viewHeight;
-            this.positions.push(...[
-                -width / 2, -height / 2, z, 1.0,
-                width / 2, -height / 2, z, 1.0,
-                width / 2, height / 2, z, 1.0,
-                -width / 2, height / 2, z, 1.0,
-            ])
-            this.imgs.splice(index - 1,null)
-        }
         // console.log(z)
         const positionsMap = [
             [// left
@@ -249,8 +241,6 @@ class webGl {
         let key = index - this.curIndex; // -1 , 0 , 1;
         key  += 1; // -1,0,1 -> 0,1,2
         this.positions.push( ...positionsMap[key] )
-        
-        // console.log(this.positions)
     }
     bindPostion(){
         const gl = this.gl;
@@ -278,6 +268,28 @@ class webGl {
                 offset);
             gl.enableVertexAttribArray(aVerLocate);
         }
+    }
+    drawPosition(){
+        // 生成黑色立方体作为背景
+        this.bindTexture(null,0);
+        for( let i = 0, L = 12 ; i < L ; i += 4 ){
+            this.bindIndex(i)
+        }
+        // 生成 真真的 图片
+        let faces = (this.positions.length / 4 - 12) / 4;
+        let textureIndex = (this.curIndex - 1);
+        ( textureIndex == -1 ) && (textureIndex = 0 )
+        for( let i = 0; i < faces ; i++ ,textureIndex++ ){
+            {;
+                // console.log(1 + textureIndex)
+                const img = this.imgs[textureIndex];
+                this.bindTexture(img,1 + textureIndex);
+                this.bindIndex( 12 + i*4 )
+            }
+        }
+        // console.log('\n')
+
+        // console.log( this.positions )
     }
     rotatePosition(deg:number){
         const gl = this.gl;
@@ -320,6 +332,21 @@ class webGl {
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
+            // Front
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            //  right
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0, // 贴图纹理坐标始终是不变的 从左下角开始依次逆时针是 0 0  ，1 0 ，1 1 ，0 1  具体对应的时候 找到矩形的第一个点  然后和矩形的顺序一样逆时针贴图  一一对应上就好 
+            // left
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
 
         ];
 
@@ -347,19 +374,23 @@ class webGl {
         // Tell the shader we bound the texture to texture unit 0
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler0'), 0);
     }
-    bindTexture(image: HTMLImageElement,index:number) {
+    bindTexture(image: HTMLImageElement,index:number) {;
+        if(this.textures.has(index)){ // 该图片已经创建过贴图 直接拿来复用
+            this.updateTexture(index)
+            return;
+        }
         const gl = this.gl;
         const level = 0;
         const internalFormat = gl.RGBA;
         const srcFormat = gl.RGBA;
         const srcType = gl.UNSIGNED_BYTE;
         const texture = gl.createTexture();
-
-        this.textures[index] = texture;
+        
+        this.textures.set(index,texture);
 
         gl.bindTexture(gl.TEXTURE_2D, texture);
         if( image == null ){//front面的黑色的底面
-
+            return;
         }
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
 
@@ -384,18 +415,32 @@ class webGl {
     }
     updateTexture(index:number){
         const gl = this.gl;
-        gl.bindTexture(gl.TEXTURE_2D,this.textures[index])
-
+        gl.bindTexture(gl.TEXTURE_2D,this.textures.get(index))
     }
-    bindIndex(index: number) {
+    bindIndex(index: number) {;
         const gl = this.gl;
-        const indexBuffer = this.gl.createBuffer();
-        gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
         const indices = [
             index, index + 1, index + 2, 
             index, index + 2, index + 3,
         ];
+        if( this.indinces.has(index) ){
+            const indexBuffer = this.indinces.get(index);
+            {
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+                const vertexCount = indices.length;
+                const type = gl.UNSIGNED_SHORT;
+                const offset = 0;
+                gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+                // gl.drawArrays(gl.TRIANGLE_STRIP,0,vertexCount)
+            }
+            return;
+        }
+        const indexBuffer = this.gl.createBuffer();
+        this.indinces[index] = indexBuffer;
+
+        gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+        
         // console.log(indices)
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.DYNAMIC_DRAW);
         {
@@ -407,36 +452,55 @@ class webGl {
             // gl.drawArrays(gl.TRIANGLE_STRIP,0,vertexCount)
         }
     }
+    generateCube(width: number, height: number,){
+        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev 
+        const positionCube = [
+            // left
+                -width / 2, -height / 2, z-width, 1.0,
+                -width / 2, -height / 2, z, 1.0,
+                -width / 2, height / 2, z, 1.0,
+                -width / 2, height / 2, z-width, 1.0,
+            //fornt
+                -width / 2, -height / 2, z, 1.0,
+                width / 2, -height / 2, z, 1.0,
+                width / 2, height / 2, z, 1.0,
+                -width / 2, height / 2, z, 1.0,
+            // right
+                width / 2, -height / 2, z, 1.0,
+                width / 2, -height / 2, z-width, 1.0,
+                width / 2, height / 2, z-width, 1.0,
+                width / 2, height / 2, z, 1.0,
+        ]
+        this.positions.splice(0,0,...positionCube);
+
+    }
     async draw( index: number) {
         let width, height;
         this.clear();
+        this.positions = [];// 期望positions只保留一个底层的立方体，三个展示图片的面 共计六个面
         const imgLength = this.imgUrls.length;
+        let maxWidth = 0,maxHeight = 0;
         for( let i = index - 1; i <= index + 1; i++ ){
-            if( i !== -1 && i !== imgLength ){
+            if( i !== -1 && i <= imgLength - 1 ){
                 {   
-                    console.log(this.imgUrls[i],i,imgLength)
                     const [err, img] = await this.loadImage(this.imgUrls[i])
                     this.imgs[i] = img;
                     const { naturalWidth, naturalHeight } = img;
                     width = this.viewWidth;
                     height = naturalHeight / naturalWidth * width;
                     this.genPostion(width, height,i);
-                    // to do fornt面需要个底面去遮挡侧面的展示
-                }
-            }
-        }
-        this.bindPostion();
-        for( let i = index - 1; i <= index + 2; i++ ){
-            if( i !== -1 && i !== imgLength ){
-                {   
-                    const img = this.imgs[i]
-                    this.bindTexture(img,i);
-                    this.bindIndex(i*4)
-                }
-            }
-        }
 
-        
+                    maxWidth = Math.max(width,maxWidth)
+                    maxHeight = Math.max(height,maxHeight)
+
+                }
+            }
+        }
+        this.generateCube(maxWidth,maxHeight);
+
+        this.bindPostion();
+
+        this.drawPosition();
     }
     createPerspectiveMatrix() {
         const fieldOfViewInRadians = this.fieldOfViewInRadians;   // in radians
@@ -477,7 +541,6 @@ class webGl {
         gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
 
         // Clear the canvas before we start drawing on it.
-
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
     bindShader(gl: WebGLRenderingContext, sourceFrag, sourceVer) {
@@ -527,6 +590,7 @@ class webGl {
             user-select:none;
             font-size:0;
         `;
+        document.body.style.overflow="hidden"
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
         document.body.append(canvas);
@@ -548,15 +612,19 @@ class webGl {
         allTime,
         timingFun,
         end,
-        playGame
+        playGame,
+        callback
     }:{
         allTime:number,
         timingFun: cubicBezier,
         end: number,
         playGame: Function
+        callback?: Function
     }){
         const startTime = new Date().getTime();
         let curTime = startTime;
+        let resolve;
+        const pro = new Promise( res => (resolve = res) )
         function run(){
             let curT = (curTime - startTime) / allTime ;
 
@@ -569,10 +637,15 @@ class webGl {
         
             if( curT <= 1 ){
                 requestAnimationFrame(run)
+            }else{
+                callback && callback();
+                resolve([false,1])
             }
             curTime = new Date().getTime();
         }
         run();
+
+        return pro
     }
 }
 
