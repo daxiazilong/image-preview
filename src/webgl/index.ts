@@ -63,6 +63,16 @@ class webGl {
         );
         
         this.imgUrls = images;
+        const gl = this.gl;
+        // this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        // gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); 
+        // gl.blendFunc(gl.ONE, gl.ONE)
+
+        gl.enable(gl.DEPTH_TEST);           // Enable depth testing
+        gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
+        gl.enable(gl.CULL_FACE)
+
         this.setTextureCordinate();
         this.initData();
 
@@ -162,9 +172,18 @@ class webGl {
             let throldDeg = Math.PI * 0.15;
             const plusOrMinus = degX / Math.abs(degX);
             if( Math.abs(degX) >= throldDeg ){// 左右切换
-                let res = await this.rotate(plusOrMinus * Math.PI/2 - degX);
-                this.curIndex += ( plusOrMinus * 1 )
-                this.draw(this.curIndex)
+                let beforeIndex = this.curIndex;
+                let nextIndex = this.curIndex + ( plusOrMinus * 1 )
+                if( nextIndex == -1 || nextIndex == this.imgUrls.length ){// 第一张左切换或最后一张右切换时 也是复原
+                    this.curIndex = beforeIndex;
+                    this.rotate(0 - degX)
+                }else{
+                    let res = await this.rotate(plusOrMinus * Math.PI/2 - degX);
+                    this.curIndex = nextIndex;
+                    this.draw(nextIndex)
+                    
+                }
+                
             }else{// 复原
                 this.rotate(0 - degX)
             }
@@ -215,15 +234,17 @@ class webGl {
 
         
         const gl = this.gl;
-        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev
+        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        const viewWidth = this.viewWidth;
+        const viewHeight = this.viewHeight
 
         // console.log(z)
         const positionsMap = [
             [// left
-                -width / 2, -height / 2, z-width, 1.0,
-                -width / 2, -height / 2, z, 1.0,
-                -width / 2, height / 2, z, 1.0,
-                -width / 2, height / 2, z-width, 1.0,
+                -viewWidth / 2, -height / 2, z-width, 1.0,
+                -viewWidth / 2, -height / 2, z, 1.0,
+                -viewWidth / 2, height / 2, z, 1.0,
+                -viewWidth / 2, height / 2, z-width, 1.0,
             ],
             [//fornt
                 -width / 2, -height / 2, z, 1.0,
@@ -232,10 +253,10 @@ class webGl {
                 -width / 2, height / 2, z, 1.0,
             ],
             [// right
-                width / 2, -height / 2, z, 1.0,
-                width / 2, -height / 2, z-width, 1.0,
-                width / 2, height / 2, z-width, 1.0,
-                width / 2, height / 2, z, 1.0,
+                viewWidth / 2, -height / 2, z, 1.0,
+                viewWidth / 2, -height / 2, z-width, 1.0,
+                viewWidth / 2, height / 2, z-width, 1.0,
+                viewWidth / 2, height / 2, z, 1.0,
             ]
         ]
         let key = index - this.curIndex; // -1 , 0 , 1;
@@ -453,14 +474,19 @@ class webGl {
         }
     }
     generateCube(width: number, height: number,){
-        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev 
+        const cubeMove = 0.1; 
+        // width = this.viewWidth;
+        // height = this.viewHeight
+        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev - cubeMove
+        width -= cubeMove
+        height -= cubeMove;
         const positionCube = [
             // left
                 -width / 2, -height / 2, z-width, 1.0,
                 -width / 2, -height / 2, z, 1.0,
                 -width / 2, height / 2, z, 1.0,
                 -width / 2, height / 2, z-width, 1.0,
-            //fornt
+            //front
                 -width / 2, -height / 2, z, 1.0,
                 width / 2, -height / 2, z, 1.0,
                 width / 2, height / 2, z, 1.0,
@@ -476,7 +502,6 @@ class webGl {
     }
     async draw( index: number) {
         let width, height;
-        this.clear();
         this.positions = [];// 期望positions只保留一个底层的立方体，三个展示图片的面 共计六个面
         const imgLength = this.imgUrls.length;
         let maxWidth = 0,maxHeight = 0;
@@ -499,6 +524,7 @@ class webGl {
         this.generateCube(maxWidth,maxHeight);
 
         this.bindPostion();
+        this.clear();
 
         this.drawPosition();
     }
@@ -537,8 +563,7 @@ class webGl {
         const gl = this.gl;
         gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
         gl.clearDepth(1.0);                 // Clear everything
-        gl.enable(gl.DEPTH_TEST);           // Enable depth testing
-        gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
+        
 
         // Clear the canvas before we start drawing on it.
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
