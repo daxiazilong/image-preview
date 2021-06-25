@@ -65,9 +65,9 @@ class webGl {
         this.imgUrls = images;
         const gl = this.gl;
         // this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        // gl.enable(gl.BLEND);
+        gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); 
-        // gl.blendFunc(gl.ONE, gl.ONE)
+        gl.blendFunc(gl.ONE, gl.ZERO)
 
         gl.enable(gl.DEPTH_TEST);           // Enable depth testing
         gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
