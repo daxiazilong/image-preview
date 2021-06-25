@@ -3,22 +3,32 @@ import { sourceVer } from './shaders/vertext-shader.vert';
 import { matrix } from './matrix'
 import { cubicBezier,linear } from '../animation/animateJs'
 
+import {showFps} from './tools/index'
+showFps();
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
-const forDev = 4000
+
+type webGlConstructorProps = {
+    images: Array<string>
+}
+const forDev = 0
 
 
 class webGl {
 
     viewWidth: number;
     viewHeight: number;
-    dpr: number = window.devicePixelRatio || 1;
+
+    dpr: number = 1 || window.devicePixelRatio || 1;
     gl: WebGLRenderingContext;
+    ref: HTMLCanvasElement;
     shaderProgram: WebGLProgram;
+
     fieldOfViewInRadians = 0.1 * Math.PI
     zNear = 100.0;
     zFar = 10000.0;
+
     curIndex = 0;
     defaultAnimateTime = 300;
     modelMatrixes: Array<number> = [];
@@ -30,11 +40,14 @@ class webGl {
         0, 0, 1.0, 0,
         0, 0, 0, 1.0
     ]
+
     initialVertextes;
     positions: Array<number> = [];
     imgs: Array<HTMLImageElement> = [];
     imgUrls: Array<string> = [];
-    constructor(images: Array<string>) {
+    imgShape: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
+
+    constructor({images}:webGlConstructorProps) {
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
         this.shaderProgram = this.bindShader(this.gl, sourceFrag, sourceVer)
@@ -65,9 +78,9 @@ class webGl {
         this.imgUrls = images;
         const gl = this.gl;
         // this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        gl.enable(gl.BLEND);
+        // gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); 
-        gl.blendFunc(gl.ONE, gl.ZERO)
+        // gl.blendFunc(gl.ONE, gl.ONE)
 
         gl.enable(gl.DEPTH_TEST);           // Enable depth testing
         gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
@@ -107,8 +120,6 @@ class webGl {
 
                 startX = e.clientX;
                 startY = e.clientY;
-                this.clear();
-
                 this.rotatePosition(deg);
                 this.bindPostion();
                 this.drawPosition();
@@ -151,6 +162,7 @@ class webGl {
             startY = e.touches[0].clientY;
         })
         this.gl.canvas.addEventListener('touchmove', (e: TouchEvent) => {
+            e.preventDefault()
             if (beginMove) {
                 this.clear();
                 let offset = (e.touches[0].clientX - startX) / this.dpr;
@@ -189,6 +201,7 @@ class webGl {
             }
         })
     }
+
     initData() {
         this.draw(this.curIndex)
     }
@@ -203,7 +216,7 @@ class webGl {
         return this.animate({
             allTime: this.defaultAnimateTime,
             timingFun: linear,
-            end,
+            ends:[end],
             playGame: (() => {
                 /**
                  矩阵旋转乘法时是累加的。因此直接通过timingFun计算出的结果直接应用的话最后的结果是个若
@@ -292,6 +305,7 @@ class webGl {
     }
     drawPosition(){
         // 生成黑色立方体作为背景
+        this.clear();
         this.bindTexture(null,0);
         for( let i = 0, L = 12 ; i < L ; i += 4 ){
             this.bindIndex(i)
@@ -299,7 +313,7 @@ class webGl {
         // 生成 真真的 图片
         let faces = (this.positions.length / 4 - 12) / 4;
         let textureIndex = (this.curIndex - 1);
-        ( textureIndex == -1 ) && (textureIndex = 0 )
+        ;( textureIndex == -1 ) && (textureIndex = 0 );
         for( let i = 0; i < faces ; i++ ,textureIndex++ ){
             {;
                 // console.log(1 + textureIndex)
@@ -325,12 +339,64 @@ class webGl {
                 matrix.rotateYMatrix(deg), //开始旋转
                 matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
             );
-            // z = zInitial; //移动到原位置
             for( let j = i ; j < 4 + i; j++ ){
                 positions[j] = newPoint[j-i]
             }
         }
         // console.log(positions)
+    }
+    scaleZPosition({
+        scaleX,
+        scaleY,
+        dx,
+        dy
+    }:{
+        scaleX:number,
+        scaleY:number,
+        dx:number,
+        dy:number,
+    }){
+        const before = [
+            0,0,0,0
+        ]
+        const step = [
+            0,0,0,0
+        ]
+        const playGame = (...rest) => {
+            rest.forEach((item,index) => {
+                step[index] = item - before[index]
+                before[index] = item;
+            })
+            step[0] += 1;
+            step[1] += 1;
+            this.transformCurplane(
+                matrix.scaleMatrix(step[0],step[1],1),
+                matrix.translateMatrix(step[2],step[3],0)
+            )
+            this.bindPostion();
+            this.drawPosition();
+        }
+        return this.animate({
+            allTime: this.defaultAnimateTime,
+            timingFun: linear,
+            ends:[scaleX,scaleY,dx,dy],
+            playGame
+        })
+    }
+    transformCurplane(a,...matrixes){console.log(arguments)
+        const positions  = this.positions
+        for( let i = this.curPointAt ; i < this.curPointAt + 16; i += 4){
+            let x = positions[i] , y = positions[i+1], z = positions[ i + 2], w = positions[i+3];
+            const newPoint = matrix.multiplyPoint( 
+                [x,y,z,w],
+                a,
+                ...matrixes
+            );
+            console.log(newPoint)
+            for( let j = i ; j < 4 + i; j++ ){
+                positions[j] = newPoint[j-i]
+            }
+        }
     }
     setTextureCordinate(){
         const gl = this.gl;
@@ -444,6 +510,7 @@ class webGl {
             index, index + 1, index + 2, 
             index, index + 2, index + 3,
         ];
+        const drawType = gl.TRIANGLES;
         if( this.indinces.has(index) ){
             const indexBuffer = this.indinces.get(index);
             {
@@ -451,11 +518,12 @@ class webGl {
                 const vertexCount = indices.length;
                 const type = gl.UNSIGNED_SHORT;
                 const offset = 0;
-                gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-                // gl.drawArrays(gl.TRIANGLE_STRIP,0,vertexCount)
+                gl.drawElements(drawType, vertexCount, type, offset);
+                // gl.drawArrays(gl.TRIANGLES,index,vertexCount)
             }
             return;
         }
+
         const indexBuffer = this.gl.createBuffer();
         this.indinces[index] = indexBuffer;
 
@@ -463,20 +531,20 @@ class webGl {
 
         
         // console.log(indices)
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.DYNAMIC_DRAW);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
         {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             const vertexCount = indices.length;
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
-            gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-            // gl.drawArrays(gl.TRIANGLE_STRIP,0,vertexCount)
+            gl.drawElements(drawType, vertexCount, type, offset);
+            // gl.drawArrays(gl.TRIANGLES,index,vertexCount)
         }
     }
     generateCube(width: number, height: number,){
         const cubeMove = 0.1; 
-        // width = this.viewWidth;
-        // height = this.viewHeight
+        width = this.viewWidth;
+        height = this.viewHeight
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev - cubeMove
         width -= cubeMove
         height -= cubeMove;
@@ -509,8 +577,11 @@ class webGl {
             if( i !== -1 && i <= imgLength - 1 ){
                 {   
                     const [err, img] = await this.loadImage(this.imgUrls[i])
+
                     this.imgs[i] = img;
+
                     const { naturalWidth, naturalHeight } = img;
+                    this.imgShape[i] = [ naturalWidth, naturalHeight, 0, 1 ]
                     width = this.viewWidth;
                     height = naturalHeight / naturalWidth * width;
                     this.genPostion(width, height,i);
@@ -524,12 +595,10 @@ class webGl {
         this.generateCube(maxWidth,maxHeight);
 
         this.bindPostion();
-        this.clear();
-
         this.drawPosition();
     }
     createPerspectiveMatrix() {
-        const fieldOfViewInRadians = this.fieldOfViewInRadians;   // in radians
+        const fieldOfViewInRadians = this.fieldOfViewInRadians;
         const aspectRatio = this.viewWidth / this.viewHeight;
         const near = this.zNear;
         const far = this.zFar;
@@ -543,6 +612,41 @@ class webGl {
             0, 0, (near + far) * rangeInv, -1,
             0, 0, near * far * rangeInv * 2, 0
         ];
+    }
+    get curPointAt(){
+        let curPointAt = (4) * 16;
+        if( this.curIndex == 0 ){
+            curPointAt = 3 * 16;
+        }
+        return curPointAt;
+    }
+    handleDoubleClick(e: TouchEvent & MouseEvent){
+        const { clientX, clientY } = e.touches[0];
+
+        const curImgShape = this.imgShape[this.curIndex];
+        const [natualWidth,natualHeight] = curImgShape;
+
+        let curPointAt = this.curPointAt;
+        const curWidth =  Math.abs(this.positions[curPointAt]) * 2;
+        const curHieght = Math.abs(this.positions[curPointAt+1]) * 2;
+        
+        const scaleX = curWidth / natualWidth;
+        const scaleY = curHieght / natualHeight;
+
+        const centerX: number = this.viewWidth / (this.dpr * 2);
+        const centerY: number = this.viewHeight / (this.dpr * 2);
+
+        let dx = 0, dy = 0;
+        dx = -((clientX - centerX) * (scaleX - 1));
+        dy = -((clientY - centerY) * (scaleY - 1));
+
+        this.scaleZPosition({scaleX,scaleY,dx,dy})
+
+        // console.log(newPoint)
+        // console.log(this.imgs)
+        // console.log(this.textures)
+        // console.log(this.indinces)
+
     }
     loadImage(src: string): Promise<[boolean, HTMLImageElement]> {
         return new Promise((res) => {
@@ -561,11 +665,9 @@ class webGl {
     }
     clear() {
         const gl = this.gl;
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
-        gl.clearDepth(1.0);                 // Clear everything
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);  
+        gl.clearDepth(1.0);                 
         
-
-        // Clear the canvas before we start drawing on it.
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
     bindShader(gl: WebGLRenderingContext, sourceFrag, sourceVer) {
@@ -618,8 +720,7 @@ class webGl {
         document.body.style.overflow="hidden"
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
-        document.body.append(canvas);
-
+        this.ref = canvas;
         const gl = canvas.getContext('webgl')
         if (!gl) {
             alert('webgl is not supported. please use before version.')
@@ -636,13 +737,13 @@ class webGl {
     animate({
         allTime,
         timingFun,
-        end,
+        ends,
         playGame,
         callback
     }:{
         allTime:number,
         timingFun: cubicBezier,
-        end: number,
+        ends: Array< number >,
         playGame: Function
         callback?: Function
     }){
@@ -650,15 +751,21 @@ class webGl {
         let curTime = startTime;
         let resolve;
         const pro = new Promise( res => (resolve = res) )
+        const eL = ends.length;
+
         function run(){
             let curT = (curTime - startTime) / allTime ;
 
-            curT > 1 && (curT == 1 )
+            curT > 1 && ( curT == 1 )
             let curEnd = timingFun.solve( curT )
             if( curEnd >= 1 ){
                 curEnd = 1;
             }
-            playGame( curEnd * end );
+            const ans = new Array(eL)
+            ends.forEach((end,index) => {
+                ans[index] = end * curEnd;
+            })
+            playGame( ...ans );
         
             if( curT <= 1 ){
                 requestAnimationFrame(run)

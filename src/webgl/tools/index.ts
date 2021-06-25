@@ -62,4 +62,37 @@
             allWidth += (curImgAfterResizeWidth / curImgWidth * item.naturalWidth)
         }
     }
+
+    function fps(){
+        let allCount = 0;
+        let start ;
+        const stat = document.createElement('pre');
+        stat.style.cssText = `
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 10px;
+            font-size:12px;
+            background: rgba(255,255,255,0.5);
+            color:#000;
+        `
+        document.body.append(stat)
+        function run(){
+            if(!start){
+                start = Date.now();
+            }
+            allCount++;
+            // console.log(allCount)
+            if( Date.now() - start >= 1000 ){
+                stat.innerHTML = allCount.toString();
+                allCount = 0;
+                start = Date.now();
+            }
+
+            requestAnimationFrame(run)
+        }
+
+        return run
+    }
+    export const showFps = fps();
 // }

@@ -2,7 +2,7 @@ import {ImagePreview}  from './image-preview'
 import {ImagePreviewVue} from '../vueComponent/index'
 
 const Vue = require('vue');
-new ImagePreview({
+const obj = new ImagePreview({
     curImg:'/testImage/IMG_0512.JPG',
     imgs: [
         '/testImage/IMG_0512.JPG',
@@ -14,13 +14,8 @@ new ImagePreview({
         '/testImage/BBC82C020430AED149F8D18A0849D241.png'
     ]
 });
+obj.show(0)
 
-new ImagePreview({
-    selector:'.imageWraper img'
-})
-new ImagePreview({
-    selector:'.noDataSrc img'
-})
 Vue.use(ImagePreviewVue)
 new Vue({
     el:'#el',

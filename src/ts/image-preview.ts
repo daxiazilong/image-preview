@@ -8,19 +8,7 @@ import { Move, Zoom, Rotate } from '../action/index';
 import { Animation } from '../animation/index'
 import { Matrix } from '../matrix/index'
 import { showDebugger } from '../tools/index';
-
 import { webGl } from '../webgl/index'
-
-if(!(window as any).webGl){
-    (window as any).webGl = new webGl([
-        '/testImage/IMG_0512.JPG',
-        '/testImage/cubetexture.png',
-        '/testImage/share_success_20190619.png',
-        '/testImage/BBC82C020430AED149F8D18A0849D241.png',
-        '/testImage/cubetexture.png'
-    ]);
-}
-
 
 
 class ImagePreview implements
@@ -68,6 +56,8 @@ class ImagePreview implements
 
     public moveStartTime: number = 0;
     public moveEndTime: number = 0;
+    
+    actionExecutor: webGl;
 
     public operateMaps: {
         [key: string]: string
@@ -95,9 +85,12 @@ class ImagePreview implements
         }
     ) {
         if (options.selector) {
+            // options里拿到图片
             this.bindTrigger();
         }
-
+        this.actionExecutor = new webGl({
+            images: this.options.imgs
+        })
         this.envClient = this.testEnv();
         this.supportTransitionEnd = this.transitionEnd();
         this.genFrame();
@@ -424,95 +417,7 @@ class ImagePreview implements
         }
     }
     handleDoubleClick(e: TouchEvent & MouseEvent) {
-        // if (this.isAnimating) return;
-        const curItem = this.imgItems[this.curIndex] as interFaceElementMatrix;
-        const curImg: HTMLImageElement = curItem as unknown as HTMLImageElement;
-
-        if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            this.isAnimating = false;
-            return;
-        }
-
-        const curItemWidth: number = curItem.getBoundingClientRect().width;
-        const curItemHeight: number = curItem.getBoundingClientRect().height;
-
-        let rotateDeg: number = curItem.rotateDeg;
-
-        let toWidth: number;
-        let toHeight: number;
-
-        if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
-            if (curImg.naturalWidth > curItemHeight) {
-                toWidth = curImg.naturalHeight
-            } else {
-                toWidth = curItemHeight
-            }
-            if (curImg.naturalHeight > curItemWidth) {
-                toHeight = curImg.naturalWidth;
-            } else {
-                toHeight = curItemWidth;
-            }
-        } else {
-            if (curImg.naturalWidth > curItemWidth) {
-                toWidth = curImg.naturalWidth
-            } else {
-                toWidth = curItemWidth
-            }
-            if (curImg.naturalHeight > curItemHeight) {
-                toHeight = curImg.naturalHeight;
-            } else {
-                toHeight = curItemHeight;
-            }
-
-            // 竖直状态下 长图的双击放大放大至设备的宽度大小，
-            if ((curItemWidth * 1.5) < this.containerWidth)//长图的初始宽度应该小于屏幕宽度
-                if (toHeight > toWidth) {
-                    if (toWidth >= this.containerWidth) {
-                        toWidth = this.containerWidth;
-                        toHeight = (curImg.naturalHeight / curImg.naturalWidth) * toWidth
-                    }
-                }
-        }
-
-        let scaleX: number;
-        let scaleY: number;
-
-        let isBigSize = curItem.dataset.isEnlargement == "enlargement";
-
-        if (isBigSize) {//当前浏览元素为大尺寸时执行缩小操作，小尺寸执行放大操作
-            switch (Math.abs(rotateDeg % 360)) {
-                case 0:
-                case 180:
-                    scaleX = Number(curItem.dataset.initialWidth) / curItemWidth;
-                    scaleY = Number(curItem.dataset.initialHeight) / curItemHeight;
-                    break;
-                case 90:
-                case 270:
-                    scaleX = Number(curItem.dataset.initialWidth) / curItemHeight;
-                    scaleY = Number(curItem.dataset.initialHeight) / curItemWidth;
-                    break;
-                default:
-                    break;
-            }
-
-        } else {
-
-            scaleX = toWidth / curItemWidth;
-            scaleY = toHeight / curItemHeight;
-
-        };
-
-
-        if (scaleX > 1 || scaleY > 1) {//放大
-
-            this.setToNaturalImgSize(toWidth, toHeight, scaleX, scaleY, e);
-
-        } else if (scaleX < 1 || scaleY < 1) {
-            this.setToInitialSize(scaleX, scaleY, e);
-        } else {
-            this.isAnimating = false;
-        }
+        this.actionExecutor.handleDoubleClick(e);
     }
     handleToucnEnd(e: TouchEvent & MouseEvent) {
         e.preventDefault();
@@ -810,19 +715,13 @@ class ImagePreview implements
 
         this.imgsNumber = images.length;
         let index: number = images.indexOf(curImg);
-        let imagesHtml: string = '';
+
         if (index == -1) {
             index = 0;
         }
         this.curIndex = index;
         this.imgContainerMoveX = -(index * this.containerWidth);
-        images.forEach(src => {
-            imagesHtml += `
-            <div class="${this.prefix}itemWraper">
-                <img class="${this.prefix}item" src="${src}">
-            </div>
-            `
-        })
+
 
         let genStyle = (prop: string) => {
             switch (prop) {
@@ -868,9 +767,7 @@ class ImagePreview implements
                         </path>
                     </svg>
                 </div>
-                <div class="${this.prefix}imgContainer">
-                    ${imagesHtml}
-                </div>
+                <div class="${this.prefix}imgContainer"></div>
                 <div class="${this.prefix}bottom">
                     <div class="${this.prefix}item ">
                         <svg data-type="rotateLeft" t="1563884004339" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1099" width="200" height="200"><path d="M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z" p-id="1100" fill="#ffffff"></path></svg>
@@ -935,39 +832,7 @@ class ImagePreview implements
                 font-size: 0;
                 white-space: nowrap;
             }
-            .${this.prefix}imagePreviewer .${this.prefix}itemWraper{
-                box-sizing:border-box;
-                position: relative;
-                display:inline-block;
-                width: 100% ;
-                height: 100%;
-                overflow: hidden;
-                
-            }
-            .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item{
-                box-sizing:border-box;
-                position: absolute;
-                top:0;left:0;
-                width: 100% ;
-                height: ${genStyle('itemHeight')};
-                overflow-x: ${genStyle('itemScroll')};
-                overflow-y:${genStyle('itemScroll')};
-                font-size: 0;
-                text-align: ${genStyle('item-text-align')};
-                white-space: normal;
-                z-index:1;
-                transform-style: preserve-3d;
-                backface-visibility: hidden;
-                will-change:transform;
-            }
-            .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item::-webkit-scrollbar {
-                width: 5px;
-                height: 8px;
-                background-color: #aaa;
-            }
-            .${this.prefix}imagePreviewer .${this.prefix}imgContainer .${this.prefix}item::-webkit-scrollbar-thumb {
-                background: #000;
-            }
+            
             .${this.prefix}imagePreviewer .${this.prefix}bottom{
                 position: absolute;
                 bottom: ${needHigher ? 20 : 0}px;
@@ -992,8 +857,6 @@ class ImagePreview implements
         `;
         this.ref = document.createElement('div');
         this.ref.className = `${this.prefix}imagePreviewer`;
-
-
         this.ref.innerHTML = html;
         if (!document.querySelector(`#${this.prefix}style`)) {
             let styleElem = document.createElement('style');
@@ -1003,7 +866,7 @@ class ImagePreview implements
             document.querySelector('head').appendChild(styleElem);
         }
 
-
+        this.ref.querySelector(`.${this.prefix}imgContainer`).append(this.actionExecutor.ref)
         document.body.appendChild(this.ref)
     }
     handleReausetAnimate() {
