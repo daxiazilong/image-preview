@@ -71,6 +71,7 @@
             position: fixed;
             top: 0;
             right: 0;
+            z-index:100;
             padding: 10px;
             font-size:12px;
             background: rgba(255,255,255,0.5);

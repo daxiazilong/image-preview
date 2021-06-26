@@ -20,7 +20,7 @@ class webGl {
     viewWidth: number;
     viewHeight: number;
 
-    dpr: number = 1 || window.devicePixelRatio || 1;
+    dpr: number = window.devicePixelRatio || 1;
     gl: WebGLRenderingContext;
     ref: HTMLCanvasElement;
     shaderProgram: WebGLProgram;
@@ -46,6 +46,7 @@ class webGl {
     imgs: Array<HTMLImageElement> = [];
     imgUrls: Array<string> = [];
     imgShape: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
+    curPlane: Array<number> = []; // 动画执行前的当前面的位置信息
 
     constructor({images}:webGlConstructorProps) {
         this.gl = this.intialView();
@@ -357,21 +358,24 @@ class webGl {
         dy:number,
     }){
         const before = [
-            0,0,0,0
+            1,1,0,0
         ]
         const step = [
             0,0,0,0
         ]
+        this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16)
         const playGame = (...rest) => {
-            rest.forEach((item,index) => {
-                step[index] = item - before[index]
-                before[index] = item;
-            })
-            step[0] += 1;
-            step[1] += 1;
+            rest[0] += 1;
+            rest[1] += 1;
+
+            // this.transformCurplane(
+            //     matrix.translateMatrix(-step[2],-step[3],0)
+            // )
+
+            // console.log(step[0],step[1])
             this.transformCurplane(
-                matrix.scaleMatrix(step[0],step[1],1),
-                matrix.translateMatrix(step[2],step[3],0)
+                matrix.scaleMatrix(rest[0],rest[1],1),
+                // matrix.translateMatrix(step[2],step[3],0)
             )
             this.bindPostion();
             this.drawPosition();
@@ -383,16 +387,17 @@ class webGl {
             playGame
         })
     }
-    transformCurplane(a,...matrixes){console.log(arguments)
+    transformCurplane(a,...matrixes){
         const positions  = this.positions
+        const curPlane = this.curPlane;
         for( let i = this.curPointAt ; i < this.curPointAt + 16; i += 4){
-            let x = positions[i] , y = positions[i+1], z = positions[ i + 2], w = positions[i+3];
+            let planeIndex = i - this.curPointAt;
+            let x = curPlane[planeIndex] , y = curPlane[planeIndex+1], z = curPlane[ planeIndex + 2], w = curPlane[planeIndex+3];
             const newPoint = matrix.multiplyPoint( 
                 [x,y,z,w],
                 a,
                 ...matrixes
             );
-            console.log(newPoint)
             for( let j = i ; j < 4 + i; j++ ){
                 positions[j] = newPoint[j-i]
             }
@@ -630,15 +635,15 @@ class webGl {
         const curWidth =  Math.abs(this.positions[curPointAt]) * 2;
         const curHieght = Math.abs(this.positions[curPointAt+1]) * 2;
         
-        const scaleX = curWidth / natualWidth;
-        const scaleY = curHieght / natualHeight;
+        const scaleX = natualWidth * this.dpr / curWidth - 1;;
+        const scaleY = natualHeight * this.dpr / curHieght - 1;
 
-        const centerX: number = this.viewWidth / (this.dpr * 2);
-        const centerY: number = this.viewHeight / (this.dpr * 2);
+        const centerX: number = this.viewWidth / (2);
+        const centerY: number = this.viewHeight / (2);
 
         let dx = 0, dy = 0;
-        dx = -((clientX - centerX) * (scaleX - 1));
-        dy = -((clientY - centerY) * (scaleY - 1));
+        dx = -((clientX * this.dpr - centerX) * (scaleX ));
+        dy = ((clientY * this.dpr - centerY) * (scaleY));
 
         this.scaleZPosition({scaleX,scaleY,dx,dy})
 
