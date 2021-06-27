@@ -503,7 +503,7 @@ class webGl {
             }
         }
         
-        // gl.bindTexture(gl.TEXTURE_2D, null);
+      
     }
     updateTexture(index:number){
         const gl = this.gl;
@@ -726,7 +726,9 @@ class webGl {
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
         this.ref = canvas;
-        const gl = canvas.getContext('webgl')
+        const gl = canvas.getContext('webgl',{
+            antialias: true
+        })
         if (!gl) {
             alert('webgl is not supported. please use before version.')
         }
