@@ -52,6 +52,7 @@ class webGl {
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
         this.shaderProgram = this.bindShader(this.gl, sourceFrag, sourceVer)
+        
         const projectionMatrix = this.createPerspectiveMatrix();
         this.gl.useProgram(this.shaderProgram);
         this.gl.uniformMatrix4fv(
@@ -59,6 +60,14 @@ class webGl {
             false,
             projectionMatrix
         );
+        // this.gl.uniform2fv(
+        //     this.gl.getUniformLocation(this.shaderProgram, 'iResolution'),
+        //     [this.viewWidth,this.viewHeight]
+        // )
+        // this.gl.uniform1i(
+        //     this.gl.getUniformLocation(this.shaderProgram, 'uSampler0'),
+        //     0
+        // )
         const modelViewMatrix = [
             1.0, 0, 0, 0,
             0, 1.0, 0, 0,
@@ -85,7 +94,7 @@ class webGl {
 
         gl.enable(gl.DEPTH_TEST);           // Enable depth testing
         gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-        gl.enable(gl.CULL_FACE)
+        // gl.enable(gl.CULL_FACE)
 
         this.setTextureCordinate();
         this.initData();
@@ -367,15 +376,9 @@ class webGl {
         const playGame = (...rest) => {
             rest[0] += 1;
             rest[1] += 1;
-
-            // this.transformCurplane(
-            //     matrix.translateMatrix(-step[2],-step[3],0)
-            // )
-
-            // console.log(step[0],step[1])
             this.transformCurplane(
                 matrix.scaleMatrix(rest[0],rest[1],1),
-                // matrix.translateMatrix(step[2],step[3],0)
+                matrix.translateMatrix(rest[2],rest[3],0)
             )
             this.bindPostion();
             this.drawPosition();
@@ -726,7 +729,7 @@ class webGl {
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
         this.ref = canvas;
-        const gl = canvas.getContext('webgl')
+        const gl = canvas.getContext('webgl',{ antialias:false })
         if (!gl) {
             alert('webgl is not supported. please use before version.')
         }

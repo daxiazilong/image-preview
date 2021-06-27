@@ -5,8 +5,8 @@ const Vue = require('vue');
 const obj = new ImagePreview({
     curImg:'/testImage/IMG_0512.JPG',
     imgs: [
-        '/testImage/IMG_0512.JPG',
         '/testImage/main_body3.png',
+        '/testImage/IMG_0512.JPG',
         '/testImage/main_body3.png',
         '/testImage/test1.jpg',
         '/testImage/main_body3.png',
