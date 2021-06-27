@@ -60,14 +60,6 @@ class webGl {
             false,
             projectionMatrix
         );
-        // this.gl.uniform2fv(
-        //     this.gl.getUniformLocation(this.shaderProgram, 'iResolution'),
-        //     [this.viewWidth,this.viewHeight]
-        // )
-        // this.gl.uniform1i(
-        //     this.gl.getUniformLocation(this.shaderProgram, 'uSampler0'),
-        //     0
-        // )
         const modelViewMatrix = [
             1.0, 0, 0, 0,
             0, 1.0, 0, 0,
@@ -87,14 +79,12 @@ class webGl {
         
         this.imgUrls = images;
         const gl = this.gl;
-        // this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        // gl.enable(gl.BLEND);
-        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); 
-        // gl.blendFunc(gl.ONE, gl.ONE)
+      
 
         gl.enable(gl.DEPTH_TEST);           // Enable depth testing
         gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-        // gl.enable(gl.CULL_FACE)
+        gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
+        // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
 
         this.setTextureCordinate();
         this.initData();
@@ -729,7 +719,7 @@ class webGl {
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
         this.ref = canvas;
-        const gl = canvas.getContext('webgl',{ antialias:false })
+        const gl = canvas.getContext('webgl',{ antialias:true })
         if (!gl) {
             alert('webgl is not supported. please use before version.')
         }
