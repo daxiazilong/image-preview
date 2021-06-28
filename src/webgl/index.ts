@@ -1,19 +1,20 @@
 import { sourceFrag } from './shaders/fragment-shader.frag'
 import { sourceVer } from './shaders/vertext-shader.vert';
 import { matrix } from './matrix'
-import { cubicBezier,linear } from '../animation/animateJs'
+import { cubicBezier,linear,easeOut } from '../animation/animateJs'
+import { events } from './eventSystem/index'
+import {fps} from './tools/index'
 
-import {showFps} from './tools/index'
-showFps();
+const easyOut1 = new cubicBezier({x:0, y:0}, {x:0, y:0.93})
+
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
 
 type webGlConstructorProps = {
-    images: Array<string>
+    images: Array<string>,
 }
 const forDev = 0
-
 
 class webGl {
 
@@ -48,7 +49,12 @@ class webGl {
     imgShape: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
     curPlane: Array<number> = []; // 动画执行前的当前面的位置信息
 
-    constructor({images}:webGlConstructorProps) {
+    eventsHanlder: events;
+
+    constructor({images,}:webGlConstructorProps) {
+
+        fps()();
+
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
         this.shaderProgram = this.bindShader(this.gl, sourceFrag, sourceVer)
@@ -83,12 +89,13 @@ class webGl {
 
         gl.enable(gl.DEPTH_TEST);           // Enable depth testing
         gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-        gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
+        // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
         // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
 
         this.setTextureCordinate();
         this.initData();
-
+        
+        this.eventsHanlder = new events(this);
         this.initEvent();
     }
     initEvent(){
@@ -105,54 +112,7 @@ class webGl {
         let degX = 0;
 
         let beginMoveX = 0;
-        this.gl.canvas.addEventListener('mousedown', (e: MouseEvent) => {
-            beginMove = true;
-            beginMoveX = startX = e.clientX;
-            startY = e.clientY;
-
-        })
-        const handleMove = (e: MouseEvent) =>{
-            if (beginMove) {
-                let offset = (e.clientX - startX) / this.dpr;
-                let offsetX = (e.clientY - startY) / this.dpr;
-                deg = -offset * 0.01;
-                degX = -offsetX * 0.01;
-
-                startX = e.clientX;
-                startY = e.clientY;
-                this.rotatePosition(deg);
-                this.bindPostion();
-                this.drawPosition();
-
-            }
-        }
-        this.gl.canvas.addEventListener('mousemove',handleMove )
-        this.gl.canvas.addEventListener('mouseup', async (e:MouseEvent) => {
-            beginMove = false;
-            let offsetX = (e.clientX - beginMoveX) / this.dpr;
-            degX = -offsetX * 0.01;
-            let throldDeg = Math.PI * 0.15;
-           
-            const plusOrMinus = degX / Math.abs(degX);
-            if( Math.abs(degX) >= throldDeg ){// 左右切换
-                let beforeIndex = this.curIndex;
-                let nextIndex = this.curIndex + ( plusOrMinus * 1 )
-                if( nextIndex == -1 || nextIndex == this.imgUrls.length ){// 第一张左切换或最后一张右切换时 也是复原
-                    this.curIndex = beforeIndex;
-                    this.rotate(0 - degX)
-                }else{
-                    let res = await this.rotate(plusOrMinus * Math.PI/2 - degX);
-                    this.curIndex = nextIndex;
-                    this.draw(nextIndex)
-                    
-                }
-                
-            }else{// 复原
-                this.rotate(0 - degX)
-            }
-            
-
-        })
+      
         this.gl.canvas.addEventListener('click', (e) => {
             // this.slideNext();
         })
@@ -161,44 +121,12 @@ class webGl {
             beginMoveX = startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
         })
-        this.gl.canvas.addEventListener('touchmove', (e: TouchEvent) => {
-            e.preventDefault()
-            if (beginMove) {
-                this.clear();
-                let offset = (e.touches[0].clientX - startX) / this.dpr;
-                let offsetX = (e.touches[0].clientY - startY) / this.dpr;
-                deg = -offset * 0.01;
-                degX = -offsetX * 0.01;
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY ;
-                this.rotatePosition(deg);
-                this.bindPostion();
-                this.drawPosition();
-            }
-        })
+     
         this.gl.canvas.addEventListener('touchend', async (e:TouchEvent) => {
-
+            return;
             beginMove = false;
             let offsetX = (e.changedTouches[0].clientX - beginMoveX) / this.dpr;
-            degX = -offsetX * 0.01;
-            let throldDeg = Math.PI * 0.15;
-            const plusOrMinus = degX / Math.abs(degX);
-            if( Math.abs(degX) >= throldDeg ){// 左右切换
-                let beforeIndex = this.curIndex;
-                let nextIndex = this.curIndex + ( plusOrMinus * 1 )
-                if( nextIndex == -1 || nextIndex == this.imgUrls.length ){// 第一张左切换或最后一张右切换时 也是复原
-                    this.curIndex = beforeIndex;
-                    this.rotate(0 - degX)
-                }else{
-                    let res = await this.rotate(plusOrMinus * Math.PI/2 - degX);
-                    this.curIndex = nextIndex;
-                    this.draw(nextIndex)
-                    
-                }
-                
-            }else{// 复原
-                this.rotate(0 - degX)
-            }
+            
         })
     }
 
@@ -241,23 +169,20 @@ class webGl {
     }
 
     genPostion(width: number, height: number,index:number) {
-        // if( this.positions[ 48 + index * 16 ]  ){ // 顶点数据已经有缓存到该数据了 则无需再次初始化咯
-        //     return;
-        // }
-
-        
         const gl = this.gl;
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         const viewWidth = this.viewWidth;
-        const viewHeight = this.viewHeight
+        const viewHeight = this.viewHeight;
+        
+        let sideZAxis = z - ( viewWidth - width ) / 2;
 
         // console.log(z)
         const positionsMap = [
             [// left
-                -viewWidth / 2, -height / 2, z-width, 1.0,
-                -viewWidth / 2, -height / 2, z, 1.0,
-                -viewWidth / 2, height / 2, z, 1.0,
-                -viewWidth / 2, height / 2, z-width, 1.0,
+                -viewWidth / 2, -height / 2, sideZAxis-width, 1.0,
+                -viewWidth / 2, -height / 2, sideZAxis, 1.0,
+                -viewWidth / 2, height / 2, sideZAxis, 1.0,
+                -viewWidth / 2, height / 2, sideZAxis-width, 1.0,
             ],
             [//fornt
                 -width / 2, -height / 2, z, 1.0,
@@ -266,10 +191,10 @@ class webGl {
                 -width / 2, height / 2, z, 1.0,
             ],
             [// right
-                viewWidth / 2, -height / 2, z, 1.0,
-                viewWidth / 2, -height / 2, z-width, 1.0,
-                viewWidth / 2, height / 2, z-width, 1.0,
-                viewWidth / 2, height / 2, z, 1.0,
+                viewWidth / 2, -height / 2, sideZAxis, 1.0,
+                viewWidth / 2, -height / 2, sideZAxis-width, 1.0,
+                viewWidth / 2, height / 2, sideZAxis-width, 1.0,
+                viewWidth / 2, height / 2, sideZAxis, 1.0,
             ]
         ]
         let key = index - this.curIndex; // -1 , 0 , 1;
@@ -356,12 +281,6 @@ class webGl {
         dx:number,
         dy:number,
     }){
-        const before = [
-            1,1,0,0
-        ]
-        const step = [
-            0,0,0,0
-        ]
         this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16)
         const playGame = (...rest) => {
             rest[0] += 1;
@@ -380,7 +299,25 @@ class webGl {
             playGame
         })
     }
-    transformCurplane(a,...matrixes){
+    moveCurPlane(x: number, y: number, z: number) {
+        let dx = x;
+        let dy = y;
+        this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16)
+        const playGame = (...rest) => {
+            this.transformCurplane(
+                matrix.translateMatrix(rest[0],rest[1],0)
+            )
+            this.bindPostion();
+            this.drawPosition();
+        }
+        return this.animate({
+            allTime: this.defaultAnimateTime,
+            timingFun: easyOut1,
+            ends:[dx,dy],
+            playGame
+        })
+    }
+    transformCurplane(a,...matrixes){;
         const positions  = this.positions
         const curPlane = this.curPlane;
         for( let i = this.curPointAt ; i < this.curPointAt + 16; i += 4){
@@ -566,8 +503,32 @@ class webGl {
         this.positions.splice(0,0,...positionCube);
 
     }
+    decideScaleRatio(cw: number, ch: number, nw: number, nh: number) {
+        const [initialW,initialH] = this.decideImgViewSize(nw,nh);
+
+
+    }
+    decideImgViewSize(imgWidth,imgHeight){
+
+        let width = 0, height = 0;
+        
+        if( this.viewWidth >= imgWidth ){
+            width = imgWidth;
+        }else{
+            width = this.viewWidth
+        }
+
+        height = imgHeight / imgWidth * width;
+        if( height > this.viewHeight ){
+            height = this.viewHeight;
+            width = height * imgWidth / imgHeight
+        }
+        return [
+            width,
+            height
+        ]
+    }
     async draw( index: number) {
-        let width, height;
         this.positions = [];// 期望positions只保留一个底层的立方体，三个展示图片的面 共计六个面
         const imgLength = this.imgUrls.length;
         let maxWidth = 0,maxHeight = 0;
@@ -579,11 +540,9 @@ class webGl {
                     this.imgs[i] = img;
 
                     const { naturalWidth, naturalHeight } = img;
-                    this.imgShape[i] = [ naturalWidth, naturalHeight, 0, 1 ]
-                    width = this.viewWidth;
-                    height = naturalHeight / naturalWidth * width;
+                    let [width,height] = this.decideImgViewSize(naturalWidth * this.dpr,naturalHeight * this.dpr)
+                    this.imgShape[i] = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ]
                     this.genPostion(width, height,i);
-
                     maxWidth = Math.max(width,maxWidth)
                     maxHeight = Math.max(height,maxHeight)
 
@@ -594,6 +553,9 @@ class webGl {
 
         this.bindPostion();
         this.drawPosition();
+    }
+    handleMove(e: TouchEvent & MouseEvent){
+
     }
     createPerspectiveMatrix() {
         const fieldOfViewInRadians = this.fieldOfViewInRadians;
@@ -618,34 +580,55 @@ class webGl {
         }
         return curPointAt;
     }
-    handleDoubleClick(e: TouchEvent & MouseEvent){
-        const { clientX, clientY } = e.touches[0];
-
-        const curImgShape = this.imgShape[this.curIndex];
-        const [natualWidth,natualHeight] = curImgShape;
-
-        let curPointAt = this.curPointAt;
-        const curWidth =  Math.abs(this.positions[curPointAt]) * 2;
-        const curHieght = Math.abs(this.positions[curPointAt+1]) * 2;
-        
-        const scaleX = natualWidth * this.dpr / curWidth - 1;;
-        const scaleY = natualHeight * this.dpr / curHieght - 1;
-
-        const centerX: number = this.viewWidth / (2);
-        const centerY: number = this.viewHeight / (2);
-
-        let dx = 0, dy = 0;
-        dx = -((clientX * this.dpr - centerX) * (scaleX ));
-        dy = ((clientY * this.dpr - centerY) * (scaleY));
-
-        this.scaleZPosition({scaleX,scaleY,dx,dy})
-
-        // console.log(newPoint)
-        // console.log(this.imgs)
-        // console.log(this.textures)
-        // console.log(this.indinces)
-
+    get IsBoundaryLeft(){
+        const rect = this.viewRect;
+        return rect.left >= 0;
     }
+    get isBoundaryRight(){
+        const rect = this.viewRect;
+        return rect.right <= this.viewWidth / 2;
+    }
+    get viewRect(){
+
+        const topOriginX = -this.viewWidth / 2;
+        const topOriginY = this.viewHeight / 2;
+
+        const curPlaneIndex = this.curPointAt;
+
+        const bottomLeftPlanX = this.positions[curPlaneIndex];
+        const bottomLeftPlaneY = this.positions[curPlaneIndex + 1];
+
+        const topLeftPlaneX = this.positions[curPlaneIndex + 12];
+        const topLeftPlaneY = this.positions[curPlaneIndex + 13];
+
+        const bottomRightPlaneX = this.positions[curPlaneIndex + 4]
+        const bottomRightPlaneY = this.positions[curPlaneIndex + 5]
+
+        const topRightPlaneX = this.positions[curPlaneIndex + 8]
+        const topRightPlaneY = this.positions[curPlaneIndex + 9]
+
+
+        return{
+            left: (topLeftPlaneX - topOriginX) / this.dpr,
+            right: (topRightPlaneX - topOriginX) / this.dpr,
+            width: Math.abs(topLeftPlaneX - topRightPlaneX ) / this.dpr,
+            height: Math.abs( bottomRightPlaneY - topRightPlaneY ) / this.dpr,
+            top: -(topLeftPlaneY - topOriginY) / this.dpr,
+            bottom:-(bottomRightPlaneY - topOriginY) / this.dpr,
+        }
+    }
+    get isEnlargement(){
+        const {naturalWidth,naturalHeight} = this.imgs[this.curIndex]
+        const [initialWidth, intinalHeight] = this.decideImgViewSize(naturalWidth*this.dpr,naturalHeight*this.dpr)
+        const rect = this.viewRect;
+
+        return rect.width > initialWidth || rect.height > intinalHeight;
+    }
+    isLoadingError(index?:number ){
+        ;arguments.length == 0 && ( index = this.curIndex );
+        return !this.imgs[index] // to do 定义错误图片样式及数据结构
+    }
+   
     loadImage(src: string): Promise<[boolean, HTMLImageElement]> {
         return new Promise((res) => {
             const img = new Image()

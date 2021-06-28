@@ -7,10 +7,8 @@ import { showDebugger } from '../tools/index';
 export class Move{
     handleMove(this: ImagePreview,e: TouchEvent & MouseEvent){
         e.preventDefault();
-        // if( this.isAnimating ){
-        //     return;
-        // } 
         // 双指缩放时的 处理 只移动和缩放。
+
         if( e.touches.length == 2 ){
             clearTimeout(this.performerRecordMove); 
             clearTimeout( this.performerClick )
@@ -18,7 +16,6 @@ export class Move{
             this.performerRecordMove = 0;
             this.handleZoom(e);
             this.handleMoveEnlage(e);
-
             return;
         }
 
@@ -30,14 +27,14 @@ export class Move{
         }
        
 
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
      
-        let isBoundaryLeft: boolean = curItem.dataset.toLeft == 'true';
-        let isBoundaryRight: boolean = curItem.dataset.toRight == 'true'
+        let isBoundaryLeft: boolean =  this.actionExecutor.IsBoundaryLeft;
+        let isBoundaryRight: boolean = this.actionExecutor.isBoundaryRight;
         let direction: string = e.touches[0].clientX - this.startX > 0 ? 'right':'left';
 
-        const curItemViewLeft: number = curItem.getBoundingClientRect().left;
-        const curItemViewRight: number = curItem.getBoundingClientRect().right;
+        const viewRect = this.actionExecutor.viewRect;
+        const curItemViewLeft: number = viewRect.left;
+        const curItemViewRight: number = viewRect.right;
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
 
@@ -47,7 +44,7 @@ export class Move{
          **/
         if( this.fingerDirection ){
             this.performerRecordMove = 0;
-            if( curItem.dataset.isEnlargement == 'enlargement' ){
+            if( this.actionExecutor.isEnlargement  ){
                 // 放大的时候的移动是查看放大后的图片
 
                 // 放大的时候,如果到达边界还是进行正常的切屏操作
@@ -90,19 +87,18 @@ export class Move{
 
 
         }else{
-
             // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
             if( 
-                ( curItem.dataset.isEnlargement == 'enlargement' &&  curItemViewLeft < 0 && curItemViewRight > conWidth )
-                 ||
-                ( curItem.dataset.isEnlargement !== 'enlargement' )
+                ( this.actionExecutor.isEnlargement &&  curItemViewLeft < 0 && curItemViewRight > conWidth )
+                    ||
+                ( !this.actionExecutor.isEnlargement )
             
             ){
-                if( curItem.dataset.isEnlargement == 'enlargement' &&  curItemViewLeft < 0 && curItemViewRight > conWidth ){
+                if( this.actionExecutor.isEnlargement &&  curItemViewLeft < 0 && curItemViewRight > conWidth ){
                     this.handleMoveEnlage(e);
-                }else if(curItem.dataset.isEnlargement !== 'enlargement'){
+                }else if( !this.actionExecutor.isEnlargement ){
+                    // this.actionExecutor.handleMoveNormal();
                     this.handleMoveNormal(e)
-
                 }
                 this.isMotionless = false;
 
@@ -129,7 +125,7 @@ export class Move{
                 }else{
                     this.fingerDirection ='horizontal'
                 }
-                if( curItem.dataset.isEnlargement == 'enlargement' ){
+                if( this.actionExecutor.isEnlargement ){
                     // 放大的时候的移动是查看放大后的图片
 
                     // 放大的时候,如果到达边界还是进行正常的切屏操作
@@ -137,10 +133,7 @@ export class Move{
                     const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
                     const conWidth: number = imgContainerRect.width;
 
-                    const curItemViewLeft: number = curItem.getBoundingClientRect().left;
-                    const curItemViewRight: number = curItem.getBoundingClientRect().right;
                     // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
-
                     if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
                         if( 
                             (
@@ -175,35 +168,31 @@ export class Move{
         if( this.isAnimating ){
             return;
         }
+        const eventsHanlder = this.actionExecutor.eventsHanlder;
+
         let curX: number = (e.touches[0].clientX);
 
         let offset = curX - this.startX;
         this.imgContainerMoveX += offset;
         
         this.startX = curX;
-        this.setTransitionProperty({
-            el: this.imgContainer,
-            time: 0,
-            timingFunction: ''
-        })
-        this.imgContainer.matrix = this.matrixMultipy( this.imgContainer.matrix,this.getTranslateMatrix({x:offset,y:0,z:0}))
-        this.imgContainer.style.transform = `${this.matrixTostr(this.imgContainer.matrix)}`
+        eventsHanlder.handleMoveNormal(e,offset);
+        
     }
-    handleMoveEnlage( this: ImagePreview,e: TouchEvent & MouseEvent ){
+    handleMoveEnlage( this: ImagePreview,e: TouchEvent & MouseEvent ){;
         if( !this.moveStartTime){
             this.moveStartTime = (new Date).getTime();
         }
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
-        const curItem = this.imgItems[this.curIndex] as interFaceElementMatrix;
 
-        if( curItem.dataset.loaded == 'false'){
+        const { actionExecutor } = this
+        if( actionExecutor.isLoadingError() ){
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
-
-        const curItemRect = curItem.getBoundingClientRect();
+        const curItemRect = actionExecutor.viewRect;
 
         const curItemHeihgt: number = curItemRect.height;
         const viewLeft: number = curItemRect.left;
@@ -234,13 +223,8 @@ export class Move{
             curTop = 0
         }
 
-        this.setTransitionProperty({
-            el: curItem,
-            time: 0,
-            timingFunction: ''
-        })
-        curItem.matrix = this.matrixMultipy( curItem.matrix , this.getTranslateMatrix({x:curLeft,y:curTop,z:1}))
-        curItem.style.transform = `${ this.matrixTostr(curItem.matrix) }`
+        actionExecutor.eventsHanlder.handleMoveEnlage(e,curLeft,curTop,0)
+       
   
         this.startX = curX;
         this.startY = curY;

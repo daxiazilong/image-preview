@@ -63,7 +63,7 @@
         }
     }
 
-    function fps(){
+    export function fps(){;
         let allCount = 0;
         let start ;
         const stat = document.createElement('pre');
@@ -89,11 +89,9 @@
                 allCount = 0;
                 start = Date.now();
             }
-
             requestAnimationFrame(run)
         }
 
         return run
     }
-    export const showFps = fps();
 // }

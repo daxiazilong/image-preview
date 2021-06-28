@@ -382,7 +382,8 @@ class ImagePreview implements
         this.touchStartX = this.startX = (e.touches[0].clientX);
         this.touchStartY = this.startY = (e.touches[0].clientY);
 
-        if ((new Date()).getTime() - this.lastClick < 300) {
+        const eventsHanlder = this.actionExecutor.eventsHanlder;
+        if ( Date.now() - this.lastClick < 300) {
             /*
                 启动一个定时器，如果双击事件发生后就
                 取消单击事件的执行
@@ -396,7 +397,7 @@ class ImagePreview implements
 
         }
 
-        this.lastClick = (new Date()).getTime();
+        this.lastClick = Date.now();
         this.getMovePoints(e);
     }
 
@@ -417,7 +418,7 @@ class ImagePreview implements
         }
     }
     handleDoubleClick(e: TouchEvent & MouseEvent) {
-        this.actionExecutor.handleDoubleClick(e);
+        this.actionExecutor.eventsHanlder.handleDoubleClick(e);
     }
     handleToucnEnd(e: TouchEvent & MouseEvent) {
         e.preventDefault();
@@ -445,10 +446,13 @@ class ImagePreview implements
         this.isMotionless = true;
         this.isEnlargeMove = false;
 
+        const {actionExecutor}= this;
+        const {eventsHanlder} = actionExecutor
+        const toLeft = actionExecutor.IsBoundaryLeft;
+        const toRight = actionExecutor.IsBoundaryLeft;
+        let isBoundary: boolean = toLeft || toRight;
 
-        let isBoundary: boolean = curItem.dataset.toLeft == 'true' || curItem.dataset.toRight == 'true';
-
-        if (curItem.dataset.isEnlargement == 'enlargement') {
+        if ( actionExecutor.isEnlargement ) {
             // 放大的时候,如果到达边界还是进行正常的切屏操作
             // for long-img operate it solely
             if (isBoundary) {
@@ -456,12 +460,13 @@ class ImagePreview implements
                 const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
                 const conWidth: number = imgContainerRect.width;
 
-                const curItemViewLeft: number = curItem.getBoundingClientRect().left;
-                const curItemViewRight: number = curItem.getBoundingClientRect().right;
+                const { viewRect } = actionExecutor;
+                const curItemViewLeft: number = viewRect.left;
+                const curItemViewRight: number = viewRect.right;
 
                 if ( Math.round(curItemViewLeft) < 0 || Math.round(curItemViewRight) > conWidth) {
-                    curItem.dataset.toLeft = 'false';
-                    curItem.dataset.toRight = 'false';
+                    // curItem.dataset.toLeft = 'false';
+                    // curItem.dataset.toRight = 'false';
                     this.handleTEndEnNormal(e);
                 } else {
                     if (this.fingerDirection == 'vertical') {
@@ -492,8 +497,8 @@ class ImagePreview implements
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
 
-        const curItem = this.imgItems[this.curIndex] as interFaceElementMatrix;
-        const curItemRect = curItem.getBoundingClientRect();
+        const { actionExecutor } = this
+        const curItemRect = actionExecutor.viewRect;
         const curItemWidth: number = curItemRect.width;
         const curItemHeihgt: number = curItemRect.height;
         const curItemViewTop = curItemRect.top;
@@ -535,60 +540,33 @@ class ImagePreview implements
         // 如果容器内能完整展示图片就不需要移动至边界
         if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
             recoverX = false;
-            curItem.dataset.toLeft = 'true';
-            curItem.dataset.toRight = 'true';
         }
         if (curItemHeihgt <= conHeight) {
             recoverY = false;
-            curItem.dataset.toTop = 'true';
-            curItem.dataset.toBottom = 'true';
         }
 
         if (recoverX || recoverY) {
-            curItem.matrix = this.matrixMultipy(
-                curItem.matrix,
-                this.getTranslateMatrix({
-                    x: endX,
-                    y: endY,
-                    z: 1
-                })
-            );
-            this.animate({
-                el: curItem,
-                prop: 'transform',
-                endStr: this.matrixTostr(curItem.matrix),
-                timingFunction: 'cubic-bezier(0, 0, 0, 0.93)'
-            })
-
+            actionExecutor.eventsHanlder.handleTEndEnlarge(e,endX,endY,0)
             if (endX == maxLeft - curItemLeft ) {
-                //toLeft 即为到达左边界的意思下同
-                curItem.dataset.toLeft = 'true';
-                curItem.dataset.toRight = 'false';
 
             } else if (endX == minLeft - curItemLeft) {
-                curItem.dataset.toLeft = 'false';
-                curItem.dataset.toRight = 'true';
+         
             }
 
             if (endY == maxTop) {
-                curItem.dataset.toTop = 'true';
-                curItem.dataset.toBottom = 'false';
+              
             } else if (endY == minTop - curItemTop) {
-                curItem.dataset.toTop = 'false';
-                curItem.dataset.toBottom = 'true';
+            
             }
         } else {
             // 如果容器内能完整展示图片就不需要移动至边界
             if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
-                curItem.dataset.toLeft = 'true';
-                curItem.dataset.toRight = 'true';
+               
             } else {
-                curItem.dataset.toLeft = 'false';
-                curItem.dataset.toRight = 'false';
+             
             }
 
-            curItem.dataset.toTop = 'false';
-            curItem.dataset.toBottom = 'false';
+         
 
             this.moveEndTime = (new Date).getTime();
             let endPoint: { x: number, y: number } = {
@@ -611,7 +589,7 @@ class ImagePreview implements
             // 要滑动的x y的值
             if (touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5)) {
                 let boundryObj = { maxTop, minTop: minTop - curItemViewTop, maxLeft, minLeft: minLeft - curItemViewLeft }
-                this.autoMove(curItem, degree, 0, 0, boundryObj)
+                // this.autoMove(curItem, degree, 0, 0, boundryObj)
             }
 
         }
@@ -620,90 +598,11 @@ class ImagePreview implements
 
     }
     handleTEndEnNormal(e: TouchEvent & MouseEvent): void {
-        // if (this.isAnimating) {
-        //     return
-        // }
         let endX: number = (e.changedTouches[0].clientX);
-        if (endX - this.touchStartX >= this.threshold) {//前一张
-            if (this.curIndex == 0) {//第一张
-                this.slideSelf();
-                return;
-            }
-            this.curIndex--;
-            this.slidePrev();
-        } else if (endX - this.touchStartX <= -this.threshold) {//后一张
-            if (this.curIndex + 1 == this.imgsNumber) {//最后一张
-                this.slideSelf();
-                return;
-            }
-            this.curIndex++;
-            this.slideNext();
-        } else {//复原
-            this.slideSelf();
-        }
+        const { actionExecutor:{eventsHanlder} } = this;
+        let offset = endX - this.touchStartX;
+        eventsHanlder.handleTEndEnNormal(e,offset);
     }
-    slideNext() {
-        let endX: number = -(this.curIndex * this.containerWidth);
-        if (endX < -(this.containerWidth * (this.imgsNumber - 1))) {
-            endX = -(this.containerWidth * (this.imgsNumber - 1));
-            this.curIndex = this.imgsNumber - 1;
-        }
-        if (this.imgContainerMoveX < endX) {/* infinite move */
-            this.slideSelf();
-            return;
-        }
-        
-
-        this.imgContainer.matrix = this.matrixMultipy(this.imgContainer.matrix, this.getTranslateMatrix({ x: endX - this.imgContainerMoveX, y: 0, z: 0 }))
-        this.imgContainerMoveX = endX;
-        this.animate({
-            el: this.imgContainer,
-            prop: 'transform',
-            duration: 0.3,
-            endStr: this.matrixTostr(this.imgContainer.matrix),
-            callback: () => {
-            }
-        })
-    }
-    slidePrev() {
-        let endX = -(this.curIndex * this.containerWidth);
-        if (endX > 0) {
-            endX = 0;
-            this.curIndex = 0;
-        }
-        if (this.imgContainerMoveX > endX) {/* infinite move */
-            this.slideSelf();
-            return;
-        }
-        let x = endX - this.imgContainerMoveX
-        this.imgContainer.matrix = this.matrixMultipy(this.imgContainer.matrix, this.getTranslateMatrix({ x, y: 0, z: 0 }))
-        this.imgContainerMoveX = endX;
-        this.animate({
-            el: this.imgContainer,
-            prop: 'transform',
-            duration: 0.3,
-            endStr: this.matrixTostr(this.imgContainer.matrix),
-            callback: () => {
-            }
-        })
-    }
-    slideSelf() {
-        let endX = -(this.curIndex * this.containerWidth);
-        let x =  endX - this.imgContainerMoveX;
-        this.imgContainer.matrix = this.matrixMultipy(this.imgContainer.matrix, this.getTranslateMatrix({ x, y: 0, z: 0 }))
-        this.imgContainerMoveX = endX;
-        this.animate({
-            el: this.imgContainer,
-            duration: 0.3,
-            prop: 'transform',
-            endStr: this.matrixTostr(this.imgContainer.matrix),
-            callback: () => {
-            }
-        })
-
-    }
-
-
     genFrame() {
         let curImg: string = this.options.curImg;
         let images: Array<string> = this.options.imgs;
