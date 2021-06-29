@@ -20,9 +20,7 @@ export class events {
        
         const curWidth =  Math.abs(viewInstance.positions[curPointAt + 4] - viewInstance.positions[curPointAt]);
         const curHieght = Math.abs(viewInstance.positions[curPointAt+1] - viewInstance.positions[curPointAt+9]);
-        viewInstance.decideScaleRatio(curWidth,curHieght,natualWidth,natualHeight)
-        const scaleX = natualWidth  / curWidth - 1;
-        const scaleY = natualHeight / curHieght - 1;
+        const [scaleX,scaleY] = viewInstance.decideScaleRatio(curWidth,curHieght,natualWidth,natualHeight)
 
         const centerX: number = viewInstance.viewWidth / (2);
         const centerY: number = viewInstance.viewHeight / (2);
@@ -31,12 +29,12 @@ export class events {
         dx = -((clientX * viewInstance.dpr - centerX) * (scaleX ));
         dy = ((clientY * viewInstance.dpr - centerY) * (scaleY));
 
+        if( viewInstance.curIsLongImg ){// a long img dont need a horisontal offset
+            dx = 0
+        }
+
         viewInstance.scaleZPosition({scaleX,scaleY,dx,dy})
 
-        // console.log(newPoint)
-        // console.log(this.imgs)
-        // console.log(this.textures)
-        // console.log(this.indinces)
 
     }
     handleMoveEnlage(e: TouchEvent & MouseEvent,x:number,y:number,z:number) {
@@ -70,6 +68,7 @@ export class events {
         let throldDeg = Math.PI * 0.15;
         const plusOrMinus = degX / Math.abs(degX);
         const {viewInstance} = this;
+
         if (Math.abs(degX) >= throldDeg) {// 左右切换
             let beforeIndex = viewInstance.curIndex;
             let nextIndex = viewInstance.curIndex + (plusOrMinus * 1)
@@ -86,14 +85,27 @@ export class events {
             viewInstance.rotate(0 - degX)
         }
     }
-    handleTEndEnlarge(e: TouchEvent & MouseEvent,x:number,y:number,z:number){
+    async handleTEndEnlarge(e: TouchEvent & MouseEvent,x:number,y:number,z:number){;
         const { viewInstance } = this
 
         x *= viewInstance.dpr;
         y *= -viewInstance.dpr;
         z *= viewInstance.dpr;
 
-        viewInstance.moveCurPlane(x,y,0)
+        await viewInstance.moveCurPlane(x,y,0)
+        if( x !== 0 ){
+            viewInstance.isBoudriedSide = true;
+        }
+
+    }
+    async moveCurPlaneTo(x:number,y:number,z:number){
+        const { viewInstance } = this
+
+        x *= viewInstance.dpr;
+        y *= -viewInstance.dpr;
+        z *= viewInstance.dpr;
+
+        await viewInstance.moveCurPlane(x,y,0)
 
     }
 }

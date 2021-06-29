@@ -42,7 +42,10 @@ class ImagePreview implements
 
     public isAnimating: boolean = false; // 是否在动画中
     public isMotionless: boolean = true;// 是否没有产生位移，用于左右切换图片或者拖动放大之后的图片
-    public isEnlargeMove: boolean = false;// 大图下得切屏
+    public isEnlargeMove: boolean = false;// 大图下得切屏 slide next/before img
+           isNormalMove:  boolean = false;// is moveNormal
+
+    maxMovePointCounts: number = 3; // max point count while collect moving point.
 
     public prefix: string = "__"
     public ref: HTMLElement;
@@ -58,6 +61,8 @@ class ImagePreview implements
     public moveEndTime: number = 0;
     
     actionExecutor: webGl;
+
+ 
 
     public operateMaps: {
         [key: string]: string
@@ -142,7 +147,7 @@ class ImagePreview implements
     ) { }
     computeStep(displacement: number, time: number): number { return 0 }
     transitionEnd() { return '' };
-    autoMove(curItem: HTMLElement, deg: number, startX: number, startY: number, { maxTop, minTop, maxLeft, minLeft }: { maxTop: any; minTop: any; maxLeft: any; minLeft: any; }): void { }
+    autoMove(deg: number, startX: number, startY: number, { maxTop, minTop, maxLeft, minLeft }: { maxTop: any; minTop: any; maxLeft: any; minLeft: any; }): void { }
     matrixMultipy(a: Array<Array<number>>, b: Array<Array<number>>, ...res) { return [] }
     matrixTostr(arr: Array<Array<number>>) { return '' }
     getTranslateMatrix({ x, y, z }) { return [] }
@@ -374,7 +379,7 @@ class ImagePreview implements
          * 这里把操作派发
          */
         const type: string = (<HTMLElement>(e.target)).dataset.type;
-
+        console.log(type)
         if (this.operateMaps[type]) {
             this[this.operateMaps[type]](e);
             return
@@ -428,66 +433,26 @@ class ImagePreview implements
             // someOperate;
             this.isZooming = false;
         }
-
         //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
         if ( e.changedTouches.length !== 1 || this.isMotionless) {
-
             return;
         }
         const type: string = (<HTMLElement>(e.target)).dataset.type;
-
         if (this.operateMaps[type]) {
             return
         }
-
-
-        const curItem: HTMLElement = this.imgItems[this.curIndex];
 
         this.isMotionless = true;
         this.isEnlargeMove = false;
 
         const {actionExecutor}= this;
         const {eventsHanlder} = actionExecutor
-        const toLeft = actionExecutor.IsBoundaryLeft;
-        const toRight = actionExecutor.IsBoundaryLeft;
-        let isBoundary: boolean = toLeft || toRight;
-
-        if ( actionExecutor.isEnlargement ) {
-            // 放大的时候,如果到达边界还是进行正常的切屏操作
-            // for long-img operate it solely
-            if (isBoundary) {
-                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-                const conWidth: number = imgContainerRect.width;
-
-                const { viewRect } = actionExecutor;
-                const curItemViewLeft: number = viewRect.left;
-                const curItemViewRight: number = viewRect.right;
-
-                if ( Math.round(curItemViewLeft) < 0 || Math.round(curItemViewRight) > conWidth) {
-                    // curItem.dataset.toLeft = 'false';
-                    // curItem.dataset.toRight = 'false';
-                    this.handleTEndEnNormal(e);
-                } else {
-                    if (this.fingerDirection == 'vertical') {
-                        this.handleTEndEnlarge(e);
-                    } else if (this.fingerDirection == 'horizontal') {
-                        this.handleTEndEnNormal(e);
-
-                    }
-                }
-
-            } else {
-                this.handleTEndEnlarge(e);
-            }
-
+        if ( this.isNormalMove ) {;
+            this.handleTEndEnNormal(e);
         } else {
-            //正常情况下的
-            this.handleTEndEnNormal(e)
+            this.handleTEndEnlarge(e)
         }
         this.fingerDirection = '';
-
-
     }
 
     handleTEndEnlarge(e: TouchEvent & MouseEvent): void {
@@ -547,28 +512,8 @@ class ImagePreview implements
 
         if (recoverX || recoverY) {
             actionExecutor.eventsHanlder.handleTEndEnlarge(e,endX,endY,0)
-            if (endX == maxLeft - curItemLeft ) {
-
-            } else if (endX == minLeft - curItemLeft) {
-         
-            }
-
-            if (endY == maxTop) {
-              
-            } else if (endY == minTop - curItemTop) {
-            
-            }
         } else {
-            // 如果容器内能完整展示图片就不需要移动至边界
-            if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
-               
-            } else {
-             
-            }
-
-         
-
-            this.moveEndTime = (new Date).getTime();
+            this.moveEndTime = Date.now();
             let endPoint: { x: number, y: number } = {
                 x: this.startX,
                 y: this.startY
@@ -589,7 +534,8 @@ class ImagePreview implements
             // 要滑动的x y的值
             if (touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5)) {
                 let boundryObj = { maxTop, minTop: minTop - curItemViewTop, maxLeft, minLeft: minLeft - curItemViewLeft }
-                // this.autoMove(curItem, degree, 0, 0, boundryObj)
+                this.autoMove(degree, 0, 0, boundryObj)
+                actionExecutor.eventsHanlder
             }
 
         }
@@ -704,7 +650,7 @@ class ImagePreview implements
                 position: absolute;
                 top: 20px;
                 right: 20px;
-                z-index: 1;
+                z-index: 10;
                 box-sizing: border-box;
                 width: 22px;
                 height: 22px;
@@ -737,6 +683,7 @@ class ImagePreview implements
                 bottom: ${needHigher ? 20 : 0}px;
                 left: 20px;
                 right: 20px;
+                z-index: 10;
                 padding: 0 10px;
                 text-align: center;
                 border-top: 1px solid rgba(255, 255, 255, .2);
@@ -811,7 +758,7 @@ class ImagePreview implements
             time: 0
         })
         let transformStr = this.matrixTostr(this.imgContainer.matrix)
-        this.imgContainer.style.transform = `${transformStr}`;
+        // this.imgContainer.style.transform = `${transformStr}`;
         this.toggleClass(this.ref, this.defToggleClass)
     }
     mobileReadyShow() { }
@@ -833,10 +780,68 @@ class ImagePreview implements
 
     }
     getMovePoints(e: MouseEvent & TouchEvent) {
+        if( this.movePoints.length > this.maxMovePointCounts ){
+            return;
+        }
         this.movePoints.push({
             x: e.touches[0].clientX,
             y: e.touches[0].clientY
         })
+    }
+    decideMoveDirection(e: TouchEvent & MouseEvent,
+        curItemViewLeft,curItemViewRight,isBoundaryLeft,
+        isBoundaryRight,direction
+    ){
+        let L: number = this.movePoints.length;
+        let endPoint: { x: number, y: number } = this.movePoints[L - 1];
+        let startPoint: { x: number, y: number } = this.movePoints[0];
+
+        let dx: number = endPoint.x - startPoint.x;
+        let dy: number = endPoint.y - startPoint.y;
+
+        let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        if (Math.abs(90 - Math.abs(degree)) < 30) {
+            this.fingerDirection = 'vertical'
+        } else {
+            this.fingerDirection = 'horizontal'
+        }
+        if (this.actionExecutor.isEnlargement) {
+            // 放大的时候的移动是查看放大后的图片
+
+            // 放大的时候,如果到达边界还是进行正常的切屏操作
+            // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
+            const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+            const conWidth: number = imgContainerRect.width;
+
+            // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
+            if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
+                if (
+                    (
+                        (isBoundaryLeft && direction == 'right') ||
+                        (isBoundaryRight && direction == 'left') ||
+                        (this.isEnlargeMove)
+                    ) &&
+                    (this.fingerDirection == 'horizontal')) {
+                    this.isEnlargeMove = true;
+                    this.handleMoveNormal(e)
+                } else {
+                    this.handleMoveEnlage(e);
+                }
+            } else {
+                if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove)) {
+                    this.isEnlargeMove = true;
+                    this.handleMoveNormal(e)
+                } else {
+                    this.handleMoveEnlage(e);
+                }
+            }
+
+        } else {
+            //正常情况下的移动是图片左右切换
+            this.handleMoveNormal(e)
+        }
+        this.isMotionless = false;
     }
     destroy(): void {
         this.ref.parentNode.removeChild(this.ref);

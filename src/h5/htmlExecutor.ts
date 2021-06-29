@@ -1,6 +1,4 @@
-/**
- *  @ts-ignore
- */
+//@ts-nocheck
 import { ImagePreview } from "../ts/image-preview";
 
 class htmlExecutor{
@@ -660,5 +658,32 @@ class htmlExecutor{
         this.moveStartTime = 0;
 
 
+    }
+    autoMove(this: ImagePreview,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}){
+        curItem.matrix = this.matrixMultipy(curItem.matrix,this.getTranslateMatrix({x,y,z:1}))
+        this.animate({
+            el:curItem,
+            prop:'transform',
+            timingFunction:'cubic-bezier(0, 0, 0, 0.93)',
+            endStr:this.matrixTostr(curItem.matrix),
+            duration: 1
+        })
+        if( endX == maxLeft ){
+            //toLeft 即为到达左边界的意思下同
+            curItem.dataset.toLeft = 'true';
+            curItem.dataset.toRight = 'false';
+            
+        }else if( endX == minLeft ){
+            curItem.dataset.toLeft = 'false';
+            curItem.dataset.toRight = 'true';
+        }
+
+        if( endY == maxTop ){
+            curItem.dataset.toTop = 'true';
+            curItem.dataset.toBottom = 'false';
+        }else if( endY == minTop ){
+            curItem.dataset.toTop = 'false';
+            curItem.dataset.toBottom = 'true';
+        }
     }
 }

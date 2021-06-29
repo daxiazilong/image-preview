@@ -13,9 +13,15 @@ export class cubicBezier{
     p1: coordinate
     p2: coordinate
     precision = 1e-7;
-    constructor(p1:coordinate,p2:coordinate){
-        this.p1 = p1;
-        this.p2 = p2;
+    constructor(x1,y1,x2,y2){
+        this.p1 = {
+            x:x1,
+            y:y1
+        };
+        this.p2 = {
+            x:x2,
+            y:y2
+        };
     }
     getX(t:number){
         let x1 = this.p1.x,x2=this.p2.x;
@@ -88,8 +94,8 @@ export class cubicBezier{
         return this.getY( this.solveCurveX(x) )
     }
 }
-export var linear = new cubicBezier({x:0, y:0}, {x:1, y:1});
-export var ease = new cubicBezier({x:.25, y:.1}, {x:.25,y: 1});
-export var easeIn = new cubicBezier({x:.42, y:0}, {x:1, y:1});
-export var easeOut = new cubicBezier({x:0, y:0}, {x:.58, y:1});
-export var easeInOut = new cubicBezier({x:.42,y: 0}, {x:.58, y:1});
+export var linear = new cubicBezier(0, 0, 1, 1);
+export var ease = new cubicBezier(.25, .1, .25, 1);
+export var easeIn = new cubicBezier(.42, 0, 1, 1);
+export var easeOut = new cubicBezier(0, 0, .58, 1);
+export var easeInOut = new cubicBezier(.42, 0, .58, 1);

@@ -1,11 +1,11 @@
 import { sourceFrag } from './shaders/fragment-shader.frag'
 import { sourceVer } from './shaders/vertext-shader.vert';
 import { matrix } from './matrix'
-import { cubicBezier,linear,easeOut } from '../animation/animateJs'
+import { cubicBezier,linear,easeOut ,easeIn,easeInOut} from '../animation/animateJs'
 import { events } from './eventSystem/index'
 import {fps} from './tools/index'
 
-const easyOut1 = new cubicBezier({x:0, y:0}, {x:0, y:0.93})
+const easeOut1 = new cubicBezier(0.1,0.9,0.1,0.9)
 
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
@@ -50,6 +50,8 @@ class webGl {
     curPlane: Array<number> = []; // 动画执行前的当前面的位置信息
 
     eventsHanlder: events;
+
+    isBoudriedSide: boolean = false //放大移动时 是否曾到达过边界 在移动放大得图片至超过边界后 恢复到最大边界位置后为true
 
     constructor({images,}:webGlConstructorProps) {
 
@@ -96,39 +98,8 @@ class webGl {
         this.initData();
         
         this.eventsHanlder = new events(this);
-        this.initEvent();
     }
-    initEvent(){
-        
-        let z = (this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2));
-
-        (z > this.zFar) && (z = this.zFar)
-        
-        let deg = 0;
-
-        let beginMove = false;
-        let startX = 0;
-        let startY = 0;
-        let degX = 0;
-
-        let beginMoveX = 0;
-      
-        this.gl.canvas.addEventListener('click', (e) => {
-            // this.slideNext();
-        })
-        this.gl.canvas.addEventListener('touchstart', (e: TouchEvent) => {
-            beginMove = true;
-            beginMoveX = startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-        })
-     
-        this.gl.canvas.addEventListener('touchend', async (e:TouchEvent) => {
-            return;
-            beginMove = false;
-            let offsetX = (e.changedTouches[0].clientX - beginMoveX) / this.dpr;
-            
-        })
-    }
+  
 
     initData() {
         this.draw(this.curIndex)
@@ -311,8 +282,8 @@ class webGl {
             this.drawPosition();
         }
         return this.animate({
-            allTime: this.defaultAnimateTime,
-            timingFun: easyOut1,
+            allTime: 300 ,//this.defaultAnimateTime,
+            timingFun: easeOut1,
             ends:[dx,dy],
             playGame
         })
@@ -504,8 +475,22 @@ class webGl {
 
     }
     decideScaleRatio(cw: number, ch: number, nw: number, nh: number) {
+        let width = 0, height = 0;
         const [initialW,initialH] = this.decideImgViewSize(nw,nh);
+        const { naturalWidth,naturalHeight } = this.imgs[this.curIndex];
 
+        if( this.curIsLongImg() ){
+            width = this.viewWidth;
+            height = nh/nw * width;
+        }else{
+            width = nw;
+            height = nh;
+        }
+
+        return [
+            width / cw - 1,
+            height / ch - 1
+        ]
 
     }
     decideImgViewSize(imgWidth,imgHeight){
@@ -554,9 +539,6 @@ class webGl {
         this.bindPostion();
         this.drawPosition();
     }
-    handleMove(e: TouchEvent & MouseEvent){
-
-    }
     createPerspectiveMatrix() {
         const fieldOfViewInRadians = this.fieldOfViewInRadians;
         const aspectRatio = this.viewWidth / this.viewHeight;
@@ -582,11 +564,15 @@ class webGl {
     }
     get IsBoundaryLeft(){
         const rect = this.viewRect;
-        return rect.left >= 0;
+        return rect.left >= 0 && this.isBoudriedSide;
     }
     get isBoundaryRight(){
         const rect = this.viewRect;
-        return rect.right <= this.viewWidth / 2;
+        return rect.right <= ((this.viewWidth / this.dpr)) && this.isBoudriedSide;
+    }
+    curIsLongImg(){
+        const { naturalWidth,naturalHeight } = this.imgs[this.curIndex];
+        return naturalWidth * 2.5 < naturalHeight;
     }
     get viewRect(){
 
@@ -621,8 +607,7 @@ class webGl {
         const {naturalWidth,naturalHeight} = this.imgs[this.curIndex]
         const [initialWidth, intinalHeight] = this.decideImgViewSize(naturalWidth*this.dpr,naturalHeight*this.dpr)
         const rect = this.viewRect;
-
-        return rect.width > initialWidth || rect.height > intinalHeight;
+        return rect.width * this.dpr > initialWidth || rect.height * this.dpr > intinalHeight;
     }
     isLoadingError(index?:number ){
         ;arguments.length == 0 && ( index = this.curIndex );
@@ -690,9 +675,10 @@ class webGl {
     intialView() {
         const canvas = document.createElement('canvas')
         canvas.style.cssText = `
-            position: fixed;
+            position: absolute;
             top: 0;
             left:0;
+            z-index: 9;
             width:${window.innerWidth}px;
             height:${window.innerHeight}px;
             user-select:none;
