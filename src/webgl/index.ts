@@ -5,7 +5,7 @@ import { cubicBezier,linear,easeOut ,easeIn,easeInOut} from '../animation/animat
 import { events } from './eventSystem/index'
 import {fps} from './tools/index'
 
-const easeOut1 = new cubicBezier(0.1,0.9,0.1,0.9)
+const easeOut1 = new cubicBezier(0.18, 0.96, 0.18, 0.96)
 
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
@@ -52,6 +52,7 @@ class webGl {
     eventsHanlder: events;
 
     isBoudriedSide: boolean = false //放大移动时 是否曾到达过边界 在移动放大得图片至超过边界后 恢复到最大边界位置后为true
+    curAimateBreaked: boolean = false // 当前动画是否被打断
 
     constructor({images,}:webGlConstructorProps) {
 
@@ -282,7 +283,7 @@ class webGl {
             this.drawPosition();
         }
         return this.animate({
-            allTime: 300 ,//this.defaultAnimateTime,
+            allTime: 800 ,//this.defaultAnimateTime,
             timingFun: easeOut1,
             ends:[dx,dy],
             playGame
@@ -714,17 +715,24 @@ class webGl {
         playGame: Function
         callback?: Function
     }){
-        const startTime = new Date().getTime();
+        const startTime = Date.now();
         let curTime = startTime;
         let resolve;
         const pro = new Promise( res => (resolve = res) )
         const eL = ends.length;
 
-        function run(){
-            let curT = (curTime - startTime) / allTime ;
+        const run = () => {
 
-            curT > 1 && ( curT == 1 )
-            let curEnd = timingFun.solve( curT )
+            if( this.curAimateBreaked){
+                resolve([false,3]);
+                this.curAimateBreaked = false;
+                return;
+            }
+            let offsetT = curTime - startTime;
+            ;offsetT > allTime && ( offsetT = allTime );
+            let curX = (offsetT) / allTime ;
+            curX > 1 && ( curX = 1 )
+            let curEnd = timingFun.solve( curX )
             if( curEnd >= 1 ){
                 curEnd = 1;
             }
@@ -734,13 +742,13 @@ class webGl {
             })
             playGame( ...ans );
         
-            if( curT <= 1 ){
+            if( curX < 1 ){
                 requestAnimationFrame(run)
             }else{
                 callback && callback();
                 resolve([false,1])
             }
-            curTime = new Date().getTime();
+            curTime = Date.now();
         }
         run();
 

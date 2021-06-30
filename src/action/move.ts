@@ -7,6 +7,10 @@ import { showDebugger } from '../tools/index';
 export class Move{
     handleMove(this: ImagePreview,e: TouchEvent & MouseEvent){
         e.preventDefault();
+
+        if( this.isAnimating ){
+            return;
+        }
         // 双指缩放时的 处理 只移动和缩放。
         if( e.touches.length == 2 ){
             clearTimeout(this.performerRecordMove); 
@@ -18,6 +22,7 @@ export class Move{
             return;
         }
 
+        
         
         let curTouchX: number = e.touches[0].clientX;
         let curTouchY: number = e.touches[0].clientY;
@@ -117,9 +122,10 @@ export class Move{
         }     
     }
     handleMoveNormal(this: ImagePreview, e: TouchEvent & MouseEvent ){
-        if( this.isAnimating ){
-            return;
-        }
+        showDebugger(`
+        this.isAnimating:${this.isAnimating}
+        `)
+        
         this.isNormalMove = true;
         const eventsHanlder = this.actionExecutor.eventsHanlder;
 
@@ -201,7 +207,7 @@ export class Move{
         const curItemViewLeft: number = curItemRect.left;
         const curItemViewRight: number = curItemRect.right;
         deg = (deg / 180) * Math.PI;
-        let distance: number = 500;
+        let distance: number = 200;
         let offsetX: number = (distance * Math.cos( deg ))
         let offsetY: number = (distance * Math.sin(deg));
 // debugger;

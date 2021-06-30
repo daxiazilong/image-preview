@@ -345,7 +345,16 @@ class ImagePreview implements
     handleTouchStart(e: TouchEvent & MouseEvent) {
         // preventDefault is very import, because if not do this, we will get 
         // an error last-Click-Time on wx.
+
+        if( this.isAnimating ){
+            return;
+        }
         e.preventDefault();
+        const { actionExecutor } = this
+        const { eventsHanlder } = actionExecutor;
+        if( eventsHanlder.curBehaviorCanBreak ){
+            actionExecutor.curAimateBreaked = true;
+        }
         switch (e.touches.length) {
             case 1:
                 this.handleOneStart(e);
@@ -379,7 +388,6 @@ class ImagePreview implements
          * 这里把操作派发
          */
         const type: string = (<HTMLElement>(e.target)).dataset.type;
-        console.log(type)
         if (this.operateMaps[type]) {
             this[this.operateMaps[type]](e);
             return
@@ -422,8 +430,13 @@ class ImagePreview implements
             bottom.style.display = 'none';
         }
     }
-    handleDoubleClick(e: TouchEvent & MouseEvent) {
-        this.actionExecutor.eventsHanlder.handleDoubleClick(e);
+    async handleDoubleClick(e: TouchEvent & MouseEvent) {
+        this.isAnimating = true;
+        showDebugger(this.isAnimating.toString())
+        await this.actionExecutor.eventsHanlder.handleDoubleClick(e);
+        this.isAnimating = false;
+        showDebugger(`animation done.`+this.isAnimating.toString())
+
     }
     handleToucnEnd(e: TouchEvent & MouseEvent) {
         e.preventDefault();
@@ -447,17 +460,21 @@ class ImagePreview implements
 
         const {actionExecutor}= this;
         const {eventsHanlder} = actionExecutor
+        
+        this.fingerDirection = '';
+        if( this.isAnimating ){
+            return;
+        }
         if ( this.isNormalMove ) {;
             this.handleTEndEnNormal(e);
         } else {
             this.handleTEndEnlarge(e)
         }
-        this.fingerDirection = '';
     }
 
     handleTEndEnlarge(e: TouchEvent & MouseEvent): void {
         // ;debugger;
-        this.isAnimating = false;
+        // this.isAnimating = false;
         const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
@@ -535,7 +552,7 @@ class ImagePreview implements
             if (touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5)) {
                 let boundryObj = { maxTop, minTop: minTop - curItemViewTop, maxLeft, minLeft: minLeft - curItemViewLeft }
                 this.autoMove(degree, 0, 0, boundryObj)
-                actionExecutor.eventsHanlder
+         
             }
 
         }

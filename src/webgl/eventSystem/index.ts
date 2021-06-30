@@ -3,6 +3,8 @@ import { matrix } from "../matrix";
 
 export class events {
     viewInstance: webGl;
+    curBehaviorCanBreak: boolean = false;
+
     constructor(viewInstance: webGl) {
         this.viewInstance = viewInstance;
     }
@@ -16,10 +18,10 @@ export class events {
         const curImgShape = viewInstance.imgShape[viewInstance.curIndex];
         const [natualWidth,natualHeight] = curImgShape;
 
-        let curPointAt = viewInstance.curPointAt;
-       
-        const curWidth =  Math.abs(viewInstance.positions[curPointAt + 4] - viewInstance.positions[curPointAt]);
-        const curHieght = Math.abs(viewInstance.positions[curPointAt+1] - viewInstance.positions[curPointAt+9]);
+        const rect = viewInstance.viewRect;
+        const curWidth =  rect.width * viewInstance.dpr;
+        const curHieght = rect.height * viewInstance.dpr;
+
         const [scaleX,scaleY] = viewInstance.decideScaleRatio(curWidth,curHieght,natualWidth,natualHeight)
 
         const centerX: number = viewInstance.viewWidth / (2);
@@ -29,11 +31,11 @@ export class events {
         dx = -((clientX * viewInstance.dpr - centerX) * (scaleX ));
         dy = ((clientY * viewInstance.dpr - centerY) * (scaleY));
 
-        if( viewInstance.curIsLongImg ){// a long img dont need a horisontal offset
+        if( viewInstance.curIsLongImg()){// a long img dont need a horisontal offset
             dx = 0
         }
 
-        viewInstance.scaleZPosition({scaleX,scaleY,dx,dy})
+        return viewInstance.scaleZPosition({scaleX,scaleY,dx,dy})
 
 
     }
@@ -92,7 +94,10 @@ export class events {
         y *= -viewInstance.dpr;
         z *= viewInstance.dpr;
 
+        this.curBehaviorCanBreak = true;
         await viewInstance.moveCurPlane(x,y,0)
+        this.curBehaviorCanBreak = false;
+
         if( x !== 0 ){
             viewInstance.isBoudriedSide = true;
         }
@@ -105,7 +110,9 @@ export class events {
         y *= -viewInstance.dpr;
         z *= viewInstance.dpr;
 
+        this.curBehaviorCanBreak = true;
         await viewInstance.moveCurPlane(x,y,0)
+        this.curBehaviorCanBreak = false;
 
     }
 }

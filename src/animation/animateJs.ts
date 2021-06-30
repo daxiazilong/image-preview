@@ -99,3 +99,6 @@ export var ease = new cubicBezier(.25, .1, .25, 1);
 export var easeIn = new cubicBezier(.42, 0, 1, 1);
 export var easeOut = new cubicBezier(0, 0, .58, 1);
 export var easeInOut = new cubicBezier(.42, 0, .58, 1);
+
+import {run} from './animateTest'
+// run()
