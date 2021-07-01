@@ -150,9 +150,12 @@ class webGl {
         // 储存旋转位置变化信息
         this.imgShape[this.curIndex] = matrix.multiplyPoint(curImgShape,matrix.rotateZMatrix(deg))
         this.imgShapeInitinal[this.curIndex] = matrix.multiplyPoint(curImgShapeInitinal,matrix.rotateZMatrix(deg))
-        console.log(this.imgShape[this.curIndex],this.imgShapeInitinal[this.curIndex] )
+        // todo . every rotate should reCenter the img center
+        const [curCenterX,curCenterY] = this.curCenterCoordinate;
+        const dx = -curCenterX, dy = -curCenterY;
         const playGame = (...rest) => {
             this.transformCurplane(
+                matrix.translateMatrix(rest[1],rest[2],0),
                 matrix.rotateZMatrix(rest[0]),
             )
             this.bindPostion();
@@ -161,7 +164,7 @@ class webGl {
         return this.animate({
             allTime: this.defaultAnimateTime,
             timingFun: linear,
-            ends:[deg],
+            ends:[deg,dx,dy],
             playGame
         })
     }
@@ -524,21 +527,18 @@ class webGl {
 
         clientX *=  this.dpr;
         clientY *=  this.dpr;
-
         if( this.isEnlargement ){// 放大双击得时候就缩小
-            let [initialWidth,initinalHeight] = this.decideImgViewSize(curWidth,curHeight)
-            width = initialWidth;
-            height = initinalHeight
+            let [initialWidth,initinalHeight] = this.imgShapeInitinal[this.curIndex]
+            width = Math.abs(initialWidth);
+            height = Math.abs(initinalHeight)
 
             // if ratio is 0.2 then result is -0.8 ,during animate  it becomes 1 0.9 .0.8 
             scaleX = width / curWidth - 1;
             scaleY = height / curHeight - 1;
-
+            console.log(scaleX,scaleY)
             //  it's should be the offset of the img's center Point
             //  this coordinate center is 0 , 0  on the center of screen
-            const curPlaneIndex = this.curPointAt;
-            const curCenterX = (this.positions[curPlaneIndex] + this.positions[curPlaneIndex + 4 ]) / 2;
-            const curCenterY = (this.positions[curPlaneIndex + 1] + this.positions[curPlaneIndex + 13 ]) / 2;
+            const [curCenterX,curCenterY] = this.curCenterCoordinate;
 
             dx = -(curCenterX * ( 1 + scaleX ) );
             dy = -(curCenterY * ( 1 + scaleY ) )
@@ -660,6 +660,18 @@ class webGl {
         const [naturalWidth,naturalHeight] = this.imgShape[this.curIndex];
         return Math.abs(naturalWidth) * 2.5 < Math.abs(naturalHeight);
     }
+    get curCenterCoordinate(){
+        const curPlaneIndex = this.curPointAt;
+        const curCenterX = (this.positions[curPlaneIndex] + this.positions[curPlaneIndex + 8 ]) / 2;
+        const curCenterY = (this.positions[curPlaneIndex + 1] + this.positions[curPlaneIndex + 9 ]) / 2;
+        return [
+            curCenterX,
+            curCenterY
+        ]
+    }
+    /**
+     * a position ,return this rect's coordinate like htmlElement.getBoundingClientRect()
+     */
     get viewRect(){
 
         const topOriginX = -this.viewWidth / 2;

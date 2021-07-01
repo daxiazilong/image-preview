@@ -2,6 +2,7 @@ import { ImagePreview } from '../ts/image-preview'
 
 export class Rotate{
     async handleRotateLeft(this: ImagePreview,e: TouchEvent & MouseEvent ) :Promise<any>{
+        if(this.isAnimating) return;
         let changeDeg = -1 * Math.PI / 2;
         this.isAnimating = true;
         await this.actionExecutor.rotateZ(changeDeg)
@@ -9,6 +10,8 @@ export class Rotate{
 
     }
     async handleRotateRight(this: ImagePreview,e: TouchEvent & MouseEvent ) :Promise<any>{
+        if(this.isAnimating) return;
+
         let changeDeg = 1 * Math.PI / 2;
         this.isAnimating = true;
         this.actionExecutor.rotateZ(changeDeg);

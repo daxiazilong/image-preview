@@ -501,7 +501,7 @@ class ImagePreview implements
 
         let endX: number = 0;
         let endY: number = 0;
-
+        
         if (curItemLeft > maxLeft) {
             endX = maxLeft - curItemLeft;
             recoverX = true;
