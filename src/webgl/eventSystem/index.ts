@@ -12,32 +12,12 @@ export class events {
         throw new Error('Method not implemented.');
     }
     handleDoubleClick(e: TouchEvent & MouseEvent){
+        
         const { clientX, clientY } = e.touches[0];
         const { viewInstance } = this
 
-        const curImgShape = viewInstance.imgShape[viewInstance.curIndex];
-        const [natualWidth,natualHeight] = curImgShape;
-
-        const rect = viewInstance.viewRect;
-        const curWidth =  rect.width * viewInstance.dpr;
-        const curHieght = rect.height * viewInstance.dpr;
-
-        const [scaleX,scaleY] = viewInstance.decideScaleRatio(curWidth,curHieght,natualWidth,natualHeight)
-
-        const centerX: number = viewInstance.viewWidth / (2);
-        const centerY: number = viewInstance.viewHeight / (2);
-
-        let dx = 0, dy = 0;
-        dx = -((clientX * viewInstance.dpr - centerX) * (scaleX ));
-        dy = ((clientY * viewInstance.dpr - centerY) * (scaleY));
-
-        if( viewInstance.curIsLongImg()){// a long img dont need a horisontal offset
-            dx = 0
-        }
-
+        const [scaleX,scaleY,dx,dy] = viewInstance.decideScaleRatio(clientX,clientY)
         return viewInstance.scaleZPosition({scaleX,scaleY,dx,dy})
-
-
     }
     handleMoveEnlage(e: TouchEvent & MouseEvent,x:number,y:number,z:number) {
         const { viewInstance } = this

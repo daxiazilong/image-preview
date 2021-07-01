@@ -47,6 +47,8 @@ class webGl {
     imgs: Array<HTMLImageElement> = [];
     imgUrls: Array<string> = [];
     imgShape: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
+    imgShapeInitinal: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
+
     curPlane: Array<number> = []; // 动画执行前的当前面的位置信息
 
     eventsHanlder: events;
@@ -112,6 +114,7 @@ class webGl {
     slideNext(){
         this.rotate(0.5 * Math.PI)
     }
+    // rotate around y axis
     rotate(end) {
         return this.animate({
             allTime: this.defaultAnimateTime,
@@ -139,7 +142,29 @@ class webGl {
 
 
     }
-
+    // rotate around z axis
+    rotateZ(deg){
+        this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16)
+        const curImgShape = this.imgShape[this.curIndex];
+        const curImgShapeInitinal = this.imgShapeInitinal[this.curIndex];
+        // 储存旋转位置变化信息
+        this.imgShape[this.curIndex] = matrix.multiplyPoint(curImgShape,matrix.rotateZMatrix(deg))
+        this.imgShapeInitinal[this.curIndex] = matrix.multiplyPoint(curImgShapeInitinal,matrix.rotateZMatrix(deg))
+        console.log(this.imgShape[this.curIndex],this.imgShapeInitinal[this.curIndex] )
+        const playGame = (...rest) => {
+            this.transformCurplane(
+                matrix.rotateZMatrix(rest[0]),
+            )
+            this.bindPostion();
+            this.drawPosition();
+        }
+        return this.animate({
+            allTime: this.defaultAnimateTime,
+            timingFun: linear,
+            ends:[deg],
+            playGame
+        })
+    }
     genPostion(width: number, height: number,index:number) {
         const gl = this.gl;
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
@@ -475,25 +500,84 @@ class webGl {
         this.positions.splice(0,0,...positionCube);
 
     }
-    decideScaleRatio(cw: number, ch: number, nw: number, nh: number) {
+    /**
+     * @param clientX 缩放点得x坐标
+     * @param clientY 缩放点得y坐标
+     * @returns [缩放x比率,缩放y比率,x轴偏移 y轴偏移]
+     */
+    decideScaleRatio( clientX: number, clientY: number ) {
         let width = 0, height = 0;
-        const [initialW,initialH] = this.decideImgViewSize(nw,nh);
-        const { naturalWidth,naturalHeight } = this.imgs[this.curIndex];
 
-        if( this.curIsLongImg() ){
-            width = this.viewWidth;
-            height = nh/nw * width;
-        }else{
-            width = nw;
-            height = nh;
+        const centerX: number = this.viewWidth / (2);
+        const centerY: number = this.viewHeight / (2);
+
+        const rect = this.viewRect;
+        const curWidth =  rect.width * this.dpr;
+        const curHeight = rect.height * this.dpr;
+
+        const curImgShape = this.imgShape[this.curIndex];
+        let [nw,nh] = curImgShape;
+        nw = Math.abs(nw);
+        nh = Math.abs(nh);
+
+        let scaleX, scaleY,dx = 0,dy = 0;
+
+        clientX *=  this.dpr;
+        clientY *=  this.dpr;
+
+        if( this.isEnlargement ){// 放大双击得时候就缩小
+            let [initialWidth,initinalHeight] = this.decideImgViewSize(curWidth,curHeight)
+            width = initialWidth;
+            height = initinalHeight
+
+            // if ratio is 0.2 then result is -0.8 ,during animate  it becomes 1 0.9 .0.8 
+            scaleX = width / curWidth - 1;
+            scaleY = height / curHeight - 1;
+
+            //  it's should be the offset of the img's center Point
+            //  this coordinate center is 0 , 0  on the center of screen
+            const curPlaneIndex = this.curPointAt;
+            const curCenterX = (this.positions[curPlaneIndex] + this.positions[curPlaneIndex + 4 ]) / 2;
+            const curCenterY = (this.positions[curPlaneIndex + 1] + this.positions[curPlaneIndex + 13 ]) / 2;
+
+            dx = -(curCenterX * ( 1 + scaleX ) );
+            dy = -(curCenterY * ( 1 + scaleY ) )
+
+        }else{//缩小得时候双击就放大
+            if( this.curIsLongImg() ){
+                width = this.viewWidth;
+                height = nh/nw * width;
+            }else{
+                width = nw;
+                height = nh;
+            }
+            scaleX = width / curWidth - 1;
+            scaleY = height / curHeight - 1;
+
+            
+            dx = -((clientX - centerX) * (scaleX));
+            dy = ((clientY  - centerY) * (scaleY));
+
+            if( this.curIsLongImg()){// a long img dont need a horisontal offset
+                dx = 0
+            }
+
         }
-
+        
         return [
-            width / cw - 1,
-            height / ch - 1
+            scaleX,
+            scaleY,
+            dx,
+            dy
         ]
 
     }
+    /**
+     * 
+     * @param imgWidth 图片宽度
+     * @param imgHeight 图片高度
+     * @returns  返回适配当前视口得图片宽高
+     */
     decideImgViewSize(imgWidth,imgHeight){
 
         let width = 0, height = 0;
@@ -527,7 +611,8 @@ class webGl {
 
                     const { naturalWidth, naturalHeight } = img;
                     let [width,height] = this.decideImgViewSize(naturalWidth * this.dpr,naturalHeight * this.dpr)
-                    this.imgShape[i] = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ]
+                    this.imgShape[i] = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ];
+                    this.imgShapeInitinal[i] = [width,height,0,1]
                     this.genPostion(width, height,i);
                     maxWidth = Math.max(width,maxWidth)
                     maxHeight = Math.max(height,maxHeight)
@@ -572,8 +657,8 @@ class webGl {
         return rect.right <= ((this.viewWidth / this.dpr)) && this.isBoudriedSide;
     }
     curIsLongImg(){
-        const { naturalWidth,naturalHeight } = this.imgs[this.curIndex];
-        return naturalWidth * 2.5 < naturalHeight;
+        const [naturalWidth,naturalHeight] = this.imgShape[this.curIndex];
+        return Math.abs(naturalWidth) * 2.5 < Math.abs(naturalHeight);
     }
     get viewRect(){
 
@@ -582,33 +667,48 @@ class webGl {
 
         const curPlaneIndex = this.curPointAt;
 
-        const bottomLeftPlanX = this.positions[curPlaneIndex];
-        const bottomLeftPlaneY = this.positions[curPlaneIndex + 1];
+        let minX = Infinity, maxX = -Infinity,
+            minY = Infinity, maxY = -Infinity;
+        // 点的位置会旋转的,旋转之后 再去用固定的坐标计算的时候你就把握不住
+        //  so dynamic find the correct coordinate
+        //  
+        for( let i = curPlaneIndex ; i < curPlaneIndex + 16; i += 4 ){
+            let x = this.positions[i];
+            let y = this.positions[i+1];
+            minX = Math.min(x,minX)
+            maxX = Math.max(x,maxX)
+            minY = Math.min(y,minY)
+            maxY = Math.max(y,maxY)
+        }
 
-        const topLeftPlaneX = this.positions[curPlaneIndex + 12];
-        const topLeftPlaneY = this.positions[curPlaneIndex + 13];
-
-        const bottomRightPlaneX = this.positions[curPlaneIndex + 4]
-        const bottomRightPlaneY = this.positions[curPlaneIndex + 5]
-
-        const topRightPlaneX = this.positions[curPlaneIndex + 8]
-        const topRightPlaneY = this.positions[curPlaneIndex + 9]
-
+        const width = Math.abs(minX - maxX );
+        const height =  Math.abs(minY - maxY);
 
         return{
-            left: (topLeftPlaneX - topOriginX) / this.dpr,
-            right: (topRightPlaneX - topOriginX) / this.dpr,
-            width: Math.abs(topLeftPlaneX - topRightPlaneX ) / this.dpr,
-            height: Math.abs( bottomRightPlaneY - topRightPlaneY ) / this.dpr,
-            top: -(topLeftPlaneY - topOriginY) / this.dpr,
-            bottom:-(bottomRightPlaneY - topOriginY) / this.dpr,
+            left: (minX - topOriginX) / this.dpr,
+            right: (maxX - topOriginX) / this.dpr,
+            width: width / this.dpr,
+            height: height / this.dpr,
+            top: -(maxY - topOriginY) / this.dpr,
+            bottom:-(minY - topOriginY) / this.dpr,
         }
     }
+    /**
+     *    top      right
+     *    bottom   bottomright
+     */
+    get curPlanePosition(){
+
+        const curPlaneIndex = this.curPointAt;
+
+        return [
+
+        ]
+    }
     get isEnlargement(){
-        const {naturalWidth,naturalHeight} = this.imgs[this.curIndex]
-        const [initialWidth, intinalHeight] = this.decideImgViewSize(naturalWidth*this.dpr,naturalHeight*this.dpr)
+        const [iw,ih] = this.imgShapeInitinal[this.curIndex]
         const rect = this.viewRect;
-        return rect.width * this.dpr > initialWidth || rect.height * this.dpr > intinalHeight;
+        return rect.width * this.dpr > Math.abs(iw) || rect.height * this.dpr > Math.abs(ih);
     }
     isLoadingError(index?:number ){
         ;arguments.length == 0 && ( index = this.curIndex );
