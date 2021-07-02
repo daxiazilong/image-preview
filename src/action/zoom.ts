@@ -125,12 +125,7 @@ export class Zoom {
             sy = 1 - this.zoomScale;
             
         } else if (distaceBefore < distanceNow) {//放大
-            // biggest width for zoom in
-            let maxWidth = this.containerWidth * 4;
-            if (curItemWidth * (1 + this.zoomScale) > maxWidth) {
-                this.isAnimating = false;
-                return;
-            }
+           
             y = -((this.zoomScale) * (centerFingerY - centerImgCenterY));
             x = -((this.zoomScale) * (centerFingerX - centerImgCenterX));
             sx = 1 + this.zoomScale
