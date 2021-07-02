@@ -723,4 +723,92 @@ class htmlExecutor{
             this.isAnimating = false;
         },{ once: true })
     }
+    handleZoom(this: ImagePreview, e: TouchEvent & MouseEvent): void {
+        if (!this.isZooming) {
+            this.curStartPoint1 = {
+                x: this.curPoint1.x,
+                y: this.curPoint1.y
+            }
+            this.curStartPoint2 = {
+                x: this.curPoint2.x,
+                y: this.curPoint2.y
+            }
+        }
+        this.isZooming = true;
+        const curItem = this.imgItems[this.curIndex] as interFaceElementMatrix;
+
+        if (curItem.dataset.loaded == 'false') {
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            this.isAnimating = false;
+            return;
+        }
+
+        const curItemRect = curItem.getBoundingClientRect();
+        const curItemWidth: number = curItemRect.width;
+        const curItemHeihgt: number = curItemRect.height;
+
+        const distaceBefore: number =
+            Math.sqrt(Math.pow(this.curPoint1.x - this.curPoint2.x, 2) + Math.pow(this.curPoint1.y - this.curPoint2.y, 2));
+
+        const distanceNow: number =
+            Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2));
+
+        let top: number = curItemRect.top;
+        let left: number = curItemRect.left;
+
+        const centerFingerX: number = (this.curStartPoint1.x + this.curStartPoint2.x) / 2;
+        const centerFingerY: number = (this.curStartPoint1.y + this.curStartPoint2.y) / 2;
+        const centerImgCenterX = curItemWidth / 2 + left;
+        const centerImgCenterY = curItemHeihgt / 2 + top;
+
+
+        this.curPoint1.x = e.touches[0].clientX;
+        this.curPoint1.y = e.touches[0].clientY;
+        this.curPoint2.x = e.touches[1].clientX;
+        this.curPoint2.y = e.touches[1].clientY;
+     
+        if (distaceBefore > distanceNow) {//缩小 retu
+
+            let y = ((this.zoomScale) * (centerFingerY - centerImgCenterY));
+            let x = ((this.zoomScale) * (centerFingerX - centerImgCenterX));
+            
+            curItem.matrix = this.matrixMultipy(
+                this.getScaleMatrix({ x: 1 - this.zoomScale, y: 1 - this.zoomScale, z: 1 }),
+                curItem.matrix,
+                this.getTranslateMatrix({ x, y, z: 1 })
+            )
+            const intialMatrix = this.matrixMultipy(this.getRotateZMatrix( curItem.rotateDeg * Math.PI / 180),curItem.intialMatrix);
+            // 缩放系数已经小于初始矩阵了 就让他维持到初始矩阵的样子
+            if( intialMatrix[0][0] >= curItem.matrix[0][0] ){
+                curItem.matrix = intialMatrix
+                curItem.dataset.isEnlargement = 'shrink';
+            }
+            
+        } else if (distaceBefore < distanceNow) {//放大
+
+            curItem.dataset.isEnlargement = 'enlargement';
+
+            // biggest width for zoom in
+            let maxWidth = this.containerWidth * 4;
+            if (curItemWidth * (1 + this.zoomScale) > maxWidth) {
+                this.isAnimating = false;
+                return;
+            }
+
+            let y = -((this.zoomScale) * (centerFingerY - centerImgCenterY));
+            let x = -((this.zoomScale) * (centerFingerX - centerImgCenterX));
+            
+            curItem.matrix = this.matrixMultipy(
+                this.getScaleMatrix({ x: 1 + this.zoomScale, y: 1 + this.zoomScale, z: 1 }),
+                curItem.matrix,
+                this.getTranslateMatrix({ x, y, z: 1 })
+            )
+
+        }
+
+        curItem.style.transform = `${this.matrixTostr(curItem.matrix)}`
+
+
+        this.isAnimating = false;
+    }
 }

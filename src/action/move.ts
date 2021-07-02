@@ -11,14 +11,13 @@ export class Move{
         if( this.isAnimating ){
             return;
         }
-        // 双指缩放时的 处理 只移动和缩放。
+        // 双指缩放时的。
         if( e.touches.length == 2 ){
             clearTimeout(this.performerRecordMove); 
             clearTimeout( this.performerClick )
 
             this.performerRecordMove = 0;
             this.handleZoom(e);
-            this.handleMoveEnlage(e);
             return;
         }
 
@@ -39,8 +38,8 @@ export class Move{
         let isBoundary = isBoundaryLeft || isBoundaryRight;
 
         let direction: string = e.touches[0].clientX - this.startX > 0 ? 'right':'left';
-
         const viewRect = this.actionExecutor.viewRect;
+
         const curItemViewLeft: number = viewRect.left;
         const curItemViewRight: number = viewRect.right;
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
@@ -94,7 +93,7 @@ export class Move{
         }else{
             // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
             if( 
-                ( this.actionExecutor.isEnlargement &&  curItemViewLeft < 0 && curItemViewRight > conWidth )
+                ( this.actionExecutor.isEnlargement &&  curItemViewLeft <= 0 && curItemViewRight > conWidth )
                     ||
                 ( !this.actionExecutor.isEnlargement )
             ){
@@ -159,6 +158,8 @@ export class Move{
         const curItemHeihgt: number = curItemRect.height;
         const viewLeft: number = curItemRect.left;
         const viewRight: number = curItemRect.right;
+        const viewTop = curItemRect.top;
+        const viewBottom = curItemRect.bottom;
 
         let curX: number = (e.touches[0].clientX);
         let curY: number = (e.touches[0].clientY);
@@ -169,17 +170,13 @@ export class Move{
         let curTop: number ;
         let curLeft: number;
         // 如果容器内能完整展示图片就不需要移动
-        showDebugger(`
-            viewLeft:${viewLeft}
-            viewRight:${viewRight}
-        `)
         if( Math.round( viewLeft ) < 0 ||  Math.round(viewRight) > conWidth ){
             curLeft = (offsetX);
         }else{
             curLeft = 0;
         }
 
-        if( curItemHeihgt > conHeight ){
+        if( Math.round( viewTop ) < 0 ||  Math.round(viewBottom) > conHeight ){
             curTop = (offsetY)
         }else{
             curTop = 0
@@ -207,33 +204,36 @@ export class Move{
         const curItemViewLeft: number = curItemRect.left;
         const curItemViewRight: number = curItemRect.right;
         deg = (deg / 180) * Math.PI;
-        let distance: number = 200;
+        let distance: number = 300;
         let offsetX: number = (distance * Math.cos( deg ))
         let offsetY: number = (distance * Math.sin(deg));
-// debugger;
+
         let endX = startX + offsetX;
         let endY = startY + offsetY;
-        if( endX + curItemViewLeft > maxLeft ){
-            endX = (maxLeft - curItemViewLeft)
+
+        if( endX > maxLeft ){
+            endX = (maxLeft)
         }else if( endX < minLeft ){
-            endX = minLeft
+            endX = (minLeft)
         }
 // debugger;
         if( endY > maxTop){
-            endY = ( maxTop -curItemViewTop )
+            endY = ( maxTop )
         }else if( endY < minTop ){
-            endY = minTop
+            endY = (minTop )
         }
         // 容器宽度能容纳图片宽度，则水平方向不需要移动，
         // 容器高度能容纳图片高度，则垂直方向不需要移动。
         let x = 0;
         let y = 0;
         if( !(curItemViewLeft >= 0 && curItemViewRight <= conWidth) ){
-            x = endX;
+            x = endX - startX;
         }
         if( !( curItemViewTop >= 0 && curItemViewBottom <= conHeight ) ){
-            y = endY;
+            y = endY - startY;
         }
+        showDebugger(`${x},${y}`)
+
         eventsHanlder.moveCurPlaneTo(x,y,0)
     }
 }

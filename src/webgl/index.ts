@@ -333,6 +333,15 @@ class webGl {
             }
         }
     }
+    zoomCurPlan(sx,sy,dx,dy){
+        this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16)
+        this.transformCurplane(
+            matrix.scaleMatrix(sx,sy,1),
+            matrix.translateMatrix(dx,dy,0)
+        )
+        this.bindPostion();
+        this.drawPosition();
+    }
     setTextureCordinate(){
         const gl = this.gl;
 
@@ -527,15 +536,14 @@ class webGl {
 
         clientX *=  this.dpr;
         clientY *=  this.dpr;
-        if( this.isEnlargement ){// 放大双击得时候就缩小
+        if( this.isEnlargementForScale ){// 放大双击得时候就缩小
             let [initialWidth,initinalHeight] = this.imgShapeInitinal[this.curIndex]
             width = Math.abs(initialWidth);
             height = Math.abs(initinalHeight)
 
-            // if ratio is 0.2 then result is -0.8 ,during animate  it becomes 1 0.9 .0.8 
+            // eg. if ratio is 0.2 then result is -0.8 ,during animate  it becomes 1 0.9 .0.8 
             scaleX = width / curWidth - 1;
             scaleY = height / curHeight - 1;
-            console.log(scaleX,scaleY)
             //  it's should be the offset of the img's center Point
             //  this coordinate center is 0 , 0  on the center of screen
             const [curCenterX,curCenterY] = this.curCenterCoordinate;
@@ -717,7 +725,24 @@ class webGl {
 
         ]
     }
+    /**
+     * should return a value that indicate whether the curViewRect over the viewPort's boundry
+     */
     get isEnlargement(){
+        const [iw,ih] = this.imgShapeInitinal[this.curIndex]
+        const viewRect = this.viewRect;
+        
+        return (
+            viewRect.width * this.dpr > this.viewWidth
+                ||
+            viewRect.height * this.dpr > this.viewHeight
+        )
+
+    }
+    /**
+     * should return curViewRect is enlarge or shrink compare with initialSize;
+     */
+    get isEnlargementForScale(){
         const [iw,ih] = this.imgShapeInitinal[this.curIndex]
         const rect = this.viewRect;
         return rect.width * this.dpr > Math.abs(iw) || rect.height * this.dpr > Math.abs(ih);

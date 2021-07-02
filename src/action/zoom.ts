@@ -82,15 +82,15 @@ export class Zoom {
             }
         }
         this.isZooming = true;
-        const curItem = this.imgItems[this.curIndex] as interFaceElementMatrix;
 
-        if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            this.isAnimating = false;
-            return;
-        }
+        // if (curItem.dataset.loaded == 'false') {
+        //     // 除了切屏之外对于加载错误的图片一律禁止其他操作
+        //     this.isAnimating = false;
+        //     return;
+        // }
 
-        const curItemRect = curItem.getBoundingClientRect();
+        const { actionExecutor } = this;
+        const curItemRect = actionExecutor.viewRect;
         const curItemWidth: number = curItemRect.width;
         const curItemHeihgt: number = curItemRect.height;
 
@@ -113,47 +113,38 @@ export class Zoom {
         this.curPoint1.y = e.touches[0].clientY;
         this.curPoint2.x = e.touches[1].clientX;
         this.curPoint2.y = e.touches[1].clientY;
+
+        let x = 0,y = 0,sx = 1.0,sy = 1.0;
      
         if (distaceBefore > distanceNow) {//缩小 retu
 
-            let y = ((this.zoomScale) * (centerFingerY - centerImgCenterY));
-            let x = ((this.zoomScale) * (centerFingerX - centerImgCenterX));
-            
-            curItem.matrix = this.matrixMultipy(
-                this.getScaleMatrix({ x: 1 - this.zoomScale, y: 1 - this.zoomScale, z: 1 }),
-                curItem.matrix,
-                this.getTranslateMatrix({ x, y, z: 1 })
-            )
-            const intialMatrix = this.matrixMultipy(this.getRotateZMatrix( curItem.rotateDeg * Math.PI / 180),curItem.intialMatrix);
-            // 缩放系数已经小于初始矩阵了 就让他维持到初始矩阵的样子
-            if( intialMatrix[0][0] >= curItem.matrix[0][0] ){
-                curItem.matrix = intialMatrix
-                curItem.dataset.isEnlargement = 'shrink';
-            }
+            y = ((this.zoomScale) * (centerFingerY - centerImgCenterY));
+            x = ((this.zoomScale) * (centerFingerX - centerImgCenterX));
+
+            sx = 1 - this.zoomScale
+            sy = 1 - this.zoomScale;
             
         } else if (distaceBefore < distanceNow) {//放大
-
-            curItem.dataset.isEnlargement = 'enlargement';
-
             // biggest width for zoom in
             let maxWidth = this.containerWidth * 4;
             if (curItemWidth * (1 + this.zoomScale) > maxWidth) {
                 this.isAnimating = false;
                 return;
             }
-
-            let y = -((this.zoomScale) * (centerFingerY - centerImgCenterY));
-            let x = -((this.zoomScale) * (centerFingerX - centerImgCenterX));
-            
-            curItem.matrix = this.matrixMultipy(
-                this.getScaleMatrix({ x: 1 + this.zoomScale, y: 1 + this.zoomScale, z: 1 }),
-                curItem.matrix,
-                this.getTranslateMatrix({ x, y, z: 1 })
-            )
-
+            y = -((this.zoomScale) * (centerFingerY - centerImgCenterY));
+            x = -((this.zoomScale) * (centerFingerX - centerImgCenterX));
+            sx = 1 + this.zoomScale
+            sy = 1 + this.zoomScale;
         }
-
-        curItem.style.transform = `${this.matrixTostr(curItem.matrix)}`
+        showDebugger(`
+            x:${x}
+            y:${y}
+            sx:${sx}
+            sy:${sy}
+            curItemWidth:${curItemWidth}
+            curItemHeihgt:${curItemHeihgt}
+        `)
+        actionExecutor.eventsHanlder.handleZoom(e,sx,sy,x,y)
 
 
         this.isAnimating = false;

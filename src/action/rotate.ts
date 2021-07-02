@@ -14,7 +14,7 @@ export class Rotate{
 
         let changeDeg = 1 * Math.PI / 2;
         this.isAnimating = true;
-        this.actionExecutor.rotateZ(changeDeg);
+        await this.actionExecutor.rotateZ(changeDeg);
         this.isAnimating = false;
     }
     handleRotate(this: ImagePreview,e: TouchEvent & MouseEvent,changeDeg:number){

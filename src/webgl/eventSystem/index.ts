@@ -1,10 +1,11 @@
+import { showDebugger } from "../../tools/index";
 import { webGl } from "../index";
 import { matrix } from "../matrix";
 
 export class events {
     viewInstance: webGl;
     curBehaviorCanBreak: boolean = false;
-
+    throldDeg: number = Math.PI * 0.15;
     constructor(viewInstance: webGl) {
         this.viewInstance = viewInstance;
     }
@@ -12,7 +13,7 @@ export class events {
         throw new Error('Method not implemented.');
     }
     handleDoubleClick(e: TouchEvent & MouseEvent){
-        
+
         const { clientX, clientY } = e.touches[0];
         const { viewInstance } = this
 
@@ -41,17 +42,44 @@ export class events {
         viewInstance.bindPostion();
         viewInstance.drawPosition();
     }
-    handleZoom(e: TouchEvent & MouseEvent) {
+    handleZoom(e: TouchEvent & MouseEvent,sx:number,sy:number,dx:number,dy:number) {
+        const { viewInstance } = this;
+
+        let [nw,nh] = viewInstance.imgShape[viewInstance.curIndex]
+        let [iW,iH] = viewInstance.imgShapeInitinal[viewInstance.curIndex]
+
+        nw = Math.abs(nw)
+        nh = Math.abs(nh)
+        iW = Math.abs(iW)
+        iH = Math.abs(iH)
+
+        const curItemRect = viewInstance.viewRect;
+        const curItemWidth = curItemRect.width * viewInstance.dpr;
+
+         // biggest width for zoom in
+         const maxWidth = nw * 4;
+         if (curItemWidth * sx > maxWidth) {
+             return;
+         }
+
+         const minWidth = iW;
+         if (curItemWidth * sx < minWidth) {
+            return;
+        }
+
+        dx *= viewInstance.dpr;
+        dy *= -viewInstance.dpr;
+
+        viewInstance.zoomCurPlan(sx,sy,dx,dy)
     }
 
     async handleTEndEnNormal(e: TouchEvent & MouseEvent, offset: number) {
 
         let degX = -offset * 0.01;
-        let throldDeg = Math.PI * 0.15;
         const plusOrMinus = degX / Math.abs(degX);
         const {viewInstance} = this;
 
-        if (Math.abs(degX) >= throldDeg) {// 左右切换
+        if (Math.abs(degX) >= this.throldDeg) {// 左右切换
             let beforeIndex = viewInstance.curIndex;
             let nextIndex = viewInstance.curIndex + (plusOrMinus * 1)
             if (nextIndex == -1 || nextIndex == viewInstance.imgUrls.length) {// 第一张左切换或最后一张右切换时 也是复原

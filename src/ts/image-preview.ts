@@ -442,10 +442,7 @@ class ImagePreview implements
         e.preventDefault();
         this.movePoints = [];//重置收集手指移动时要收集得点
         this.performerRecordMove = 0;//重置收集收支移动点的计时器
-        if (e.touches.length == 0 && this.isZooming) {//重置是否正在进行双指缩放操作
-            // someOperate;
-            this.isZooming = false;
-        }
+        
         //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
         if ( e.changedTouches.length !== 1 || this.isMotionless) {
             return;
@@ -462,6 +459,12 @@ class ImagePreview implements
         const {eventsHanlder} = actionExecutor
         
         this.fingerDirection = '';
+
+        if (e.touches.length == 0 && this.isZooming) {//重置是否正在进行双指缩放操作
+            // someOperate;
+            this.isZooming = false;
+            return;
+        }
         if( this.isAnimating ){
             return;
         }
@@ -481,6 +484,7 @@ class ImagePreview implements
 
         const { actionExecutor } = this
         const curItemRect = actionExecutor.viewRect;
+
         const curItemWidth: number = curItemRect.width;
         const curItemHeihgt: number = curItemRect.height;
         const curItemViewTop = curItemRect.top;
@@ -522,9 +526,11 @@ class ImagePreview implements
         // 如果容器内能完整展示图片就不需要移动至边界
         if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
             recoverX = false;
+            endX = 0;
         }
         if (curItemHeihgt <= conHeight) {
             recoverY = false;
+            endY = 0
         }
 
         if (recoverX || recoverY) {
@@ -550,9 +556,8 @@ class ImagePreview implements
             // 上边确定的degree时 Math.atan2会返回这个向量相对原点的偏移角度，我们借此拿到直线的斜率进而根据直线方程确定
             // 要滑动的x y的值
             if (touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5)) {
-                let boundryObj = { maxTop, minTop: minTop - curItemViewTop, maxLeft, minLeft: minLeft - curItemViewLeft }
-                this.autoMove(degree, 0, 0, boundryObj)
-         
+                let boundryObj = { maxTop, minTop: minTop, maxLeft, minLeft: conWidth - curItemWidth }
+                this.autoMove(degree, curItemViewLeft, curItemViewTop,boundryObj)
             }
 
         }
