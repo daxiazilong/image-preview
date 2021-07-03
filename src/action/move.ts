@@ -124,6 +124,9 @@ export class Move{
         showDebugger(`
         this.isAnimating:${this.isAnimating}
         `)
+        if( this.isZooming ){
+            return;
+        }
         
         this.isNormalMove = true;
         const eventsHanlder = this.actionExecutor.eventsHanlder;
@@ -138,9 +141,13 @@ export class Move{
         
     }
     handleMoveEnlage( this: ImagePreview,e: TouchEvent & MouseEvent ){;
+        if( this.isZooming ){
+            return;
+        }
         if( !this.moveStartTime){
             this.moveStartTime = Date.now();
         }
+
         this.isNormalMove = false;
 
         this.actionExecutor.isBoudriedSide = false;

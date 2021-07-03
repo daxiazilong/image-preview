@@ -88,25 +88,24 @@ export class Zoom {
         //     this.isAnimating = false;
         //     return;
         // }
-
         const { actionExecutor } = this;
         const curItemRect = actionExecutor.viewRect;
         const curItemWidth: number = curItemRect.width;
         const curItemHeihgt: number = curItemRect.height;
 
         const distaceBefore: number =
-            Math.sqrt(Math.pow(this.curPoint1.x - this.curPoint2.x, 2) + Math.pow(this.curPoint1.y - this.curPoint2.y, 2));
+            (Math.pow(this.curPoint1.x - this.curPoint2.x, 2) + Math.pow(this.curPoint1.y - this.curPoint2.y, 2));
 
         const distanceNow: number =
-            Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2));
+            (Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2));
 
-        let top: number = curItemRect.top;
-        let left: number = curItemRect.left;
+        let top = curItemRect.top;
+        let left = curItemRect.left;
 
-        const centerFingerX: number = (this.curStartPoint1.x + this.curStartPoint2.x) / 2;
-        const centerFingerY: number = (this.curStartPoint1.y + this.curStartPoint2.y) / 2;
-        const centerImgCenterX = curItemWidth / 2 + left;
-        const centerImgCenterY = curItemHeihgt / 2 + top;
+        const centerFingerX = (this.curStartPoint1.x + this.curStartPoint2.x) / 2 ;
+        const centerFingerY = (this.curStartPoint1.y + this.curStartPoint2.y) / 2 ;
+        const centerImgCenterX = actionExecutor.viewWidth / (2 * actionExecutor.dpr)// + left;
+        const centerImgCenterY = actionExecutor.viewHeight / (2 *actionExecutor.dpr)// + top;
 
 
         this.curPoint1.x = e.touches[0].clientX;
@@ -118,30 +117,30 @@ export class Zoom {
      
         if (distaceBefore > distanceNow) {//缩小 retu
 
-            y = ((this.zoomScale) * (centerFingerY - centerImgCenterY));
-            x = ((this.zoomScale) * (centerFingerX - centerImgCenterX));
+            y =  (centerFingerY - centerImgCenterY) * this.zoomScale;
+            x =  (centerFingerX - centerImgCenterX) * this.zoomScale;
 
             sx = 1 - this.zoomScale
             sy = 1 - this.zoomScale;
             
         } else if (distaceBefore < distanceNow) {//放大
-           
-            y = -((this.zoomScale) * (centerFingerY - centerImgCenterY));
-            x = -((this.zoomScale) * (centerFingerX - centerImgCenterX));
+            // scaleX = 1 + scaleRatio
+            // x*scaleX - x
+            // x(scaleX-1) = x * scaleRatio
+            y = -((centerFingerY - centerImgCenterY)) * this.zoomScale;
+            x = -((centerFingerX - centerImgCenterX)) * this.zoomScale;
+            
             sx = 1 + this.zoomScale
             sy = 1 + this.zoomScale;
+        }else{
+            return;
         }
         showDebugger(`
-            x:${x}
-            y:${y}
-            sx:${sx}
-            sy:${sy}
-            curItemWidth:${curItemWidth}
-            curItemHeihgt:${curItemHeihgt}
+        sx:${sx}
+        sy:${sy}
+        centerFingerY:${centerFingerY}  centerImgCenterY:${centerImgCenterY}
+        centerFingerX:${centerFingerX}  centerImgCenterX:${centerImgCenterX}
         `)
         actionExecutor.eventsHanlder.handleZoom(e,sx,sy,x,y)
-
-
-        this.isAnimating = false;
     }
 }

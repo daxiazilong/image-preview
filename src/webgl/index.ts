@@ -337,9 +337,9 @@ class webGl {
         this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16)
         this.transformCurplane(
             matrix.scaleMatrix(sx,sy,1),
-            matrix.translateMatrix(dx,dy,0)
+            matrix.translateMatrix(dx,dy,0),
         )
-        this.bindPostion();
+        this.bindPostion(); 
         this.drawPosition();
     }
     setTextureCordinate(){

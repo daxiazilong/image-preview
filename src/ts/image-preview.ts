@@ -37,6 +37,7 @@ class ImagePreview implements
     public curStartPoint1: { x: number, y: number };//双指缩放时的第一个起点
     public curStartPoint2: { x: number, y: number };//双指缩放的第二个起点
 
+
     public maxMoveX: number; // 滑动时的最大距离
     public minMoveX: number; // 滑动时的最小距离
 
@@ -343,8 +344,6 @@ class ImagePreview implements
         }
     }
     handleTouchStart(e: TouchEvent & MouseEvent) {
-        // preventDefault is very import, because if not do this, we will get 
-        // an error last-Click-Time on wx.
 
         if( this.isAnimating ){
             return;
@@ -445,6 +444,11 @@ class ImagePreview implements
         
         //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
         if ( e.changedTouches.length !== 1 || this.isMotionless) {
+            if (e.touches.length == 0 && this.isZooming) {//重置是否正在进行双指缩放操作
+                // someOperate;
+                this.isZooming = false;
+                return;
+            }
             return;
         }
         const type: string = (<HTMLElement>(e.target)).dataset.type;
