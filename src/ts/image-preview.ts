@@ -344,14 +344,6 @@ class ImagePreview implements
         }
     }
     handleTouchStart(e: TouchEvent & MouseEvent) {
-
-        if( 
-            this.isAnimating
-            ||
-            this.isNormalMove
-        ){
-            return;
-        }
         e.preventDefault();
         const { actionExecutor } = this
         const { eventsHanlder } = actionExecutor;
@@ -400,11 +392,13 @@ class ImagePreview implements
             // 因而如果已经开始noramlMove 则这里就不再继续往下走了
             return
         }
+        if( this.isAnimating ){
+            return;
+        }
 
         this.touchStartX = this.startX = (e.touches[0].clientX);
         this.touchStartY = this.startY = (e.touches[0].clientY);
 
-        const eventsHanlder = this.actionExecutor.eventsHanlder;
         if ( Date.now() - this.lastClick < 300) {
             /*
                 启动一个定时器，如果双击事件发生后就
@@ -440,6 +434,9 @@ class ImagePreview implements
         }
     }
     async handleDoubleClick(e: TouchEvent & MouseEvent) {
+        if( this.isAnimating ){
+            return;
+        }
         this.isAnimating = true;
         showDebugger(this.isAnimating.toString())
         await this.actionExecutor.eventsHanlder.handleDoubleClick(e);
@@ -582,14 +579,24 @@ class ImagePreview implements
 
 
     }
-    handleTEndEnNormal(e: TouchEvent & MouseEvent): void {
-        showDebugger(`
-            endNormral!!
-        `)
+    async handleTEndEnNormal(e: TouchEvent & MouseEvent) {
+     
+        if( this.isAnimating ){
+            return
+        }
         let endX: number = (e.changedTouches[0].clientX);
         const { actionExecutor:{eventsHanlder} } = this;
         let offset = endX - this.touchStartX;
-        eventsHanlder.handleTEndEnNormal(e,offset);
+        this.isAnimating = true;
+        showDebugger(`
+        this.isAnimating :${this.isAnimating }
+        endX:${endX}
+        this.touchStartX:${this.touchStartX}
+        `)
+        await eventsHanlder.handleTEndEnNormal(e,offset);
+        this.isAnimating = false;
+        this.touchStartX = -1;
+
     }
     genFrame() {
         let curImg: string = this.options.curImg;

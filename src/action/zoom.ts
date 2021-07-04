@@ -107,8 +107,8 @@ export class Zoom {
 
         const centerFingerX = (this.curStartPoint1.x + this.curStartPoint2.x) / 2 ;
         const centerFingerY = (this.curStartPoint1.y + this.curStartPoint2.y) / 2 ;
-        const centerImgCenterX = actionExecutor.viewWidth / (2 * actionExecutor.dpr)// + left;
-        const centerImgCenterY = actionExecutor.viewHeight / (2 *actionExecutor.dpr)// + top;
+        const centerImgCenterX = actionExecutor.viewWidth / (2 * actionExecutor.dpr)
+        const centerImgCenterY = actionExecutor.viewHeight / (2 *actionExecutor.dpr)
 
 
         this.curPoint1.x = e.touches[0].clientX;
@@ -146,6 +146,7 @@ export class Zoom {
         centerFingerX:${centerFingerX}  centerImgCenterX:${centerImgCenterX}
         `)
         actionExecutor.eventsHanlder.handleZoom(e,sx,sy,x,y)
+        this.isZooming = false;
         this.isAnimating = false;
     }
 }

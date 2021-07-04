@@ -252,7 +252,6 @@ class webGl {
         // console.log( this.positions )
     }
     rotatePosition(deg:number){
-        const gl = this.gl;
         const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         const centerX = this.viewWidth / 2;
         const positions = this.positions;
@@ -421,6 +420,8 @@ class webGl {
 
         gl.bindTexture(gl.TEXTURE_2D, texture);
         if( image == null ){//front面的黑色的底面
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+                              new Uint8Array([0, 220, 0, 255]));
             return;
         }
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);

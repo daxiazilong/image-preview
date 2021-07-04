@@ -36,7 +36,7 @@ export class events {
     }
 
     handleMoveNormal(e: TouchEvent & MouseEvent, offset: number) {
-        let deg = -offset * 0.01;
+        let deg = -offset * 0.008;
         const { viewInstance } = this
         viewInstance.rotatePosition(deg);
         viewInstance.bindPostion();
@@ -75,7 +75,7 @@ export class events {
 
     async handleTEndEnNormal(e: TouchEvent & MouseEvent, offset: number) {
 
-        let degX = -offset * 0.01;
+        let degX = -offset * 0.008;
         const plusOrMinus = degX / Math.abs(degX);
         const {viewInstance} = this;
 
@@ -84,7 +84,7 @@ export class events {
             let nextIndex = viewInstance.curIndex + (plusOrMinus * 1)
             if (nextIndex == -1 || nextIndex == viewInstance.imgUrls.length) {// 第一张左切换或最后一张右切换时 也是复原
                 viewInstance.curIndex = beforeIndex;
-                viewInstance.rotate(0 - degX)
+                await viewInstance.rotate(0 - degX)
             } else {
                 let res = await viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX);
                 viewInstance.curIndex = nextIndex;
@@ -92,8 +92,10 @@ export class events {
             }
 
         } else {// 复原
-            viewInstance.rotate(0 - degX)
+            await viewInstance.rotate(0 - degX)
         }
+
+        return 'handled'
     }
     async handleTEndEnlarge(e: TouchEvent & MouseEvent,x:number,y:number,z:number){;
         const { viewInstance } = this

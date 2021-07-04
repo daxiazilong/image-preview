@@ -122,12 +122,19 @@ export class Move{
         }     
     }
     handleMoveNormal(this: ImagePreview, e: TouchEvent & MouseEvent ){
-        showDebugger(`
-        this.isAnimating:${this.isAnimating}
-        `)
+        
+        if( this.isAnimating){
+            return;
+        }
         if( this.isZooming ){
             return;
         }
+        if( this.touchStartX == -1 ){// touchstartx 应该从手指开始触碰时获取，到手指离开时结束。若该值为-1(在tendnormal中设置的)，说明是一个已经使用过的值
+                                    // 重新设置一下就好
+            // this.touchStartX = this.startX = e.touches[0].clientX;
+            return;
+        }
+       
         
         this.isNormalMove = true;
         const eventsHanlder = this.actionExecutor.eventsHanlder;
@@ -138,6 +145,11 @@ export class Move{
         this.imgContainerMoveX += offset;
         
         this.startX = curX;
+        showDebugger(`
+        this.isAnimating :${this.isAnimating }
+        this.touchStartX:${this.touchStartX}
+        offset：${offset}
+        `)
         eventsHanlder.handleMoveNormal(e,offset);
         
     }
