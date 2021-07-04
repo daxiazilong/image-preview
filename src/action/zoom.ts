@@ -71,6 +71,9 @@ export class Zoom {
     }
 
     handleZoom(this: ImagePreview, e: TouchEvent & MouseEvent): void {
+        if( this.isNormalMove ){
+            return;
+        }
         if (!this.isZooming) {
             this.curStartPoint1 = {
                 x: this.curPoint1.x,
@@ -82,7 +85,7 @@ export class Zoom {
             }
         }
         this.isZooming = true;
-
+        this.isAnimating = true;
         // if (curItem.dataset.loaded == 'false') {
         //     // 除了切屏之外对于加载错误的图片一律禁止其他操作
         //     this.isAnimating = false;
@@ -138,9 +141,11 @@ export class Zoom {
         showDebugger(`
         sx:${sx}
         sy:${sy}
+        this.isNormalMove:${this.isNormalMove}
         centerFingerY:${centerFingerY}  centerImgCenterY:${centerImgCenterY}
         centerFingerX:${centerFingerX}  centerImgCenterX:${centerImgCenterX}
         `)
         actionExecutor.eventsHanlder.handleZoom(e,sx,sy,x,y)
+        this.isAnimating = false;
     }
 }

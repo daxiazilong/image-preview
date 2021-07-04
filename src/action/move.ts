@@ -8,11 +8,12 @@ export class Move{
     handleMove(this: ImagePreview,e: TouchEvent & MouseEvent){
         e.preventDefault();
 
+        // 不可中断动画发生时
         if( this.isAnimating ){
             return;
         }
         // 双指缩放时的。
-        if( e.touches.length == 2 ){
+        if( e.touches.length == 2 && !this.isNormalMove ){
             clearTimeout(this.performerRecordMove); 
             clearTimeout( this.performerClick )
 

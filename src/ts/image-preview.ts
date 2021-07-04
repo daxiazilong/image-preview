@@ -345,7 +345,11 @@ class ImagePreview implements
     }
     handleTouchStart(e: TouchEvent & MouseEvent) {
 
-        if( this.isAnimating ){
+        if( 
+            this.isAnimating
+            ||
+            this.isNormalMove
+        ){
             return;
         }
         e.preventDefault();
@@ -391,6 +395,12 @@ class ImagePreview implements
             this[this.operateMaps[type]](e);
             return
         }
+        if( this.isNormalMove ){
+            // noramlMove 之后 在touchend事件处理中需要 根据touchStartX 计算出开始到结束的位移偏差
+            // 因而如果已经开始noramlMove 则这里就不再继续往下走了
+            return
+        }
+
         this.touchStartX = this.startX = (e.touches[0].clientX);
         this.touchStartY = this.startY = (e.touches[0].clientY);
 
@@ -447,7 +457,6 @@ class ImagePreview implements
             if (e.touches.length == 0 && this.isZooming) {//重置是否正在进行双指缩放操作
                 // someOperate;
                 this.isZooming = false;
-                return;
             }
             return;
         }
@@ -468,7 +477,10 @@ class ImagePreview implements
             // someOperate;
             this.isZooming = false;
             return;
+        }else if( e.touches.length !== 0 ){// 还有手指在屏幕上
+            return;
         }
+        
         if( this.isAnimating ){
             return;
         }
@@ -477,6 +489,7 @@ class ImagePreview implements
         } else {
             this.handleTEndEnlarge(e)
         }
+        this.isNormalMove = false;
     }
 
     handleTEndEnlarge(e: TouchEvent & MouseEvent): void {
@@ -570,6 +583,9 @@ class ImagePreview implements
 
     }
     handleTEndEnNormal(e: TouchEvent & MouseEvent): void {
+        showDebugger(`
+            endNormral!!
+        `)
         let endX: number = (e.changedTouches[0].clientX);
         const { actionExecutor:{eventsHanlder} } = this;
         let offset = endX - this.touchStartX;
