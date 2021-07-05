@@ -381,17 +381,9 @@ class ImagePreview implements
             this[this.operateMaps[type]](e);
             return
         }
-        if( this.isNormalMove ){
-            // noramlMove 之后 在touchend事件处理中需要 根据touchStartX 计算出开始到结束的位移偏差
-            // 因而如果已经开始noramlMove 则这里就不再继续往下走了
-            return
-        }
         if( this.isAnimating ){
             return;
         }
-
-        
-
         if ( Date.now() - this.lastClick < 300) {
             /*
                 启动一个定时器，如果双击事件发生后就
@@ -441,6 +433,8 @@ class ImagePreview implements
         e.preventDefault();
         this.movePoints = [];//重置收集手指移动时要收集得点
         this.performerRecordMove = 0;//重置收集收支移动点的计时器
+
+
         
         //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
         if ( e.changedTouches.length !== 1 || this.isMotionless) {
@@ -476,10 +470,11 @@ class ImagePreview implements
         }
         if ( this.isNormalMove ) {;
             this.handleTEndEnNormal(e);
+            this.isNormalMove = false;
+
         } else {
             this.handleTEndEnlarge(e)
         }
-        this.isNormalMove = false;
     }
 
     async handleTEndEnlarge(e: TouchEvent & MouseEvent) {

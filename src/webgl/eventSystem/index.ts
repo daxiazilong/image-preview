@@ -86,9 +86,9 @@ export class events {
                 viewInstance.curIndex = beforeIndex;
                 await viewInstance.rotate(-degX);
             } else {
-                let res = await viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX);
+                await viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX);
                 viewInstance.curIndex = nextIndex;
-                viewInstance.draw(nextIndex)
+                await viewInstance.draw(nextIndex)
             }
 
         } else {// 复原

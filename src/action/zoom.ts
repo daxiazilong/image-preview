@@ -136,6 +136,7 @@ export class Zoom {
             sx = 1 + this.zoomScale
             sy = 1 + this.zoomScale;
         }else{
+            this.isZooming = false;
             return;
         }
         showDebugger(`

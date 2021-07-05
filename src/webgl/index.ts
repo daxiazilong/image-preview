@@ -734,9 +734,9 @@ class webGl {
         const viewRect = this.viewRect;
         
         return (
-            viewRect.width * this.dpr > this.viewWidth
+            viewRect.width * this.dpr - 1 > this.viewWidth
                 ||
-            viewRect.height * this.dpr > this.viewHeight
+            viewRect.height * this.dpr - 1 > this.viewHeight
         )
 
     }
@@ -746,7 +746,7 @@ class webGl {
     get isEnlargementForScale(){
         const [iw,ih] = this.imgShapeInitinal[this.curIndex]
         const rect = this.viewRect;
-        return rect.width * this.dpr > Math.abs(iw) || rect.height * this.dpr > Math.abs(ih);
+        return rect.width * this.dpr - 1 > Math.abs(iw) || rect.height * this.dpr - 1 > Math.abs(ih);
     }
     isLoadingError(index?:number ){
         ;arguments.length == 0 && ( index = this.curIndex );

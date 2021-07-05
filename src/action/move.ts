@@ -118,7 +118,11 @@ export class Move{
         }     
     }
     handleMoveNormal(this: ImagePreview, e: TouchEvent & MouseEvent ){
-        
+        showDebugger(`
+        moveNormal:${Date.now()}
+        this.isAnimating :${this.isAnimating }
+        this.touchStartX:${this.touchStartX}
+        `)
         if( this.isAnimating){
             return;
         }
@@ -140,15 +144,15 @@ export class Move{
         this.imgContainerMoveX += offset;
         
         this.startX = curX;
-        showDebugger(`
-        this.isAnimating :${this.isAnimating }
-        this.touchStartX:${this.touchStartX}
-        offset：${offset}
-        `)
+       
         eventsHanlder.handleMoveNormal(e,offset);
         
     }
     handleMoveEnlage( this: ImagePreview,e: TouchEvent & MouseEvent ){;
+        showDebugger(`
+            handlemoveEnlarge:this.isZooming ${this.isZooming}
+             ${Date.now()}
+        `)
         if( this.isZooming ){
             return;
         }
