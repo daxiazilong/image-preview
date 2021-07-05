@@ -84,7 +84,7 @@ export class events {
             let nextIndex = viewInstance.curIndex + (plusOrMinus * 1)
             if (nextIndex == -1 || nextIndex == viewInstance.imgUrls.length) {// 第一张左切换或最后一张右切换时 也是复原
                 viewInstance.curIndex = beforeIndex;
-                await viewInstance.rotate(0 - degX)
+                await viewInstance.rotate(-degX);
             } else {
                 let res = await viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX);
                 viewInstance.curIndex = nextIndex;
@@ -92,7 +92,7 @@ export class events {
             }
 
         } else {// 复原
-            await viewInstance.rotate(0 - degX)
+            await viewInstance.rotate(- degX)
         }
 
         return 'handled'

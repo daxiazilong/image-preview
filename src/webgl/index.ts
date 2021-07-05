@@ -421,7 +421,7 @@ class webGl {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         if( image == null ){//front面的黑色的底面
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-                              new Uint8Array([0, 220, 0, 255]));
+                              new Uint8Array([0, 0, 100, 255]));
             return;
         }
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
@@ -861,7 +861,7 @@ class webGl {
 
         const run = () => {
 
-            if( this.curAimateBreaked){
+            if( this.curAimateBreaked ){
                 resolve([false,3]);
                 this.curAimateBreaked = false;
                 return;

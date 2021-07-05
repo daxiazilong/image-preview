@@ -8,10 +8,7 @@ export class Move{
     handleMove(this: ImagePreview,e: TouchEvent & MouseEvent){
         e.preventDefault();
 
-        // 不可中断动画发生时
-        if( this.isAnimating ){
-            return;
-        }
+        
         // 双指缩放时的。
         if( e.touches.length == 2 && !this.isNormalMove ){
             clearTimeout(this.performerRecordMove); 
@@ -22,7 +19,6 @@ export class Move{
             return;
         }
 
-        
         
         let curTouchX: number = e.touches[0].clientX;
         let curTouchY: number = e.touches[0].clientY;
@@ -129,12 +125,11 @@ export class Move{
         if( this.isZooming ){
             return;
         }
-        if( this.touchStartX == -1 ){// touchstartx 应该从手指开始触碰时获取，到手指离开时结束。若该值为-1(在tendnormal中设置的)，说明是一个已经使用过的值
-                                    // 重新设置一下就好
-            // this.touchStartX = this.startX = e.touches[0].clientX;
-            return;
+        
+        if( !this.isNormalMove ){
+            this.touchStartX = this.startX = (e.touches[0].clientX);
+            this.touchStartY = this.startY = (e.touches[0].clientY);
         }
-       
         
         this.isNormalMove = true;
         const eventsHanlder = this.actionExecutor.eventsHanlder;
@@ -159,6 +154,23 @@ export class Move{
         }
         if( !this.moveStartTime){
             this.moveStartTime = Date.now();
+            this.touchStartX = this.startX = (e.touches[0].clientX);
+            this.touchStartY = this.startY = (e.touches[0].clientY);
+        }
+        const { actionExecutor } = this
+        const { eventsHanlder } = actionExecutor;
+        // 放大的时候自由滑动的时候是可以被中断的
+        if( eventsHanlder.curBehaviorCanBreak ){
+            actionExecutor.curAimateBreaked = true;
+            if( this.isAnimating ){
+                this.touchStartX  = (e.touches[0].clientX);
+                this.touchStartY  = (e.touches[0].clientY);
+                return;
+            }
+        }else{ // 不可中断动画进行时
+            if( this.isAnimating ){
+                return
+            }
         }
 
         this.isNormalMove = false;
@@ -168,7 +180,6 @@ export class Move{
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
 
-        const { actionExecutor } = this
         if( actionExecutor.isLoadingError() ){
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
@@ -209,10 +220,8 @@ export class Move{
         this.startY = curY;
 
     }
-    autoMove(this: ImagePreview,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}):void{
-        if( this.isAnimating ){
-            return;
-        }
+    autoMove(this: ImagePreview,deg: number,startX:number,startY:number,{maxTop,minTop,maxLeft,minLeft}){
+    
         const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
@@ -252,8 +261,7 @@ export class Move{
         if( !( curItemViewTop >= 0 && curItemViewBottom <= conHeight ) ){
             y = endY - startY;
         }
-        showDebugger(`${x},${y}`)
 
-        eventsHanlder.moveCurPlaneTo(x,y,0)
+        return eventsHanlder.moveCurPlaneTo(x,y,0)
     }
 }

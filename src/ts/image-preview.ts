@@ -18,10 +18,12 @@ class ImagePreview implements
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
     public performerClick: any;// 单击事件执行计时器
     public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
-    public startX: number;//手指移动时的x起始坐标
-    public touchStartX: number;//手指第一次点击时的x起点坐标
+
+    public startX: number;//手指移动时的x坐标 会随手指坐标变化
+    public touchStartX: number;//手指第一次点击时的x起点坐标 不会变化
     public startY: number;//手指移动时的y起始坐标
     public touchStartY: number; //手指第一次点击时的y起点坐标
+
     public curIndex: number = 0;//当前第几个图片
     public imgContainerMoveX: number = 0;//图片容器x轴的移动距离
     public imgContainerMoveY: number = 0;//图片容器y轴的移动距离
@@ -60,11 +62,7 @@ class ImagePreview implements
 
     public moveStartTime: number = 0;
     public moveEndTime: number = 0;
-    
     actionExecutor: webGl;
-
- 
-
     public operateMaps: {
         [key: string]: string
     } = {
@@ -148,7 +146,7 @@ class ImagePreview implements
     ) { }
     computeStep(displacement: number, time: number): number { return 0 }
     transitionEnd() { return '' };
-    autoMove(deg: number, startX: number, startY: number, { maxTop, minTop, maxLeft, minLeft }: { maxTop: any; minTop: any; maxLeft: any; minLeft: any; }): void { }
+    autoMove(deg: number, startX: number, startY: number, { maxTop, minTop, maxLeft, minLeft }: { maxTop: any; minTop: any; maxLeft: any; minLeft: any; }):Promise<any> { return Promise.resolve(1) }
     matrixMultipy(a: Array<Array<number>>, b: Array<Array<number>>, ...res) { return [] }
     matrixTostr(arr: Array<Array<number>>) { return '' }
     getTranslateMatrix({ x, y, z }) { return [] }
@@ -345,11 +343,7 @@ class ImagePreview implements
     }
     handleTouchStart(e: TouchEvent & MouseEvent) {
         e.preventDefault();
-        const { actionExecutor } = this
-        const { eventsHanlder } = actionExecutor;
-        if( eventsHanlder.curBehaviorCanBreak ){
-            actionExecutor.curAimateBreaked = true;
-        }
+        
         switch (e.touches.length) {
             case 1:
                 this.handleOneStart(e);
@@ -396,8 +390,7 @@ class ImagePreview implements
             return;
         }
 
-        this.touchStartX = this.startX = (e.touches[0].clientX);
-        this.touchStartY = this.startY = (e.touches[0].clientY);
+        
 
         if ( Date.now() - this.lastClick < 300) {
             /*
@@ -489,7 +482,7 @@ class ImagePreview implements
         this.isNormalMove = false;
     }
 
-    handleTEndEnlarge(e: TouchEvent & MouseEvent): void {
+    async handleTEndEnlarge(e: TouchEvent & MouseEvent) {
         // ;debugger;
         // this.isAnimating = false;
         const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
@@ -548,7 +541,9 @@ class ImagePreview implements
         }
 
         if (recoverX || recoverY) {
-            actionExecutor.eventsHanlder.handleTEndEnlarge(e,endX,endY,0)
+            this.isAnimating = true;
+            await actionExecutor.eventsHanlder.handleTEndEnlarge(e,endX,endY,0)
+            this.isAnimating = false;
         } else {
             this.moveEndTime = Date.now();
             let endPoint: { x: number, y: number } = {
@@ -571,7 +566,9 @@ class ImagePreview implements
             // 要滑动的x y的值
             if (touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5)) {
                 let boundryObj = { maxTop, minTop: minTop, maxLeft, minLeft: conWidth - curItemWidth }
-                this.autoMove(degree, curItemViewLeft, curItemViewTop,boundryObj)
+                this.isAnimating = true;
+                await this.autoMove(degree, curItemViewLeft, curItemViewTop,boundryObj)
+                this.isAnimating = false;
             }
 
         }
@@ -588,15 +585,8 @@ class ImagePreview implements
         const { actionExecutor:{eventsHanlder} } = this;
         let offset = endX - this.touchStartX;
         this.isAnimating = true;
-        showDebugger(`
-        this.isAnimating :${this.isAnimating }
-        endX:${endX}
-        this.touchStartX:${this.touchStartX}
-        `)
         await eventsHanlder.handleTEndEnNormal(e,offset);
         this.isAnimating = false;
-        this.touchStartX = -1;
-
     }
     genFrame() {
         let curImg: string = this.options.curImg;
