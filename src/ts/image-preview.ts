@@ -4,6 +4,7 @@
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
+import { off } from 'process';
 import { Move, Zoom, Rotate } from '../action/index';
 import { Animation } from '../animation/index'
 import { Matrix } from '../matrix/index'
@@ -44,9 +45,9 @@ class ImagePreview implements
     public minMoveX: number; // 滑动时的最小距离
 
     public isAnimating: boolean = false; // 是否在动画中
-    public isMotionless: boolean = true;// 是否没有产生位移，用于左右切换图片或者拖动放大之后的图片
     public isEnlargeMove: boolean = false;// 大图下得切屏 slide next/before img
            isNormalMove:  boolean = false;// is moveNormal
+           normalMoved = false // 手指移动上下一张切换的时候有没有产生位移 双指缩放时若此值为true则不进行缩放
 
     maxMovePointCounts: number = 3; // max point count while collect moving point.
 
@@ -58,11 +59,12 @@ class ImagePreview implements
 
     public movePoints: Array<{ x: number, y: number }> = [];//收集移动点，判断滑动方向
     public fingerDirection: string = '';//当前手指得移动方向
-    public performerRecordMove: any;
 
     public moveStartTime: number = 0;
     public moveEndTime: number = 0;
     actionExecutor: webGl;
+    taskExecuteAfterTEnd: Map<string,task>; // touchend之后需要执行的任务 commonly, it is reset sth,and so on.
+
     public operateMaps: {
         [key: string]: string
     } = {
@@ -95,6 +97,7 @@ class ImagePreview implements
         this.actionExecutor = new webGl({
             images: this.options.imgs
         })
+        this.taskExecuteAfterTEnd = new Map;
         this.envClient = this.testEnv();
         this.supportTransitionEnd = this.transitionEnd();
         this.genFrame();
@@ -193,6 +196,11 @@ class ImagePreview implements
             })
         })
 
+    }
+    addTouchEndTask(type:string,task: task){
+        if( !this.taskExecuteAfterTEnd.has(type) ){
+            this.taskExecuteAfterTEnd.set(type,task)
+        }
     }
     mobileRecordInitialData(els: NodeListOf<HTMLElement>) {
         /**
@@ -381,9 +389,6 @@ class ImagePreview implements
             this[this.operateMaps[type]](e);
             return
         }
-        if( this.isAnimating ){
-            return;
-        }
         if ( Date.now() - this.lastClick < 300) {
             /*
                 启动一个定时器，如果双击事件发生后就
@@ -397,7 +402,6 @@ class ImagePreview implements
             }, 300)
 
         }
-
         this.lastClick = Date.now();
         this.getMovePoints(e);
     }
@@ -419,6 +423,7 @@ class ImagePreview implements
         }
     }
     async handleDoubleClick(e: TouchEvent & MouseEvent) {
+        console.log(this.isAnimating,'handleDoubleClick')
         if( this.isAnimating ){
             return;
         }
@@ -431,50 +436,17 @@ class ImagePreview implements
     }
     handleToucnEnd(e: TouchEvent & MouseEvent) {
         e.preventDefault();
-        this.movePoints = [];//重置收集手指移动时要收集得点
-        this.performerRecordMove = 0;//重置收集收支移动点的计时器
-
-
+        const taskArray = Array.
+            from(this.taskExecuteAfterTEnd.values())
+                .sort((a,b) => b.priority - a.priority );
+        taskArray.forEach(item => {
+            item.callback(e)
+        })
+        this.taskExecuteAfterTEnd.forEach( (item,key) => {
+            console.log(key)
+        })
+        this.taskExecuteAfterTEnd.clear();
         
-        //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
-        if ( e.changedTouches.length !== 1 || this.isMotionless) {
-            if (e.touches.length == 0 && this.isZooming) {//重置是否正在进行双指缩放操作
-                // someOperate;
-                this.isZooming = false;
-            }
-            return;
-        }
-        const type: string = (<HTMLElement>(e.target)).dataset.type;
-        if (this.operateMaps[type]) {
-            return
-        }
-
-        this.isMotionless = true;
-        this.isEnlargeMove = false;
-
-        const {actionExecutor}= this;
-        const {eventsHanlder} = actionExecutor
-        
-        this.fingerDirection = '';
-
-        if (e.touches.length == 0 && this.isZooming) {//重置是否正在进行双指缩放操作
-            // someOperate;
-            this.isZooming = false;
-            return;
-        }else if( e.touches.length !== 0 ){// 还有手指在屏幕上
-            return;
-        }
-        
-        if( this.isAnimating ){
-            return;
-        }
-        if ( this.isNormalMove ) {;
-            this.handleTEndEnNormal(e);
-            this.isNormalMove = false;
-
-        } else {
-            this.handleTEndEnlarge(e)
-        }
     }
 
     async handleTEndEnlarge(e: TouchEvent & MouseEvent) {
@@ -572,13 +544,16 @@ class ImagePreview implements
 
     }
     async handleTEndEnNormal(e: TouchEvent & MouseEvent) {
-     
+       
         if( this.isAnimating ){
             return
         }
         let endX: number = (e.changedTouches[0].clientX);
         const { actionExecutor:{eventsHanlder} } = this;
         let offset = endX - this.touchStartX;
+        if( offset === 0 ){
+            return;
+        }
         this.isAnimating = true;
         await eventsHanlder.handleTEndEnNormal(e,offset);
         this.isAnimating = false;
@@ -821,6 +796,11 @@ class ImagePreview implements
             x: e.touches[0].clientX,
             y: e.touches[0].clientY
         })
+        const type = 'resetMovePoints';
+        this.addTouchEndTask(type,{
+            priority:1,
+            callback:() => (this.movePoints = [])
+        })//重置收集手指移动时要收集得点))
     }
     decideMoveDirection(e: TouchEvent & MouseEvent,
         curItemViewLeft,curItemViewRight,isBoundaryLeft,
@@ -834,12 +814,19 @@ class ImagePreview implements
         let dy: number = endPoint.y - startPoint.y;
 
         let degree: number = Math.atan2(dy, dx) * 180 / Math.PI;
-
         if (Math.abs(90 - Math.abs(degree)) < 30) {
             this.fingerDirection = 'vertical'
         } else {
             this.fingerDirection = 'horizontal'
         }
+        const type = 'resetFingerDirection';
+      
+        this.addTouchEndTask(type,{
+            priority:1,
+            callback: () => {
+                this.fingerDirection = ''
+            }
+        })
         if (this.actionExecutor.isEnlargement) {
             // 放大的时候的移动是查看放大后的图片
 
@@ -852,12 +839,20 @@ class ImagePreview implements
             if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
                 if (
                     (
-                        (isBoundaryLeft && direction == 'right') ||
-                        (isBoundaryRight && direction == 'left') ||
+                        (direction == 'right') ||
+                        (direction == 'left')  ||
                         (this.isEnlargeMove)
                     ) &&
-                    (this.fingerDirection == 'horizontal')) {
+                    (this.fingerDirection == 'horizontal')
+                ) {
                     this.isEnlargeMove = true;
+                    const type = 'resetEnlargeMove';
+                    this.addTouchEndTask(type,{
+                        priority:1,
+                        callback:() => {
+                            this.isEnlargeMove = false
+                        }
+                    })
                     this.handleMoveNormal(e)
                 } else {
                     this.handleMoveEnlage(e);
@@ -865,7 +860,12 @@ class ImagePreview implements
             } else {
                 if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove)) {
                     this.isEnlargeMove = true;
-                    this.handleMoveNormal(e)
+                    this.handleMoveNormal(e);
+                    const type = 'resetEnlargeMove';
+                    this.addTouchEndTask(type,{
+                        priority:1,
+                        callback:() => (this.isEnlargeMove = false)
+                    })
                 } else {
                     this.handleMoveEnlage(e);
                 }
@@ -875,7 +875,6 @@ class ImagePreview implements
             //正常情况下的移动是图片左右切换
             this.handleMoveNormal(e)
         }
-        this.isMotionless = false;
     }
     destroy(): void {
         this.ref.parentNode.removeChild(this.ref);

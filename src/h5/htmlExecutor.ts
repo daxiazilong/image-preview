@@ -811,4 +811,62 @@ class htmlExecutor{
 
         this.isAnimating = false;
     }
+    setToNaturalImgSize(this: ImagePreview,
+        toWidth: number, toHeight: number,
+        scaleX: number, scaleY: number,
+        e: TouchEvent & MouseEvent
+    ): void {
+        let mouseX: number = e.touches[0].clientX;
+        let mouseY: number = e.touches[0].clientY;
+
+        const curItem = this.imgItems[this.curIndex] as interFaceElementMatrix;
+
+        // 以下为旋转之后缩放时需要用到的参数
+        const curItemRect = curItem.getBoundingClientRect();
+        const curItemViewTop: number = curItemRect.top;//当前元素距离视口的top
+        const curItemViewLeft: number = curItemRect.left;//当前元素距离视口的left
+
+        const centerX: number = (curItemRect.width) / 2 + curItemViewLeft;
+        const centerY: number = (curItemRect.height) / 2 + curItemViewTop;
+
+        let x = 0, y = 0;
+        x = -((mouseX - centerX) * (scaleX - 1));
+        y = -((mouseY - centerY) * (scaleY - 1));
+
+        if (toWidth == this.containerWidth) {
+            x = 0
+        }
+        curItem.matrix = this.matrixMultipy(
+            this.getScaleMatrix({ x: scaleX, y: scaleY, z: 1 }),
+            curItem.matrix,
+            this.getTranslateMatrix({ x, y, z: 1 })
+        )
+        this.animate({
+            el: curItem,
+            prop:'transform',
+            endStr: `${this.matrixTostr(curItem.matrix)}`,
+            callback: () => {
+                curItem.dataset.isEnlargement = 'enlargement';
+                this.isAnimating = false;
+            }
+        })
+        
+    }
+    setToInitialSize(this: ImagePreview, scaleX: number, scaleY: number, e: TouchEvent & MouseEvent) {
+        const curItem = this.imgItems[this.curIndex] as interFaceElementMatrix;
+        let rotateDeg: number = curItem.rotateDeg;;
+        curItem.matrix = this.matrixMultipy(
+            this.getRotateZMatrix(rotateDeg * Math.PI / 180),
+            curItem.intialMatrix
+        )
+        this.animate({
+            el: curItem,
+            endStr:  `${this.matrixTostr(curItem.matrix)}`,
+            prop:'transform',
+            callback:() => {
+                curItem.dataset.isEnlargement = 'shrink';
+                this.isAnimating = false;
+            }
+        })
+    }
 }

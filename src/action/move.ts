@@ -10,25 +10,12 @@ export class Move{
 
         
         // 双指缩放时的。
-        if( e.touches.length == 2 && !this.isNormalMove ){
-            clearTimeout(this.performerRecordMove); 
+        if( e.touches.length == 2 ){
             clearTimeout( this.performerClick )
-
-            this.performerRecordMove = 0;
             this.handleZoom(e);
             return;
         }
-
         
-        let curTouchX: number = e.touches[0].clientX;
-        let curTouchY: number = e.touches[0].clientY;
-        const overDistanceBeMoeve = 2;
-        if( 
-            Math.abs(this.touchStartX - curTouchX) > overDistanceBeMoeve 
-                || 
-            Math.abs( this.touchStartY - curTouchY ) > overDistanceBeMoeve ){
-            clearTimeout( this.performerClick )
-        }
         let isBoundaryLeft: boolean =  this.actionExecutor.IsBoundaryLeft;
         let isBoundaryRight: boolean = this.actionExecutor.isBoundaryRight;
 
@@ -44,10 +31,8 @@ export class Move{
 
         /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
          * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
-         * 并启动一个计时器 一定时间之后处理移动方向
          **/
         if( this.fingerDirection ){
-            this.performerRecordMove = 0;
             if( this.actionExecutor.isEnlargement  ){
                 // 放大的时候的移动是查看放大后的图片
                 // 放大的时候,如果到达边界还是进行正常的切屏操作
@@ -63,7 +48,13 @@ export class Move{
                         (this.fingerDirection == 'horizontal')
                     ){
                         this.isEnlargeMove = true;
-                        this.handleMoveNormal(e)
+                        this.handleMoveNormal(e);
+                        const type = 'resetEnlargeMove';
+                        const task = () => { this.isEnlargeMove = false }
+                        this.addTouchEndTask(type,{
+                            priority:1,
+                            callback:task
+                        });
                     }else{
                         this.handleMoveEnlage(e);
                     }
@@ -76,7 +67,12 @@ export class Move{
                         (this.isEnlargeMove)) 
                     ){;
                         this.isEnlargeMove = true;
-                        this.handleMoveNormal(e)
+                        this.handleMoveNormal(e);
+                        const type = 'resetEnlargeMove';
+                         this.addTouchEndTask(type,{
+                             priority:1,
+                             callback:() => (this.isEnlargeMove = false)
+                         })
                     }else{
                         this.handleMoveEnlage(e);
                     }
@@ -86,11 +82,12 @@ export class Move{
                 //正常情况下的移动是图片左右切换
                 this.handleMoveNormal(e)
             }
-            this.isMotionless = false;
         }else{
             // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
             if( 
-                ( this.actionExecutor.isEnlargement &&  curItemViewLeft <= 0 && curItemViewRight > conWidth )
+                ( this.actionExecutor.isEnlargement &&  
+                    (curItemViewLeft < 0 || curItemViewRight > conWidth)
+                )
                     ||
                 ( !this.actionExecutor.isEnlargement )
             ){
@@ -102,8 +99,6 @@ export class Move{
                 }else if( isBoundary ){// 放大了到边界了
                     this.handleMoveNormal(e)
                 }
-                this.isMotionless = false;
-
                 return;
             }
 
@@ -134,16 +129,31 @@ export class Move{
             this.touchStartX = this.startX = (e.touches[0].clientX);
             this.touchStartY = this.startY = (e.touches[0].clientY);
         }
-        
         this.isNormalMove = true;
+        const type = 'normalMove'
+        this.addTouchEndTask(type, {
+            priority:1,
+            callback:() => (this.isNormalMove = false)
+        })
         const eventsHanlder = this.actionExecutor.eventsHanlder;
 
         let curX: number = (e.touches[0].clientX);
 
         let offset = curX - this.startX;
         this.imgContainerMoveX += offset;
-        
         this.startX = curX;
+        if( offset !== 0 ){
+            this.normalMoved = true;
+            const type = 'normalMoved';
+            const task = (e) => {
+                (this.normalMoved = false);
+                this.handleTEndEnNormal.bind(this)(e)
+            };
+            this.addTouchEndTask(type,{
+                priority:10,
+                callback: task
+            })
+        }
        
         eventsHanlder.handleMoveNormal(e,offset);
         
@@ -151,6 +161,7 @@ export class Move{
     handleMoveEnlage( this: ImagePreview,e: TouchEvent & MouseEvent ){;
         showDebugger(`
             handlemoveEnlarge:this.isZooming ${this.isZooming}
+            this.isAnimating:${this.isAnimating}
              ${Date.now()}
         `)
         if( this.isZooming ){
@@ -165,7 +176,7 @@ export class Move{
         const { eventsHanlder } = actionExecutor;
         // 放大的时候自由滑动的时候是可以被中断的
         if( eventsHanlder.curBehaviorCanBreak ){
-            actionExecutor.curAimateBreaked = true;
+            actionExecutor.curAimateBreaked = true;//直接中断当前动画
             if( this.isAnimating ){
                 this.touchStartX  = (e.touches[0].clientX);
                 this.touchStartY  = (e.touches[0].clientY);
@@ -177,6 +188,11 @@ export class Move{
             }
         }
 
+        if( actionExecutor.isLoadingError() ){
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            return;
+        }
+
         this.isNormalMove = false;
 
         this.actionExecutor.isBoudriedSide = false;
@@ -184,10 +200,7 @@ export class Move{
         const conWidth: number = imgContainerRect.width;
         const conHeight: number = imgContainerRect.height;
 
-        if( actionExecutor.isLoadingError() ){
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            return;
-        }
+        
         const curItemRect = actionExecutor.viewRect;
 
         const curItemHeihgt: number = curItemRect.height;
@@ -216,10 +229,14 @@ export class Move{
         }else{
             curTop = 0
         }
+        actionExecutor.eventsHanlder.handleMoveEnlage(e,curLeft,curTop,0);
 
-        actionExecutor.eventsHanlder.handleMoveEnlage(e,curLeft,curTop,0)
-       
-  
+        const type = 'handleTendEnlarte';
+        this.addTouchEndTask(type,{
+            priority: 10,
+            callback:this.handleTEndEnlarge.bind(this)
+        })
+
         this.startX = curX;
         this.startY = curY;
 

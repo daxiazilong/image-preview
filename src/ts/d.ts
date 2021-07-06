@@ -9,6 +9,11 @@ type transformParam = {
     rotateDeg: number
 }
 
+type task = {
+    priority:number,
+    callback: (e:any) => any
+}
+
 type animateProps = {
     el: HTMLElement,
     prop: string,
