@@ -12,7 +12,7 @@ function isPowerOf2(value) {
 }
 
 type webGlConstructorProps = {
-    images: Array<string>,
+    images: Array<string|HTMLImageElement>,
 }
 const forDev = 0
 
@@ -33,7 +33,6 @@ class webGl {
     curIndex = 0;
     defaultAnimateTime = 300;
     modelMatrixes: Array<number> = [];
-    textures: Map<number,WebGLTexture> = new Map;
     indinces: Map<number,WebGLTexture> = new Map;
     initialModel: Array<number> = [
         1.0, 0, 0, 0,
@@ -44,10 +43,12 @@ class webGl {
 
     initialVertextes;
     positions: Array<number> = [];
-    imgs: Array<HTMLImageElement> = [];
-    imgUrls: Array<string> = [];
+    imgs: Array<image> = [];
+    imgUrls: Array<string|HTMLImageElement> = [];
     imgShape: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
     imgShapeInitinal: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
+    textures: Map<number,WebGLTexture> = new Map;//贴图 保存图片贴图
+    texturesOther: Map<number,WebGLTexture> = new Map // 保存背景色及其他贴图
 
     curPlane: Array<number> = []; // 动画执行前的当前面的位置信息
 
@@ -91,19 +92,67 @@ class webGl {
         this.imgUrls = images;
         const gl = this.gl;
       
-
+        console.log(gl.getParameter(gl.MAX_TEXTURE_SIZE))
         gl.enable(gl.DEPTH_TEST);           // Enable depth testing
         gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
         // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
         // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
 
         this.setTextureCordinate();
+        this.initOtherTexture();
         this.initData();
         
         this.eventsHanlder = new events(this);
     }
   
-
+    addImg(image: string | HTMLImageElement , index: number){
+        this.imgUrls.splice(index + 1,0,image);
+        this.imgs.splice(index + 1, 0 ,null);
+        let inserted = null;
+        for( let i = index + 1, L = this.imgUrls.length; i < L; i++ ){// 向后错一位
+            let cur = this.textures.get(i)// texture or undefined
+            this.textures.set(i,inserted)
+            inserted = cur;
+        }
+        console.log(this.textures)
+        if( index <= this.curIndex ){// 会影响当前视图
+           debugger; this.draw(this.curIndex)
+        }
+    }
+    delImg(index:number){
+        this.imgUrls.splice(index ,1);
+        this.imgs.splice(index, 1);
+        this.textures
+        const moveForward = (index:number) => {
+            if( index == this.imgUrls.length - 1 ){
+                return this.textures.get(index);
+            }
+            let textureNext = moveForward(index + 1);
+            let textureNow = this.textures.get(index);
+            this.textures.set(index,textureNext);
+            return textureNow;
+        }
+        moveForward(index);
+        if( index == this.curIndex ){
+            this.draw(this.curIndex)
+        }
+    }
+    initOtherTexture(){
+        const gl = this.gl;
+        const texture = gl.createTexture();
+        this.texturesOther.set(0,texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        //@ts-ignore
+        texture.cubicBgd = true;
+        const r = Math.round( Math.random() * 255 )
+        const g = Math.round( Math.random() * 255 )
+        const b = Math.round( Math.random() * 255 )
+        gl.texImage2D(
+            gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, 
+            gl.UNSIGNED_BYTE,
+                new Uint8Array([r, g, b, 255])
+        );
+    }
     initData() {
         this.draw(this.curIndex)
     }
@@ -231,21 +280,19 @@ class webGl {
     drawPosition(){
         // 生成黑色立方体作为背景
         this.clear();
-        this.bindTexture(null,0);
+        const gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D, this.texturesOther.get(0));
         for( let i = 0, L = 12 ; i < L ; i += 4 ){
             this.bindIndex(i)
         }
         // 生成 真真的 图片
         let faces = (this.positions.length / 4 - 12) / 4;
-        let textureIndex = (this.curIndex - 1);
-        ;( textureIndex == -1 ) && (textureIndex = 0 );
+        let textureIndex = ( this.curIndex - 1); 
+        ;( textureIndex < 0 ) && (textureIndex = 0);
         for( let i = 0; i < faces ; i++ ,textureIndex++ ){
-            {;
-                // console.log(1 + textureIndex)
-                const img = this.imgs[textureIndex];
-                this.bindTexture(img,1 + textureIndex);
-                this.bindIndex( 12 + i*4 )
-            }
+            const img = this.imgs[textureIndex];
+            this.bindTexture(img,textureIndex);
+            this.bindIndex( 12 + i*4 )
         }
         // console.log('\n')
 
@@ -405,7 +452,8 @@ class webGl {
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler0'), 0);
     }
     bindTexture(image: HTMLImageElement,index:number) {;
-        if(this.textures.has(index)){ // 该图片已经创建过贴图 直接拿来复用
+      
+        if(this.textures.get(index)){ // 该图片已经创建过贴图 直接拿来复用
             this.updateTexture(index)
             return;
         }
@@ -419,11 +467,6 @@ class webGl {
         this.textures.set(index,texture);
 
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        if( image == null ){//front面的黑色的底面
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-                              new Uint8Array([0, 0, 100, 255]));
-            return;
-        }
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
 
         {
@@ -535,8 +578,8 @@ class webGl {
 
         let scaleX, scaleY,dx = 0,dy = 0;
 
-        clientX *=  this.dpr;
-        clientY *=  this.dpr;
+        clientX *= this.dpr;
+        clientY *= this.dpr;
         if( this.isEnlargementForScale ){// 放大双击得时候就缩小
             let [initialWidth,initinalHeight] = this.imgShapeInitinal[this.curIndex]
             width = Math.abs(initialWidth);
@@ -614,18 +657,24 @@ class webGl {
         for( let i = index - 1; i <= index + 1; i++ ){
             if( i !== -1 && i <= imgLength - 1 ){
                 {   
-                    const [err, img] = await this.loadImage(this.imgUrls[i])
-
-                    this.imgs[i] = img;
-
-                    const { naturalWidth, naturalHeight } = img;
+                    let image;
+                    if( typeof this.imgUrls[i] == 'string' ){
+                        const [err, img] = await this.loadImage(this.imgUrls[i] as string);
+                        image = img;
+                        if(err){
+                            img.loadError = true;
+                        }
+                    }else{
+                        image = this.imgUrls[i];
+                    }
+                    this.imgs[i] = image;
+                    const { naturalWidth, naturalHeight } = image;
                     let [width,height] = this.decideImgViewSize(naturalWidth * this.dpr,naturalHeight * this.dpr)
                     this.imgShape[i] = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ];
                     this.imgShapeInitinal[i] = [width,height,0,1]
                     this.genPostion(width, height,i);
                     maxWidth = Math.max(width,maxWidth)
                     maxHeight = Math.max(height,maxHeight)
-
                 }
             }
         }
@@ -750,12 +799,12 @@ class webGl {
     }
     isLoadingError(index?:number ){
         ;arguments.length == 0 && ( index = this.curIndex );
-        return !this.imgs[index] // to do 定义错误图片样式及数据结构
+        return this.imgs[index]['loadError'] // to do 定义错误图片样式
     }
    
-    loadImage(src: string): Promise<[boolean, HTMLImageElement]> {
+    loadImage(src: string): Promise<[boolean, image]> {
         return new Promise((res) => {
-            const img = new Image()
+            const img = new Image() as image;
             img.onload = () => {
                 res([false, img])
             }

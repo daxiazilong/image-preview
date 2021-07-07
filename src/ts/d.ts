@@ -13,6 +13,10 @@ type task = {
     priority:number,
     callback: (e:any) => any
 }
+type image = 
+    HTMLImageElement & {
+        loadError: boolean
+    }
 
 type animateProps = {
     el: HTMLElement,

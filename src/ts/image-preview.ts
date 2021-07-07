@@ -155,19 +155,11 @@ class ImagePreview implements
     getTranslateMatrix({ x, y, z }) { return [] }
     getRotateZMatrix(deg: number) { return [] }
     getScaleMatrix({ x, y, z }) { return [] }
-    pcInitial() {
-        this.ref.addEventListener('click', this.handlePcClick.bind(this));
-        this.ref.querySelector(`.${this.prefix}close`).addEventListener('click', this.close.bind(this))
-        let timer;
-        window.addEventListener('resize', (e) => {
-            clearTimeout(timer)
-            setTimeout(() => {
-                this.containerWidth = this.imgContainer.getBoundingClientRect().width;
-                let index = this.curIndex;
-                this.imgContainerMoveX = -index * this.containerWidth;
-                this.imgContainer.style.left = `${this.imgContainerMoveX}px`;
-            }, 17)
-        })
+    insertImageAfter( image: string | HTMLImageElement , index: number ){
+        this.actionExecutor.addImg(image,index)
+    }
+    delImage(index:number){
+        this.actionExecutor.delImg(index)
     }
     mobileInitial() {
         this.ref.addEventListener('touchstart', this.handleTouchStart.bind(this));
@@ -405,8 +397,6 @@ class ImagePreview implements
         this.lastClick = Date.now();
         this.getMovePoints(e);
     }
-
-
     handleClick(e?: TouchEvent & MouseEvent) {
         let close: HTMLElement = <HTMLElement>(this.ref.querySelector(`.${this.prefix}close`));
         let bottom: HTMLElement = <HTMLElement>(this.ref.querySelector(`.${this.prefix}bottom`));
@@ -448,7 +438,6 @@ class ImagePreview implements
         this.taskExecuteAfterTEnd.clear();
         
     }
-
     async handleTEndEnlarge(e: TouchEvent & MouseEvent) {
         // ;debugger;
         // this.isAnimating = false;
@@ -802,10 +791,7 @@ class ImagePreview implements
             callback:() => (this.movePoints = [])
         })//重置收集手指移动时要收集得点))
     }
-    decideMoveDirection(e: TouchEvent & MouseEvent,
-        curItemViewLeft,curItemViewRight,isBoundaryLeft,
-        isBoundaryRight,direction
-    ){
+    decideMoveDirection(){
         let L: number = this.movePoints.length;
         let endPoint: { x: number, y: number } = this.movePoints[L - 1];
         let startPoint: { x: number, y: number } = this.movePoints[0];
@@ -827,54 +813,7 @@ class ImagePreview implements
                 this.fingerDirection = ''
             }
         })
-        if (this.actionExecutor.isEnlargement) {
-            // 放大的时候的移动是查看放大后的图片
-
-            // 放大的时候,如果到达边界还是进行正常的切屏操作
-            // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-            const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-            const conWidth: number = imgContainerRect.width;
-
-            // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
-            if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
-                if (
-                    (
-                        (direction == 'right') ||
-                        (direction == 'left')  ||
-                        (this.isEnlargeMove)
-                    ) &&
-                    (this.fingerDirection == 'horizontal')
-                ) {
-                    this.isEnlargeMove = true;
-                    const type = 'resetEnlargeMove';
-                    this.addTouchEndTask(type,{
-                        priority:1,
-                        callback:() => {
-                            this.isEnlargeMove = false
-                        }
-                    })
-                    this.handleMoveNormal(e)
-                } else {
-                    this.handleMoveEnlage(e);
-                }
-            } else {
-                if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove)) {
-                    this.isEnlargeMove = true;
-                    this.handleMoveNormal(e);
-                    const type = 'resetEnlargeMove';
-                    this.addTouchEndTask(type,{
-                        priority:1,
-                        callback:() => (this.isEnlargeMove = false)
-                    })
-                } else {
-                    this.handleMoveEnlage(e);
-                }
-            }
-
-        } else {
-            //正常情况下的移动是图片左右切换
-            this.handleMoveNormal(e)
-        }
+        
     }
     destroy(): void {
         this.ref.parentNode.removeChild(this.ref);

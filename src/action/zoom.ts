@@ -9,6 +9,13 @@ export class Zoom {
         if( this.isNormalMove && this.normalMoved ){
             return;
         }
+        if( this.isAnimating ){
+            return;
+        }
+        if( this.actionExecutor.isLoadingError() ){
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            return;
+        }
         if (!this.isZooming) {
             this.curStartPoint1 = {
                 x: this.curPoint1.x,
@@ -21,11 +28,7 @@ export class Zoom {
         }
         this.isZooming = true;
         this.isAnimating = true;
-        // if (curItem.dataset.loaded == 'false') {
-        //     // 除了切屏之外对于加载错误的图片一律禁止其他操作
-        //     this.isAnimating = false;
-        //     return;
-        // }
+        
         const { actionExecutor } = this;
 
         const distaceBefore: number =
@@ -66,7 +69,7 @@ export class Zoom {
             sy = 1 + this.zoomScale;
         }else{
             this.isZooming = false;
-            this.isAnimating = true;
+            this.isAnimating = false;
             return;
         }
         actionExecutor.eventsHanlder.handleZoom(e,sx,sy,x,y)

@@ -18,7 +18,10 @@ const obj = new ImagePreview({
     ]
 });
 obj.show(0)
-
+setTimeout( () => {debugger;
+    // obj.insertImageAfter('/testImage/IMG_0512.JPG',0)
+    obj.delImage(0)
+} ,500)
 // Vue.use(ImagePreviewVue)
 // new Vue({
 //     el:'#el',

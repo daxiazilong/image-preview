@@ -8,14 +8,13 @@ export class Move{
     handleMove(this: ImagePreview,e: TouchEvent & MouseEvent){
         e.preventDefault();
 
-        
         // 双指缩放时的。
         if( e.touches.length == 2 ){
             clearTimeout( this.performerClick )
             this.handleZoom(e);
+            // this.handleMoveEnlage(e); 
             return;
         }
-        
         let isBoundaryLeft: boolean =  this.actionExecutor.IsBoundaryLeft;
         let isBoundaryRight: boolean = this.actionExecutor.isBoundaryRight;
 
@@ -34,10 +33,7 @@ export class Move{
          **/
         if( this.fingerDirection ){
             if( this.actionExecutor.isEnlargement  ){
-                // 放大的时候的移动是查看放大后的图片
-                // 放大的时候,如果到达边界还是进行正常的切屏操作
-                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
+                // 放大了但是没有超出边界
                 if( curItemViewLeft >= 0 && curItemViewRight <= conWidth ){
                     if( 
                         (
@@ -92,24 +88,22 @@ export class Move{
                 ( !this.actionExecutor.isEnlargement )
             ){
                 // enlarge but not reach bonudry
-                if( this.actionExecutor.isEnlargement && !isBoundary ){
+                if( this.actionExecutor.isEnlargement && !isBoundary && !this.normalMoved ){
                     this.handleMoveEnlage(e);
                 }else if( !this.actionExecutor.isEnlargement ){// not enlage
                     this.handleMoveNormal(e)
-                }else if( isBoundary ){// 放大了到边界了
+                }else if( isBoundary || this.normalMoved ){// 放大了到边界了
                     this.handleMoveNormal(e)
                 }
                 return;
             }
-
+            // 长图收集手指方向
             this.getMovePoints( e );
+            // 收集够一定数量的点才会执行下边的逻辑
             if( this.movePoints.length < this.maxMovePointCounts ){
                 return;
             }
-            this.decideMoveDirection(
-                e,curItemViewLeft,curItemViewRight,isBoundaryLeft,
-                isBoundaryRight,direction
-            );
+            this.decideMoveDirection();
         }     
     }
     handleMoveNormal(this: ImagePreview, e: TouchEvent & MouseEvent ){
@@ -164,6 +158,10 @@ export class Move{
             this.isAnimating:${this.isAnimating}
              ${Date.now()}
         `)
+        if( this.actionExecutor.isLoadingError() ){
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            return;
+        }
         if( this.isZooming ){
             return;
         }
@@ -188,10 +186,7 @@ export class Move{
             }
         }
 
-        if( actionExecutor.isLoadingError() ){
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            return;
-        }
+        
 
         this.isNormalMove = false;
 
