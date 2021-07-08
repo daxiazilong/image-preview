@@ -23,7 +23,7 @@ export const matrix = {
 
         }
         if( rest.length ){
-            return matrix.multiplyMatrices(result,rest.splice(0,1),...rest)
+            return matrix.multiplyMatrices(result,rest.splice(0,1)[0],...rest)
         }
         return result;
     },

@@ -39,6 +39,12 @@ class webGl {
         0, 0, 1.0, 0,
         0, 0, 0, 1.0
     ]
+    baseModel: Array<number> = [
+        1.0, 0, 0, 0,
+        0, 1.0, 0, 0,
+        0, 0, 1.0, 0,
+        0, 0, 0, 1.0
+    ]
     modelMatrix: Array<number> = [
         1.0, 0, 0, 0,
         0, 1.0, 0, 0,
@@ -302,12 +308,11 @@ class webGl {
         //     }
         // }
         this.modelMatrix = matrix.multiplyMatrices(
-            this.modelMatrix,
+            this.baseModel,
             matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
             matrix.rotateYMatrix(deg), //开始旋转
             matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
         )
-        console.log(this.modelMatrix)
         this.gl.uniformMatrix4fv(
             this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
             false,

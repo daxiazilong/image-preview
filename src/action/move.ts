@@ -133,7 +133,7 @@ export class Move{
 
         let curX: number = (e.touches[0].clientX);
 
-        let offset = curX - this.startX;
+        let offset = curX - this.touchStartX;
         this.imgContainerMoveX += offset;
         this.startX = curX;
         if( offset !== 0 ){

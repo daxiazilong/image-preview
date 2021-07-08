@@ -75,7 +75,9 @@ export class events {
 
         let degX = -offset * 0.008;
         const plusOrMinus = degX / Math.abs(degX);
-        const {viewInstance} = this;
+        const { viewInstance } = this;
+
+        viewInstance.baseModel = viewInstance.modelMatrix;
 
         if (Math.abs(degX) >= this.throldDeg) {// 左右切换
             let beforeIndex = viewInstance.curIndex;
@@ -86,12 +88,20 @@ export class events {
             } else {
                 await viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX);
                 viewInstance.curIndex = nextIndex;
+                viewInstance.modelMatrix = viewInstance.baseModel = viewInstance.initialModel ;
+                viewInstance.gl.uniformMatrix4fv(
+                    viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uModelViewMatrix'),
+                    false,
+                    viewInstance.modelMatrix
+                );
                 await viewInstance.draw(nextIndex)
             }
 
         } else {// 复原
             await viewInstance.rotate(- degX)
         }
+
+        viewInstance.modelMatrix = viewInstance.baseModel = viewInstance.initialModel ;
 
         return 'handled'
     }
