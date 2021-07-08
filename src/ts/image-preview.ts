@@ -155,7 +155,7 @@ class ImagePreview implements
     getTranslateMatrix({ x, y, z }) { return [] }
     getRotateZMatrix(deg: number) { return [] }
     getScaleMatrix({ x, y, z }) { return [] }
-    insertImageAfter( image: string | HTMLImageElement , index: number ){
+    insertImageAfter( image: string | image , index: number ){
         this.actionExecutor.addImg(image,index)
     }
     delImage(index:number){
@@ -426,15 +426,15 @@ class ImagePreview implements
     }
     handleToucnEnd(e: TouchEvent & MouseEvent) {
         e.preventDefault();
+        
         const taskArray = Array.
             from(this.taskExecuteAfterTEnd.values())
                 .sort((a,b) => b.priority - a.priority );
+
         taskArray.forEach(item => {
             item.callback(e)
         })
-        this.taskExecuteAfterTEnd.forEach( (item,key) => {
-            console.log(key)
-        })
+        
         this.taskExecuteAfterTEnd.clear();
         
     }

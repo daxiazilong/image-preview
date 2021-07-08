@@ -15,7 +15,8 @@ type task = {
 }
 type image = 
     HTMLImageElement & {
-        loadError: boolean
+        loadError: boolean,
+        _id: number
     }
 
 type animateProps = {

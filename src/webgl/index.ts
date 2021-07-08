@@ -32,7 +32,6 @@ class webGl {
 
     curIndex = 0;
     defaultAnimateTime = 300;
-    modelMatrixes: Array<number> = [];
     indinces: Map<number,WebGLTexture> = new Map;
     initialModel: Array<number> = [
         1.0, 0, 0, 0,
@@ -40,13 +39,19 @@ class webGl {
         0, 0, 1.0, 0,
         0, 0, 0, 1.0
     ]
+    modelMatrix: Array<number> = [
+        1.0, 0, 0, 0,
+        0, 1.0, 0, 0,
+        0, 0, 1.0, 0,
+        0, 0, 0, 1.0
+    ];
 
     initialVertextes;
     positions: Array<number> = [];
     imgs: Array<image> = [];
-    imgUrls: Array<string|HTMLImageElement> = [];
-    imgShape: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
-    imgShapeInitinal: Array<Array<number>> = [];//快速定位旋转之后图片的尺寸
+    imgUrls: Array<string|image> = [];
+    imgShape: Array<number> = [];//快速定位旋转之后图片的尺寸
+    imgShapeInitinal: Array<number> = [];//快速定位旋转之后图片的尺寸
     textures: Map<number,WebGLTexture> = new Map;//贴图 保存图片贴图
     texturesOther: Map<number,WebGLTexture> = new Map // 保存背景色及其他贴图
 
@@ -56,6 +61,8 @@ class webGl {
 
     isBoudriedSide: boolean = false //放大移动时 是否曾到达过边界 在移动放大得图片至超过边界后 恢复到最大边界位置后为true
     curAimateBreaked: boolean = false // 当前动画是否被打断
+
+    imgId = 0;
 
     constructor({images,}:webGlConstructorProps) {
 
@@ -72,16 +79,11 @@ class webGl {
             false,
             projectionMatrix
         );
-        const modelViewMatrix = [
-            1.0, 0, 0, 0,
-            0, 1.0, 0, 0,
-            0, 0, 1.0, 0,
-            0, 0, 0, 1.0
-        ]
+        
         this.gl.uniformMatrix4fv(
             this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
             false,
-            modelViewMatrix
+            this.modelMatrix
         );
 
         this.gl.uniform4fv(
@@ -89,7 +91,7 @@ class webGl {
             new Float32Array([0, 0, 0, 0.1])
         );
         
-        this.imgUrls = images;
+        this.imgUrls = images as Array<image>;
         const gl = this.gl;
       
         console.log(gl.getParameter(gl.MAX_TEXTURE_SIZE))
@@ -105,35 +107,29 @@ class webGl {
         this.eventsHanlder = new events(this);
     }
   
-    addImg(image: string | HTMLImageElement , index: number){
+    addImg(image: string | image , index: number){
         this.imgUrls.splice(index + 1,0,image);
         this.imgs.splice(index + 1, 0 ,null);
-        let inserted = null;
-        for( let i = index + 1, L = this.imgUrls.length; i < L; i++ ){// 向后错一位
-            let cur = this.textures.get(i)// texture or undefined
-            this.textures.set(i,inserted)
-            inserted = cur;
+        if( image instanceof Image ){
+            if( typeof image._id == 'undefined' ){
+                image._id = this.imgId++;
+            }
         }
-        console.log(this.textures)
-        if( index <= this.curIndex ){// 会影响当前视图
-           debugger; this.draw(this.curIndex)
+        
+        index -= this.curIndex;
+
+        if( ~[-2,-1,0].indexOf(index) ){
+            this.draw(this.curIndex)
         }
     }
     delImg(index:number){
-        this.imgUrls.splice(index ,1);
+
+        this.imgUrls.splice(index,1);
         this.imgs.splice(index, 1);
-        this.textures
-        const moveForward = (index:number) => {
-            if( index == this.imgUrls.length - 1 ){
-                return this.textures.get(index);
-            }
-            let textureNext = moveForward(index + 1);
-            let textureNow = this.textures.get(index);
-            this.textures.set(index,textureNext);
-            return textureNow;
-        }
-        moveForward(index);
-        if( index == this.curIndex ){
+        this.textures.delete(this.imgs[index]._id);
+
+        index -= this.curIndex;
+        if( ~[-1,0,1].indexOf(index) ){
             this.draw(this.curIndex)
         }
     }
@@ -170,20 +166,10 @@ class webGl {
             timingFun: linear,
             ends:[end],
             playGame: (() => {
-                /**
-                 矩阵旋转乘法时是累加的。因此直接通过timingFun计算出的结果直接应用的话最后的结果是个若
-                 干个某数列元素的和 所以需要前后值的差值来按步进行动画
-                 * 
-                 */
-                let beforePos = 0;
                 const play = this.rotatePosition.bind(this);
                 return (curPos: number) => {
                     this.clear();
-                    let step = curPos - beforePos;
-                    play(step);
-                    this.bindPostion();
-                    this.drawPosition();
-                    beforePos = curPos;
+                    play(curPos);
                 }
 
             })()
@@ -194,11 +180,11 @@ class webGl {
     // rotate around z axis
     rotateZ(deg){
         this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16)
-        const curImgShape = this.imgShape[this.curIndex];
-        const curImgShapeInitinal = this.imgShapeInitinal[this.curIndex];
+        const curImgShape = this.imgShape;
+        const curImgShapeInitinal = this.imgShapeInitinal;
         // 储存旋转位置变化信息
-        this.imgShape[this.curIndex] = matrix.multiplyPoint(curImgShape,matrix.rotateZMatrix(deg))
-        this.imgShapeInitinal[this.curIndex] = matrix.multiplyPoint(curImgShapeInitinal,matrix.rotateZMatrix(deg))
+        this.imgShape = matrix.multiplyPoint(curImgShape,matrix.rotateZMatrix(deg))
+        this.imgShapeInitinal = matrix.multiplyPoint(curImgShapeInitinal,matrix.rotateZMatrix(deg))
         // todo . every rotate should reCenter the img center
         const [curCenterX,curCenterY] = this.curCenterCoordinate;
         const dx = -curCenterX, dy = -curCenterY;
@@ -248,6 +234,7 @@ class webGl {
         ]
         let key = index - this.curIndex; // -1 , 0 , 1;
         key  += 1; // -1,0,1 -> 0,1,2
+        // 可以优化为插入
         this.positions.push( ...positionsMap[key] )
     }
     bindPostion(){
@@ -291,7 +278,7 @@ class webGl {
         ;( textureIndex < 0 ) && (textureIndex = 0);
         for( let i = 0; i < faces ; i++ ,textureIndex++ ){
             const img = this.imgs[textureIndex];
-            this.bindTexture(img,textureIndex);
+            this.bindTexture(img,img._id);
             this.bindIndex( 12 + i*4 )
         }
         // console.log('\n')
@@ -302,18 +289,31 @@ class webGl {
         const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         const centerX = this.viewWidth / 2;
         const positions = this.positions;
-        for( let i = 0 , L = positions.length; i < L; i += 4){
-            let x = positions[i] , y = positions[i+1], z = positions[ i + 2], w = positions[i+3];
-            const newPoint = matrix.multiplyPoint( 
-                [x,y,z,w],
-                matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
-                matrix.rotateYMatrix(deg), //开始旋转
-                matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
-            );
-            for( let j = i ; j < 4 + i; j++ ){
-                positions[j] = newPoint[j-i]
-            }
-        }
+        // for( let i = 0 , L = positions.length; i < L; i += 4){
+        //     let x = positions[i] , y = positions[i+1], z = positions[ i + 2], w = positions[i+3];
+        //     const newPoint = matrix.multiplyPoint( 
+        //         [x,y,z,w],
+        //         matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
+        //         matrix.rotateYMatrix(deg), //开始旋转
+        //         matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
+        //     );
+        //     for( let j = i ; j < 4 + i; j++ ){
+        //         positions[j] = newPoint[j-i]
+        //     }
+        // }
+        this.modelMatrix = matrix.multiplyMatrices(
+            this.modelMatrix,
+            matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
+            matrix.rotateYMatrix(deg), //开始旋转
+            matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
+        )
+        console.log(this.modelMatrix)
+        this.gl.uniformMatrix4fv(
+            this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
+            false,
+            this.modelMatrix
+        );
+        this.drawPosition();
         // console.log(positions)
     }
     scaleZPosition({
@@ -451,10 +451,14 @@ class webGl {
         // Tell the shader we bound the texture to texture unit 0
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler0'), 0);
     }
-    bindTexture(image: HTMLImageElement,index:number) {;
+    bindTexture(image: HTMLImageElement,id:number) {;
+        if( !image.complete ){//图片还没加载完 先用 背景贴图顶上
+            this.updateTexture(0)
+            return;
+        }
       
-        if(this.textures.get(index)){ // 该图片已经创建过贴图 直接拿来复用
-            this.updateTexture(index)
+        if(this.textures.get(id)){ // 该图片已经创建过贴图 直接拿来复用
+            this.updateTexture(id)
             return;
         }
         const gl = this.gl;
@@ -464,7 +468,7 @@ class webGl {
         const srcType = gl.UNSIGNED_BYTE;
         const texture = gl.createTexture();
         
-        this.textures.set(index,texture);
+        this.textures.set(id,texture);
 
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
@@ -488,9 +492,9 @@ class webGl {
         
         // gl.bindTexture(gl.TEXTURE_2D, null);
     }
-    updateTexture(index:number){
+    updateTexture(id:number){
         const gl = this.gl;
-        gl.bindTexture(gl.TEXTURE_2D,this.textures.get(index))
+        gl.bindTexture(gl.TEXTURE_2D,this.textures.get(id))
     }
     bindIndex(index: number) {;
         const gl = this.gl;
@@ -571,7 +575,7 @@ class webGl {
         const curWidth =  rect.width * this.dpr;
         const curHeight = rect.height * this.dpr;
 
-        const curImgShape = this.imgShape[this.curIndex];
+        const curImgShape = this.imgShape;
         let [nw,nh] = curImgShape;
         nw = Math.abs(nw);
         nh = Math.abs(nh);
@@ -581,7 +585,7 @@ class webGl {
         clientX *= this.dpr;
         clientY *= this.dpr;
         if( this.isEnlargementForScale ){// 放大双击得时候就缩小
-            let [initialWidth,initinalHeight] = this.imgShapeInitinal[this.curIndex]
+            let [initialWidth,initinalHeight] = this.imgShapeInitinal
             width = Math.abs(initialWidth);
             height = Math.abs(initinalHeight)
 
@@ -650,7 +654,7 @@ class webGl {
             height
         ]
     }
-    async draw( index: number) {
+    draw( index: number) {
         this.positions = [];// 期望positions只保留一个底层的立方体，三个展示图片的面 共计六个面
         const imgLength = this.imgUrls.length;
         let maxWidth = 0,maxHeight = 0;
@@ -658,20 +662,20 @@ class webGl {
             if( i !== -1 && i <= imgLength - 1 ){
                 {   
                     let image;
-                    if( typeof this.imgUrls[i] == 'string' ){
-                        const [err, img] = await this.loadImage(this.imgUrls[i] as string);
-                        image = img;
-                        if(err){
-                            img.loadError = true;
-                        }
+                    if( this.imgs[i] ){
+                        image = this.imgs[i]
+                    }else if( typeof this.imgUrls[i] == 'string' ){
+                        image = this.loadImage(this.imgUrls[i] as string,i);
                     }else{
                         image = this.imgUrls[i];
                     }
                     this.imgs[i] = image;
                     const { naturalWidth, naturalHeight } = image;
                     let [width,height] = this.decideImgViewSize(naturalWidth * this.dpr,naturalHeight * this.dpr)
-                    this.imgShape[i] = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ];
-                    this.imgShapeInitinal[i] = [width,height,0,1]
+                    if( i == this.curIndex ){
+                        this.imgShape = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ];
+                        this.imgShapeInitinal = [width,height,0,1]
+                    }
                     this.genPostion(width, height,i);
                     maxWidth = Math.max(width,maxWidth)
                     maxHeight = Math.max(height,maxHeight)
@@ -679,7 +683,6 @@ class webGl {
             }
         }
         this.generateCube(maxWidth,maxHeight);
-
         this.bindPostion();
         this.drawPosition();
     }
@@ -715,7 +718,7 @@ class webGl {
         return rect.right <= ((this.viewWidth / this.dpr)) && this.isBoudriedSide;
     }
     curIsLongImg(){
-        const [naturalWidth,naturalHeight] = this.imgShape[this.curIndex];
+        const [naturalWidth,naturalHeight] = this.imgShape;
         return Math.abs(naturalWidth) * 2.5 < Math.abs(naturalHeight);
     }
     get curCenterCoordinate(){
@@ -779,7 +782,7 @@ class webGl {
      * should return a value that indicate whether the curViewRect over the viewPort's boundry
      */
     get isEnlargement(){
-        const [iw,ih] = this.imgShapeInitinal[this.curIndex]
+        const [iw,ih] = this.imgShapeInitinal
         const viewRect = this.viewRect;
         
         return (
@@ -792,30 +795,38 @@ class webGl {
     /**
      * should return curViewRect is enlarge or shrink compare with initialSize;
      */
-    get isEnlargementForScale(){
-        const [iw,ih] = this.imgShapeInitinal[this.curIndex]
+    get isEnlargementForScale(){;
+        const [iw,ih] = this.imgShapeInitinal;
         const rect = this.viewRect;
-        return rect.width * this.dpr - 1 > Math.abs(iw) || rect.height * this.dpr - 1 > Math.abs(ih);
+        return rect.width * this.dpr > Math.abs(iw) || rect.height * this.dpr > Math.abs(ih);
     }
     isLoadingError(index?:number ){
         ;arguments.length == 0 && ( index = this.curIndex );
         return this.imgs[index]['loadError'] // to do 定义错误图片样式
     }
-   
-    loadImage(src: string): Promise<[boolean, image]> {
-        return new Promise((res) => {
-            const img = new Image() as image;
-            img.onload = () => {
-                res([false, img])
-            }
-            img.onerror = () => {
-                res([true, img])
-            }
-            img.src = src;
-            if( img.complete ){
-                res([false, img]);
-            }
-        })
+    loadImage(src: string,index:number){
+        const img = new Image() as image;
+        img._id = this.imgId++;
+        this.imgs[index] = img;
+        img.onload = () => {
+            this.handleImgLoaded(index);
+        }
+        img.onerror = () => {
+            img.loadError = true;
+        }
+        img.crossOrigin='anonymous';
+        (img.src = src)
+        // Promise.resolve().then( () => (img.src = src) )
+        if( img.complete ){
+            this.handleImgLoaded(index);
+        }
+        return img;
+    }
+    handleImgLoaded(index:number){
+        if( ~[-1,0,1].indexOf(index - this.curIndex) ){
+            // this.draw(this.curIndex);
+            this.drawPosition();
+        }
     }
     clear() {
         const gl = this.gl;

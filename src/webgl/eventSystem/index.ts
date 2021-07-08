@@ -15,7 +15,7 @@ export class events {
     handleDoubleClick(e: TouchEvent & MouseEvent){
 
         const { clientX, clientY } = e.touches[0];
-        const { viewInstance } = this
+        const { viewInstance } = this;
 
         const [scaleX,scaleY,dx,dy] = viewInstance.decideScaleRatio(clientX,clientY)
         return viewInstance.scaleZPosition({scaleX,scaleY,dx,dy})
@@ -39,14 +39,12 @@ export class events {
         let deg = -offset * 0.008;
         const { viewInstance } = this
         viewInstance.rotatePosition(deg);
-        viewInstance.bindPostion();
-        viewInstance.drawPosition();
     }
     handleZoom(e: TouchEvent & MouseEvent,sx:number,sy:number,dx:number,dy:number) {
         const { viewInstance } = this;
 
-        let [nw,nh] = viewInstance.imgShape[viewInstance.curIndex]
-        let [iW,iH] = viewInstance.imgShapeInitinal[viewInstance.curIndex]
+        let [nw,nh] = viewInstance.imgShape
+        let [iW,iH] = viewInstance.imgShapeInitinal
 
         nw = Math.abs(nw)
         nh = Math.abs(nh)

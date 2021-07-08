@@ -12,7 +12,7 @@ export const matrix = {
         }
         return result;
     },
-    multiplyMatrices(a: matrixType, b: matrixType) {
+    multiplyMatrices(a: matrixType, b: matrixType,...rest) {
         var result = [];
         for (var row = 0; row < 4; row++) {
             for (var col = 0; col < 4; col++) {
@@ -21,6 +21,9 @@ export const matrix = {
                     a[row * 4 + 2] * b[col + 8] + a[row * 4 + 3] * b[col + 12]
             }
 
+        }
+        if( rest.length ){
+            return matrix.multiplyMatrices(result,rest.splice(0,1),...rest)
         }
         return result;
     },
