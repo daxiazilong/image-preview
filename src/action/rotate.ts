@@ -1,4 +1,4 @@
-import { ImagePreview } from '../ts/image-preview'
+import { ImagePreview } from '../core/image-preview'
 
 export class Rotate{
     async handleRotateLeft(this: ImagePreview,e: TouchEvent & MouseEvent ) :Promise<any>{

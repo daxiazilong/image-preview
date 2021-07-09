@@ -1,5 +1,5 @@
 //@ts-nocheck
-import { ImagePreview } from "../ts/image-preview";
+import { ImagePreview } from "../core/image-preview";
 
 class htmlExecutor{
     ref: Array<HTMLDivElement>;

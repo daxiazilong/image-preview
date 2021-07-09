@@ -1,4 +1,4 @@
-import { ImagePreview } from "../ts/image-preview";
+import { ImagePreview } from "../core/image-preview";
 export let _Vue;
 let component =  {
     props:{

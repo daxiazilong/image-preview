@@ -5,7 +5,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const version = process.env.npm_package_version;
 const dev = (process.argv[2].split('=')[1]) == "development";
 let compilePath = {
-  imagePreview: './src/ts/image-preview.ts'
+  imagePreview: './src/core/image-preview.ts'
 };
 const output = dev ? 'debug' : 'release';
 
@@ -13,8 +13,8 @@ var plugins = [];
 
 if (1) {
   compilePath = {
-    imagePreview: './src/ts/image-preview.ts',
-    test: './src/ts/test.ts'
+    imagePreview: './src/core/image-preview.ts',
+    test: './src/core/test.ts'
   }
   plugins = [
     new HtmlWebpackPlugin({

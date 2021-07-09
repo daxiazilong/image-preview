@@ -7,10 +7,11 @@ export const matrix = {
                 +
                 rowMatrix[col + 8] * point[2] + rowMatrix[col + 12] * point[3]
         }
-        if(rest.length > 0){
-            return matrix.multiplyPoint(result,rest.splice(0,1)[0],...rest)
+
+        if( !rest.length ){
+            return result;
         }
-        return result;
+        return matrix.multiplyPoint(result,rest.splice(0,1)[0],...rest)
     },
     multiplyMatrices(a: matrixType, b: matrixType,...rest) {
         var result = [];
@@ -22,10 +23,10 @@ export const matrix = {
             }
 
         }
-        if( rest.length ){
-            return matrix.multiplyMatrices(result,rest.splice(0,1)[0],...rest)
+        if( !rest.length ){
+            return result;
         }
-        return result;
+        return matrix.multiplyMatrices(result,rest.splice(0,1)[0],...rest)
     },
     // https://www.songho.ca/opengl/gl_rotate.html
     rotateByArbitrayAxis(x:number,y:number,z:number,deg:number){

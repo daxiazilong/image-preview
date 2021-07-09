@@ -3,6 +3,7 @@ import { sourceVer } from './shaders/vertext-shader.vert';
 import { matrix } from './matrix'
 import { cubicBezier,linear,easeOut ,easeIn,easeInOut} from '../animation/animateJs'
 import { events } from './eventSystem/index'
+import {errImgBase64} from './static/index'
 import {fps} from './tools/index'
 
 const easeOut1 = new cubicBezier(0.18, 0.96, 0.18, 0.96)
@@ -140,8 +141,10 @@ class webGl {
         }
     }
     initOtherTexture(){
+
         const gl = this.gl;
         const texture = gl.createTexture();
+        // bgd of cubic
         this.texturesOther.set(0,texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         //@ts-ignore
@@ -154,14 +157,22 @@ class webGl {
             gl.UNSIGNED_BYTE,
                 new Uint8Array([r, g, b, 255])
         );
+        // err img
+        const img = new Image() as image;
+        img.src = errImgBase64;
+        // 200 200
+        // console.log(img.naturalWidth,img.naturalHeight)
+        const textureErrImg = gl.createTexture();
+        this.texturesOther.set(1,textureErrImg);
+        gl.bindTexture(gl.TEXTURE_2D, textureErrImg);
+        this.texImage(img)
+        this.setTexParameteri(img.width,img.height)
+        // document.body.appendChild(img)
     }
     initData() {
         this.draw(this.curIndex)
     }
-    // place a substitute by subterfuge
-    placeAsubstituteBySubterfuge(){
-
-    }
+    
     slideNext(){
         this.rotate(0.5 * Math.PI)
     }
@@ -210,10 +221,8 @@ class webGl {
         })
     }
     genPostion(width: number, height: number,index:number) {
-        const gl = this.gl;
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         const viewWidth = this.viewWidth;
-        const viewHeight = this.viewHeight;
         
         let sideZAxis = z - ( viewWidth - width ) / 2;
 
@@ -242,6 +251,52 @@ class webGl {
         key  += 1; // -1,0,1 -> 0,1,2
         // 可以优化为插入
         this.positions.push( ...positionsMap[key] )
+    }
+    /**
+     * 图片异步加载之后更新顶点坐标位置。
+     * @param index 相对于 curIndex 的位置 -1,1,0
+     */
+    updatePosition(img:image,index){
+        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        const viewWidth = this.viewWidth;
+        
+        let { naturalWidth, naturalHeight } = img;
+        if( img.loadError ){
+            naturalWidth = naturalHeight = 200;
+        }
+        let [width,height] = this.decideImgViewSize(naturalWidth * this.dpr,naturalHeight * this.dpr)
+        let sideZAxis = z - ( viewWidth - width ) / 2;
+
+        // console.log(z)
+        const positionsMap = [
+            [// left
+                -viewWidth / 2, -height / 2, sideZAxis-width, 1.0,
+                -viewWidth / 2, -height / 2, sideZAxis, 1.0,
+                -viewWidth / 2, height / 2, sideZAxis, 1.0,
+                -viewWidth / 2, height / 2, sideZAxis-width, 1.0,
+            ],
+            [//fornt
+                -width / 2, -height / 2, z, 1.0,
+                width / 2, -height / 2, z, 1.0,
+                width / 2, height / 2, z, 1.0,
+                -width / 2, height / 2, z, 1.0,
+            ],
+            [// right
+                viewWidth / 2, -height / 2, sideZAxis, 1.0,
+                viewWidth / 2, -height / 2, sideZAxis-width, 1.0,
+                viewWidth / 2, height / 2, sideZAxis-width, 1.0,
+                viewWidth / 2, height / 2, sideZAxis, 1.0,
+            ]
+        ]
+        let key = index;
+        let indexInPosition = this.curPointAt + key * 16;
+
+        key  += 1; // -1,0,1 -> 0,1,2;
+
+        let curPlane = positionsMap[key];
+        for( let i = indexInPosition ; i < indexInPosition + 16; i++ ){
+            this.positions[i] = curPlane[i-indexInPosition]
+        }
     }
     bindPostion(){
         const gl = this.gl;
@@ -284,7 +339,12 @@ class webGl {
         ;( textureIndex < 0 ) && (textureIndex = 0);
         for( let i = 0; i < faces ; i++ ,textureIndex++ ){
             const img = this.imgs[textureIndex];
-            this.bindTexture(img,img._id);
+            if(img){
+                this.bindTexture(img,img._id);
+            }else{
+                // loading
+                console.log(`shouldn't have`)
+            }
             this.bindIndex( 12 + i*4 )
         }
         // console.log('\n')
@@ -294,19 +354,6 @@ class webGl {
     rotatePosition(deg:number){
         const zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         const centerX = this.viewWidth / 2;
-        const positions = this.positions;
-        // for( let i = 0 , L = positions.length; i < L; i += 4){
-        //     let x = positions[i] , y = positions[i+1], z = positions[ i + 2], w = positions[i+3];
-        //     const newPoint = matrix.multiplyPoint( 
-        //         [x,y,z,w],
-        //         matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
-        //         matrix.rotateYMatrix(deg), //开始旋转
-        //         matrix.translateMatrix(0,0,zInitial-(centerX )) // 挪到原位置
-        //     );
-        //     for( let j = i ; j < 4 + i; j++ ){
-        //         positions[j] = newPoint[j-i]
-        //     }
-        // }
         this.modelMatrix = matrix.multiplyMatrices(
             this.baseModel,
             matrix.translateMatrix(0,0,centerX - zInitial),// 挪到坐标原点
@@ -319,7 +366,6 @@ class webGl {
             this.modelMatrix
         );
         this.drawPosition();
-        // console.log(positions)
     }
     scaleZPosition({
         scaleX,
@@ -456,50 +502,64 @@ class webGl {
         // Tell the shader we bound the texture to texture unit 0
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler0'), 0);
     }
-    bindTexture(image: HTMLImageElement,id:number) {;
-        if( !image.complete ){//图片还没加载完 先用 背景贴图顶上
-            this.updateTexture(0)
-            return;
-        }
+    bindTexture(image: image,id:number) {;
       
-        if(this.textures.get(id)){ // 该图片已经创建过贴图 直接拿来复用
-            this.updateTexture(id)
+        if( !image.complete ){//loading ing
+            this.updateOtherTexture(0);
             return;
         }
+        if(image.loadError){
+            this.updateOtherTexture(1);
+            return;
+        }
+        if(this.textures.get(id)){ // 该图片已经创建过贴图 直接拿来复用
+            this.updateTexture(id,image)
+            return;
+        }
+        const gl = this.gl;
+        
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        this.textures.set(id,texture);
+
+        this.texImage(image)
+        this.setTexParameteri(image.width,image.height)
+    }
+    updateTexture(id:number,image: image){
+        const gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D,this.textures.get(id));
+        this.setTexParameteri(image.width,image.height)
+    }
+    updateOtherTexture(id:number){
+        const gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D,this.texturesOther.get(id));
+        this.setTexParameteri(0,3)// default
+    }
+    texImage(image:image){
         const gl = this.gl;
         const level = 0;
         const internalFormat = gl.RGBA;
         const srcFormat = gl.RGBA;
         const srcType = gl.UNSIGNED_BYTE;
-        const texture = gl.createTexture();
-        
-        this.textures.set(id,texture);
 
-        gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
-
-        {
-            // WebGL1 has different requirements for power of 2 images
-            // vs non power of 2 images so check if the image is a
-            // power of 2 in both dimensions.
-            if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-                // Yes, it's a power of 2. Generate mips.
-                gl.generateMipmap(gl.TEXTURE_2D);
-            } else {
-                // No, it's not a power of 2. Turn of mips and set
-                // wrapping to clamp to edge
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);//gl.LINEAR_MIPMAP_LINE
-            }
-        }
-        
-        // gl.bindTexture(gl.TEXTURE_2D, null);
     }
-    updateTexture(id:number){
+    setTexParameteri(width:number,height:number){
         const gl = this.gl;
-        gl.bindTexture(gl.TEXTURE_2D,this.textures.get(id))
+        // WebGL1 has different requirements for power of 2 images
+        // vs non power of 2 images so check if the image is a
+        // power of 2 in both dimensions.
+        if (isPowerOf2(width) && isPowerOf2(height)) {
+            // Yes, it's a power of 2. Generate mips.
+            gl.generateMipmap(gl.TEXTURE_2D);
+        } else {
+            // No, it's not a power of 2. Turn of mips and set
+            // wrapping to clamp to edge
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);//gl.LINEAR_MIPMAP_LINE
+        }
     }
     bindIndex(index: number) {;
         const gl = this.gl;
@@ -665,26 +725,29 @@ class webGl {
         let maxWidth = 0,maxHeight = 0;
         for( let i = index - 1; i <= index + 1; i++ ){
             if( i !== -1 && i <= imgLength - 1 ){
-                {   
-                    let image;
-                    if( this.imgs[i] ){
-                        image = this.imgs[i]
-                    }else if( typeof this.imgUrls[i] == 'string' ){
-                        image = this.loadImage(this.imgUrls[i] as string,i);
-                    }else{
-                        image = this.imgUrls[i];
-                    }
-                    this.imgs[i] = image;
-                    const { naturalWidth, naturalHeight } = image;
-                    let [width,height] = this.decideImgViewSize(naturalWidth * this.dpr,naturalHeight * this.dpr)
-                    if( i == this.curIndex ){
-                        this.imgShape = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ];
-                        this.imgShapeInitinal = [width,height,0,1]
-                    }
-                    this.genPostion(width, height,i);
-                    maxWidth = Math.max(width,maxWidth)
-                    maxHeight = Math.max(height,maxHeight)
+                let image:image;
+                if( this.imgs[i] ){
+                    image = this.imgs[i]
+                }else if( typeof this.imgUrls[i] == 'string' ){
+                    image = this.loadImage(this.imgUrls[i] as string,i);
+                }else{
+                    image = this.imgUrls[i] as image;
                 }
+                this.imgs[i] = image;
+                let { naturalWidth, naturalHeight } = image;
+
+                if( image.loadError){// a load wrong img
+                    naturalWidth = naturalHeight = 200; // default size. here maybe 
+                }
+                let [width,height] = this.decideImgViewSize(naturalWidth * this.dpr,naturalHeight * this.dpr)
+                
+                if( i == this.curIndex ){
+                    this.imgShape = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ];
+                    this.imgShapeInitinal = [width,height,0,1]
+                }
+                this.genPostion(width, height,i);
+                maxWidth = Math.max(width,maxWidth)
+                maxHeight = Math.max(height,maxHeight)
             }
         }
         this.generateCube(maxWidth,maxHeight);
@@ -813,23 +876,30 @@ class webGl {
         const img = new Image() as image;
         img._id = this.imgId++;
         this.imgs[index] = img;
+        let isHandled = false;
         img.onload = () => {
-            this.handleImgLoaded(index);
+            if( isHandled ){
+                return;
+            }
+            isHandled = true;
+            this.handleImgLoaded(img,index);
         }
         img.onerror = () => {
+            if( isHandled ){
+                return;
+            }
+            isHandled = true;
             img.loadError = true;
+            this.handleImgLoaded(img,index);
         }
         img.crossOrigin='anonymous';
-        (img.src = src)
-        // Promise.resolve().then( () => (img.src = src) )
-        if( img.complete ){
-            this.handleImgLoaded(index);
-        }
+        ;(img.src = src);
         return img;
     }
-    handleImgLoaded(index:number){
+    handleImgLoaded(img:image,index:number){
         if( ~[-1,0,1].indexOf(index - this.curIndex) ){
-            // this.draw(this.curIndex);
+            this.updatePosition(img,index - this.curIndex)
+            this.bindPostion();
             this.drawPosition();
         }
     }

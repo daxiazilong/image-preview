@@ -1,7 +1,7 @@
 /**
  * move action
  */
-import { ImagePreview } from '../ts/image-preview'
+import { ImagePreview } from '../core/image-preview'
 import { showDebugger } from '../tools/index';
 
 export class Move{
