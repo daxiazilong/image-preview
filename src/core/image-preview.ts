@@ -21,9 +21,11 @@ class ImagePreview implements
     public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
 
     public startX: number;//手指移动时的x坐标 会随手指坐标变化
-    public touchStartX: number;//手指第一次点击时的x起点坐标 不会变化
+    public touchStartX: number;//手指移动时的x起点坐标 不会变化
     public startY: number;//手指移动时的y起始坐标
     public touchStartY: number; //手指第一次点击时的y起点坐标
+
+    public startXForDirection: number // 判断手指移动方向的点
 
     public curIndex: number = 0;//当前第几个图片
     public imgContainerMoveX: number = 0;//图片容器x轴的移动距离
@@ -396,6 +398,8 @@ class ImagePreview implements
         }
         this.lastClick = Date.now();
         this.getMovePoints(e);
+
+        this.startXForDirection = e.touches[0].clientX;
     }
     handleClick(e?: TouchEvent & MouseEvent) {
         let close: HTMLElement = <HTMLElement>(this.ref.querySelector(`.${this.prefix}close`));
@@ -441,12 +445,13 @@ class ImagePreview implements
     async handleTEndEnlarge(e: TouchEvent & MouseEvent) {
         // ;debugger;
         // this.isAnimating = false;
-        const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-        const conWidth: number = imgContainerRect.width;
-        const conHeight: number = imgContainerRect.height;
+    
 
         const { actionExecutor } = this
         const curItemRect = actionExecutor.viewRect;
+
+        const conWidth: number = actionExecutor.viewWidth / actionExecutor.dpr;
+        const conHeight: number = actionExecutor.viewHeight / actionExecutor.dpr;
 
         const curItemWidth: number = curItemRect.width;
         const curItemHeihgt: number = curItemRect.height;

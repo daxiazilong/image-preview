@@ -5,6 +5,7 @@ import { cubicBezier,linear,easeOut ,easeIn,easeInOut} from '../animation/animat
 import { events } from './eventSystem/index'
 import {errImgBase64} from './static/index'
 import {fps} from './tools/index'
+import { showDebugger } from '../tools/index';
 
 const easeOut1 = new cubicBezier(0.18, 0.96, 0.18, 0.96)
 
@@ -77,6 +78,19 @@ class webGl {
 
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
+        
+        this.imgUrls = images as Array<image>;
+        const gl = this.gl;
+      
+        gl.enable(gl.DEPTH_TEST);           // Enable depth testing
+        gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
+        // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
+        // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
+        this.readyWebgl();
+        this.initData();
+        this.eventsHanlder = new events(this);
+    }
+    readyWebgl(){
         this.shaderProgram = this.bindShader(this.gl, sourceFrag, sourceVer)
         
         const projectionMatrix = this.createPerspectiveMatrix();
@@ -92,28 +106,10 @@ class webGl {
             false,
             this.modelMatrix
         );
-
-        this.gl.uniform4fv(
-            this.gl.getUniformLocation(this.shaderProgram,'bgdColor'), 
-            new Float32Array([0, 0, 0, 0.1])
-        );
-        
-        this.imgUrls = images as Array<image>;
-        const gl = this.gl;
-      
-        console.log(gl.getParameter(gl.MAX_TEXTURE_SIZE))
-        gl.enable(gl.DEPTH_TEST);           // Enable depth testing
-        gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-        // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
-        // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
-
         this.setTextureCordinate();
         this.initOtherTexture();
-        this.initData();
         
-        this.eventsHanlder = new events(this);
     }
-  
     addImg(image: string | image , index: number){
         this.imgUrls.splice(index + 1,0,image);
         this.imgs.splice(index + 1, 0 ,null);
@@ -160,8 +156,10 @@ class webGl {
         // err img
         const img = new Image() as image;
         img.src = errImgBase64;
+        document.body.append(img)
         // 200 200
         // console.log(img.naturalWidth,img.naturalHeight)
+        console.log(img.complete)
         const textureErrImg = gl.createTexture();
         this.texturesOther.set(1,textureErrImg);
         gl.bindTexture(gl.TEXTURE_2D, textureErrImg);
@@ -254,7 +252,7 @@ class webGl {
     }
     /**
      * 图片异步加载之后更新顶点坐标位置。
-     * @param index 相对于 curIndex 的位置 -1,1,0
+     * @param index 相对于 curIndex 的位置 -1,0,1
      */
     updatePosition(img:image,index){
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
@@ -265,6 +263,11 @@ class webGl {
             naturalWidth = naturalHeight = 200;
         }
         let [width,height] = this.decideImgViewSize(naturalWidth * this.dpr,naturalHeight * this.dpr)
+
+        if( index == 0 ){
+            this.imgShape = [ naturalWidth*this.dpr, naturalHeight * this.dpr, 0, 1 ];
+            this.imgShapeInitinal = [width,height,0,1]
+        }
         let sideZAxis = z - ( viewWidth - width ) / 2;
 
         // console.log(z)
@@ -304,9 +307,6 @@ class webGl {
         const positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
-
-        // Tell WebGL how to pull out the positions from the position
-        // buffer into the vertexPosition attribute
         {
             const numComponents = 4;
             const type = gl.FLOAT;
@@ -779,11 +779,11 @@ class webGl {
     }
     get IsBoundaryLeft(){
         const rect = this.viewRect;
-        return rect.left >= 0 && this.isBoudriedSide;
+        return Math.round(rect.left) >= 0 && this.isBoudriedSide;
     }
     get isBoundaryRight(){
         const rect = this.viewRect;
-        return rect.right <= ((this.viewWidth / this.dpr)) && this.isBoudriedSide;
+        return Math.round(rect.right * this.dpr) <= Math.round(((this.viewWidth / 1))) && this.isBoudriedSide;
     }
     curIsLongImg(){
         const [naturalWidth,naturalHeight] = this.imgShape;
@@ -824,7 +824,7 @@ class webGl {
 
         const width = Math.abs(minX - maxX );
         const height =  Math.abs(minY - maxY);
-
+      
         return{
             left: (minX - topOriginX) / this.dpr,
             right: (maxX - topOriginX) / this.dpr,

@@ -36,8 +36,9 @@ export class events {
     }
 
     handleMoveNormal(e: TouchEvent & MouseEvent, offset: number) {
-        let deg = -offset * 0.008;
-        const { viewInstance } = this
+        const { viewInstance } = this;
+        const maxDeg = Math.PI / 2 ;
+        let deg = -offset / (viewInstance.viewWidth/viewInstance.dpr) * maxDeg
         viewInstance.rotatePosition(deg);
     }
     handleZoom(e: TouchEvent & MouseEvent,sx:number,sy:number,dx:number,dy:number) {
@@ -73,9 +74,10 @@ export class events {
 
     async handleTEndEnNormal(e: TouchEvent & MouseEvent, offset: number) {
 
-        let degX = -offset * 0.008;
-        const plusOrMinus = degX / Math.abs(degX);
         const { viewInstance } = this;
+        const maxDeg = Math.PI / 2 ;
+        let degX = -offset / (viewInstance.viewWidth/viewInstance.dpr) * maxDeg
+        const plusOrMinus = degX / Math.abs(degX);
 
         viewInstance.baseModel = viewInstance.modelMatrix;
 
@@ -111,7 +113,7 @@ export class events {
         x *= viewInstance.dpr;
         y *= -viewInstance.dpr;
         z *= viewInstance.dpr;
-
+        console.log('handleTEndEnlarge',x,y,z)
         this.curBehaviorCanBreak = true;
         await viewInstance.moveCurPlane(x,y,0)
         this.curBehaviorCanBreak = false;

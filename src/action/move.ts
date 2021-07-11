@@ -19,8 +19,11 @@ export class Move{
         let isBoundaryRight: boolean = this.actionExecutor.isBoundaryRight;
 
         let isBoundary = isBoundaryLeft || isBoundaryRight;
+        if(e.touches[0].clientX - this.startXForDirection === 0){//还没移动
+            return;
+        }
+        let direction: string = e.touches[0].clientX - this.startXForDirection > 0 ? 'right':'left';
 
-        let direction: string = e.touches[0].clientX - this.startX > 0 ? 'right':'left';
         const viewRect = this.actionExecutor.viewRect;
 
         const curItemViewLeft: number = viewRect.left;
@@ -93,7 +96,25 @@ export class Move{
                 }else if( !this.actionExecutor.isEnlargement ){// not enlage
                     this.handleMoveNormal(e)
                 }else if( isBoundary || this.normalMoved ){// 放大了到边界了
-                    this.handleMoveNormal(e)
+                    if( this.normalMoved ){// 已经有normal move 继续normalmove
+                        this.handleMoveNormal(e)
+                    }else{                 // 否则手指移动方向与到达的边界同向 才normalmove 反向就enlarge
+                        if( direction == 'right' ){
+                            if( isBoundaryLeft ){
+                                this.handleMoveNormal(e)
+                            }else{
+                                this.handleMoveEnlage(e)
+                            }
+                        }else if( direction == 'left' ){
+                            if( isBoundaryRight ){
+                                this.handleMoveNormal(e)
+                            }else{
+                                this.handleMoveEnlage(e)
+                            }
+                        }else{
+                            this.handleMoveEnlage(e)
+                        }
+                    }
                 }
                 return;
             }
