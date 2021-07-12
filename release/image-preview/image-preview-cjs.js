@@ -2,68 +2,83 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+/**
+* 移动端自己调试要显示的数据
+*/
+var msgs = [];
+var timer;
+function showDebugger(msg) {
+    clearTimeout(timer);
+    msgs.push(msg);
+    var stat = document.getElementById('stat');
+    timer = setTimeout(function () {
+        stat.innerHTML = "<pre style=\"word-break: break-all;white-space: pre-line;\">" + msgs.join('\n') + "</pre>";
+        msgs = [];
+    }, 200);
+}
+
 var Move = /** @class */ (function () {
     function Move() {
     }
     Move.prototype.handleMove = function (e) {
         var _this = this;
         e.preventDefault();
-        if (this.isAnimating) {
-            return;
-        }
-        // 双指缩放时的处理
+        // 双指缩放时的。
         if (e.touches.length == 2) {
-            clearTimeout(this.performerRecordMove);
             clearTimeout(this.performerClick);
-            this.performerRecordMove = 0;
             this.handleZoom(e);
+            // this.handleMoveEnlage(e); 
             return;
         }
-        if (this.isZooming) {
-            // 执行了缩放操作，则不进行任何移动
-            // 这个值会在手指全部离开屏幕后重置
+        var isBoundaryLeft = this.actionExecutor.IsBoundaryLeft;
+        var isBoundaryRight = this.actionExecutor.isBoundaryRight;
+        var isBoundary = isBoundaryLeft || isBoundaryRight;
+        if (e.touches[0].clientX - this.startXForDirection === 0) { //还没移动
             return;
         }
-        var curTouchX = e.touches[0].clientX;
-        var curTouchY = e.touches[0].clientY;
-        if ((this.touchStartX - curTouchX) > 2 && Math.abs(this.touchStartY - curTouchY) > 2) {
-            clearTimeout(this.performerClick);
-        }
-        var curItem = this.imgItems[this.curIndex];
-        var isBoundaryLeft = curItem.dataset.toLeft == 'true';
-        var isBoundaryRight = curItem.dataset.toRight == 'true';
-        var direction = e.touches[0].clientX - this.startX > 0 ? 'right' : 'left';
-        var curItemViewLeft = curItem.getBoundingClientRect().left;
-        var curItemViewRight = curItem.getBoundingClientRect().right;
+        var direction = e.touches[0].clientX - this.startXForDirection > 0 ? 'right' : 'left';
+        var viewRect = this.actionExecutor.viewRect;
+        var curItemViewLeft = viewRect.left;
+        var curItemViewRight = viewRect.right;
         var imgContainerRect = this.imgContainer.getBoundingClientRect();
         var conWidth = imgContainerRect.width;
         /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
          * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
-         * 并启动一个计时器 一定时间之后处理移动方向
          **/
         if (this.fingerDirection) {
-            this.performerRecordMove = 0;
-            if (curItem.dataset.isEnlargement == 'enlargement') {
-                // 放大的时候的移动是查看放大后的图片
-                // 放大的时候,如果到达边界还是进行正常的切屏操作
-                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
+            if (this.actionExecutor.isEnlargement) {
+                // 放大了但是没有超出边界
                 if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
-                    if (((isBoundaryLeft && direction == 'right') ||
-                        (isBoundaryRight && direction == 'left') ||
+                    if (((direction == 'right') ||
+                        (direction == 'left') ||
                         (this.isEnlargeMove)) &&
                         (this.fingerDirection == 'horizontal')) {
                         this.isEnlargeMove = true;
                         this.handleMoveNormal(e);
+                        var type = 'resetEnlargeMove';
+                        var task = function () { _this.isEnlargeMove = false; };
+                        this.addTouchEndTask(type, {
+                            priority: 1,
+                            callback: task
+                        });
                     }
                     else {
                         this.handleMoveEnlage(e);
                     }
                 }
                 else {
-                    if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (this.isEnlargeMove)) {
+                    if (((isBoundaryLeft && direction == 'right')
+                        ||
+                            (isBoundaryRight && direction == 'left')
+                        ||
+                            (this.isEnlargeMove))) {
                         this.isEnlargeMove = true;
                         this.handleMoveNormal(e);
+                        var type = 'resetEnlargeMove';
+                        this.addTouchEndTask(type, {
+                            priority: 1,
+                            callback: function () { return (_this.isEnlargeMove = false); }
+                        });
                     }
                     else {
                         this.handleMoveEnlage(e);
@@ -74,204 +89,206 @@ var Move = /** @class */ (function () {
                 //正常情况下的移动是图片左右切换
                 this.handleMoveNormal(e);
             }
-            this.isMotionless = false;
         }
         else {
             // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
-            if ((curItem.dataset.isEnlargement == 'enlargement' && curItemViewLeft < 0 && curItemViewRight > conWidth)
+            if ((this.actionExecutor.isEnlargement &&
+                (curItemViewLeft < 0 || curItemViewRight > conWidth))
                 ||
-                    (curItem.dataset.isEnlargement !== 'enlargement')) {
-                if (curItem.dataset.isEnlargement == 'enlargement' && curItemViewLeft < 0 && curItemViewRight > conWidth) {
+                    (!this.actionExecutor.isEnlargement)) {
+                // enlarge but not reach bonudry
+                if (this.actionExecutor.isEnlargement && !isBoundary && !this.normalMoved) {
                     this.handleMoveEnlage(e);
                 }
-                else if (curItem.dataset.isEnlargement !== 'enlargement') {
+                else if (!this.actionExecutor.isEnlargement) { // not enlage
                     this.handleMoveNormal(e);
                 }
-                this.isMotionless = false;
+                else if (isBoundary || this.normalMoved) { // 放大了到边界了
+                    if (this.normalMoved) { // 已经有normal move 继续normalmove
+                        this.handleMoveNormal(e);
+                    }
+                    else { // 否则手指移动方向与到达的边界同向 才normalmove 反向就enlarge
+                        if (direction == 'right') {
+                            if (isBoundaryLeft) {
+                                this.handleMoveNormal(e);
+                            }
+                            else {
+                                this.handleMoveEnlage(e);
+                            }
+                        }
+                        else if (direction == 'left') {
+                            if (isBoundaryRight) {
+                                this.handleMoveNormal(e);
+                            }
+                            else {
+                                this.handleMoveEnlage(e);
+                            }
+                        }
+                        else {
+                            this.handleMoveEnlage(e);
+                        }
+                    }
+                }
                 return;
             }
+            // 长图收集手指方向
             this.getMovePoints(e);
-            if (this.performerRecordMove) {
+            // 收集够一定数量的点才会执行下边的逻辑
+            if (this.movePoints.length < this.maxMovePointCounts) {
                 return;
             }
-            this.performerRecordMove = setTimeout(function () {
-                var L = _this.movePoints.length;
-                if (L == 0)
-                    return;
-                var endPoint = _this.movePoints[L - 1];
-                var startPoint = _this.movePoints[0];
-                var dx = endPoint.x - startPoint.x;
-                var dy = endPoint.y - startPoint.y;
-                var degree = Math.atan2(dy, dx) * 180 / Math.PI;
-                if (Math.abs(90 - Math.abs(degree)) < 30) {
-                    _this.fingerDirection = 'vertical';
-                }
-                else {
-                    _this.fingerDirection = 'horizontal';
-                }
-                if (curItem.dataset.isEnlargement == 'enlargement') {
-                    // 放大的时候的移动是查看放大后的图片
-                    // 放大的时候,如果到达边界还是进行正常的切屏操作
-                    // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                    var imgContainerRect_1 = _this.imgContainer.getBoundingClientRect();
-                    var conWidth_1 = imgContainerRect_1.width;
-                    var curItemViewLeft_1 = curItem.getBoundingClientRect().left;
-                    var curItemViewRight_1 = curItem.getBoundingClientRect().right;
-                    // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
-                    if (curItemViewLeft_1 >= 0 && curItemViewRight_1 <= conWidth_1) {
-                        if (((isBoundaryLeft && direction == 'right') ||
-                            (isBoundaryRight && direction == 'left') ||
-                            (_this.isEnlargeMove)) &&
-                            (_this.fingerDirection == 'horizontal')) {
-                            _this.isEnlargeMove = true;
-                            _this.handleMoveNormal(e);
-                        }
-                        else {
-                            _this.handleMoveEnlage(e);
-                        }
-                    }
-                    else {
-                        if ((isBoundaryLeft && direction == 'right') || (isBoundaryRight && direction == 'left') || (_this.isEnlargeMove)) {
-                            _this.isEnlargeMove = true;
-                            _this.handleMoveNormal(e);
-                        }
-                        else {
-                            _this.handleMoveEnlage(e);
-                        }
-                    }
-                }
-                else {
-                    //正常情况下的移动是图片左右切换
-                    _this.handleMoveNormal(e);
-                }
-                _this.isMotionless = false;
-            }, 25);
+            this.decideMoveDirection();
         }
     };
     Move.prototype.handleMoveNormal = function (e) {
-        var curX = Math.round(e.touches[0].clientX);
-        var offset = curX - this.startX;
+        var _this = this;
+        showDebugger("\n        moveNormal:" + Date.now() + "\n        this.isAnimating :" + this.isAnimating + "\n        this.touchStartX:" + this.touchStartX + "\n        ");
+        if (this.isAnimating) {
+            return;
+        }
+        if (this.isZooming) {
+            return;
+        }
+        if (!this.isNormalMove) {
+            this.touchStartX = this.startX = (e.touches[0].clientX);
+            this.touchStartY = this.startY = (e.touches[0].clientY);
+        }
+        this.isNormalMove = true;
+        var type = 'normalMove';
+        this.addTouchEndTask(type, {
+            priority: 1,
+            callback: function () { return (_this.isNormalMove = false); }
+        });
+        var eventsHanlder = this.actionExecutor.eventsHanlder;
+        var curX = (e.touches[0].clientX);
+        var offset = curX - this.touchStartX;
         this.imgContainerMoveX += offset;
-        if (this.imgContainerMoveX > this.maxMoveX) {
-            this.imgContainerMoveX = this.maxMoveX;
-        }
-        else if (this.imgContainerMoveX < this.minMoveX) {
-            this.imgContainerMoveX = this.minMoveX;
-        }
         this.startX = curX;
-        this.imgContainer.style.left = this.imgContainerMoveX + "px";
+        if (offset !== 0) {
+            this.normalMoved = true;
+            var type_1 = 'normalMoved';
+            var task = function (e) {
+                (_this.normalMoved = false);
+                _this.handleTEndEnNormal.bind(_this)(e);
+            };
+            this.addTouchEndTask(type_1, {
+                priority: 10,
+                callback: task
+            });
+        }
+        eventsHanlder.handleMoveNormal(e, offset);
     };
     Move.prototype.handleMoveEnlage = function (e) {
-        if (!this.moveStartTime) {
-            this.moveStartTime = (new Date).getTime();
-        }
-        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-        var conWidth = imgContainerRect.width;
-        var conHeight = imgContainerRect.height;
-        var curItem = this.imgItems[this.curIndex];
-        if (curItem.dataset.loaded == 'false') {
+        showDebugger("\n            handlemoveEnlarge:this.isZooming " + this.isZooming + "\n            this.isAnimating:" + this.isAnimating + "\n             " + Date.now() + "\n        ");
+        if (this.actionExecutor.isLoadingError()) {
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
-        var curItemWidth = curItem.getBoundingClientRect().width;
-        var curItemHeihgt = curItem.getBoundingClientRect().height;
-        var viewLeft = curItem.getBoundingClientRect().left;
-        var viewRight = curItem.getBoundingClientRect().right;
-        var curX = Math.round(e.touches[0].clientX);
-        var curY = Math.round(e.touches[0].clientY);
+        if (this.isZooming) {
+            return;
+        }
+        if (!this.moveStartTime) {
+            this.moveStartTime = Date.now();
+            this.touchStartX = this.startX = (e.touches[0].clientX);
+            this.touchStartY = this.startY = (e.touches[0].clientY);
+        }
+        var actionExecutor = this.actionExecutor;
+        var eventsHanlder = actionExecutor.eventsHanlder;
+        // 放大的时候自由滑动的时候是可以被中断的
+        if (eventsHanlder.curBehaviorCanBreak) {
+            actionExecutor.curAimateBreaked = true; //直接中断当前动画
+            if (this.isAnimating) {
+                this.touchStartX = (e.touches[0].clientX);
+                this.touchStartY = (e.touches[0].clientY);
+                return;
+            }
+        }
+        else { // 不可中断动画进行时
+            if (this.isAnimating) {
+                return;
+            }
+        }
+        this.isNormalMove = false;
+        this.actionExecutor.isBoudriedSide = false;
+        var imgContainerRect = this.imgContainer.getBoundingClientRect();
+        var conWidth = imgContainerRect.width;
+        var conHeight = imgContainerRect.height;
+        var curItemRect = actionExecutor.viewRect;
+        curItemRect.height;
+        var viewLeft = curItemRect.left;
+        var viewRight = curItemRect.right;
+        var viewTop = curItemRect.top;
+        var viewBottom = curItemRect.bottom;
+        var curX = (e.touches[0].clientX);
+        var curY = (e.touches[0].clientY);
         var offsetX = curX - this.startX;
         var offsetY = curY - this.startY;
-        var curItemTop = Number(curItem.dataset.top);
-        var curItemLeft = Number(curItem.dataset.left);
         var curTop;
         var curLeft;
         // 如果容器内能完整展示图片就不需要移动
-        if (viewLeft < 0 || viewRight > conWidth) {
-            curLeft = curItemLeft + offsetX;
+        if (Math.round(viewLeft) < 0 || Math.round(viewRight) > conWidth) {
+            curLeft = (offsetX);
         }
         else {
-            curLeft = curItemLeft;
+            curLeft = 0;
         }
-        if (curItemHeihgt > conHeight) {
-            curTop = curItemTop + offsetY;
+        if (Math.round(viewTop) < 0 || Math.round(viewBottom) > conHeight) {
+            curTop = (offsetY);
         }
         else {
-            curTop = curItemTop;
+            curTop = 0;
         }
-        curItem.style.cssText += "\n            top: " + curTop + "px;\n            left: " + curLeft + "px;\n        ";
-        curItem.dataset.top = (curTop).toString();
-        curItem.dataset.left = (curLeft).toString();
+        actionExecutor.eventsHanlder.handleMoveEnlage(e, curLeft, curTop, 0);
+        var type = 'handleTendEnlarte';
+        this.addTouchEndTask(type, {
+            priority: 10,
+            callback: this.handleTEndEnlarge.bind(this)
+        });
         this.startX = curX;
         this.startY = curY;
     };
-    Move.prototype.autoMove = function (curItem, deg, startX, startY, _a) {
+    Move.prototype.autoMove = function (deg, startX, startY, _a) {
         var maxTop = _a.maxTop, minTop = _a.minTop, maxLeft = _a.maxLeft, minLeft = _a.minLeft;
         var imgContainerRect = this.imgContainer.getBoundingClientRect();
         var conWidth = imgContainerRect.width;
         var conHeight = imgContainerRect.height;
-        var curItemViewTop = curItem.getBoundingClientRect().top;
-        var curItemViewBottom = curItem.getBoundingClientRect().bottom;
-        var curItemViewLeft = curItem.getBoundingClientRect().left;
-        var curItemViewRight = curItem.getBoundingClientRect().right;
+        // debugger;
+        var _b = this.actionExecutor, viewRect = _b.viewRect, eventsHanlder = _b.eventsHanlder;
+        var curItemRect = viewRect;
+        var curItemViewTop = curItemRect.top;
+        var curItemViewBottom = curItemRect.bottom;
+        var curItemViewLeft = curItemRect.left;
+        var curItemViewRight = curItemRect.right;
         deg = (deg / 180) * Math.PI;
-        var distance = 500;
-        var offsetX = Math.round(distance * Math.cos(deg));
-        var offsetY = Math.round(distance * Math.sin(deg));
+        var distance = 300;
+        var offsetX = (distance * Math.cos(deg));
+        var offsetY = (distance * Math.sin(deg));
         var endX = startX + offsetX;
         var endY = startY + offsetY;
         if (endX > maxLeft) {
-            endX = maxLeft;
+            endX = (maxLeft);
         }
         else if (endX < minLeft) {
-            endX = minLeft;
+            endX = (minLeft);
         }
+        // debugger;
         if (endY > maxTop) {
-            endY = maxTop;
+            endY = (maxTop);
         }
         else if (endY < minTop) {
-            endY = minTop;
+            endY = (minTop);
         }
-        var stepX = this.computeStep(startX - endX, 300);
-        var stepY = this.computeStep(startY - endY, 300);
         // 容器宽度能容纳图片宽度，则水平方向不需要移动，
         // 容器高度能容纳图片高度，则垂直方向不需要移动。
-        var moveStyles = [];
+        var x = 0;
+        var y = 0;
         if (!(curItemViewLeft >= 0 && curItemViewRight <= conWidth)) {
-            moveStyles.push({
-                prop: 'left',
-                start: startX,
-                end: endX,
-                step: -stepX
-            });
-            curItem.dataset.left = "" + endX;
+            x = endX - startX;
         }
         if (!(curItemViewTop >= 0 && curItemViewBottom <= conHeight)) {
-            moveStyles.push({
-                prop: 'top',
-                start: startY,
-                end: endY,
-                step: -stepY
-            });
-            curItem.dataset.top = "" + endY;
+            y = endY - startY;
         }
-        this.animateMultiValue(curItem, moveStyles);
-        if (endX == maxLeft) {
-            //toLeft 即为到达左边界的意思下同
-            curItem.dataset.toLeft = 'true';
-            curItem.dataset.toRight = 'false';
-        }
-        else if (endX == minLeft) {
-            curItem.dataset.toLeft = 'false';
-            curItem.dataset.toRight = 'true';
-        }
-        if (endY == maxTop) {
-            curItem.dataset.toTop = 'true';
-            curItem.dataset.toBottom = 'false';
-        }
-        else if (endY == minTop) {
-            curItem.dataset.toTop = 'false';
-            curItem.dataset.toBottom = 'true';
-        }
+        return eventsHanlder.moveCurPlaneTo(x, y, 0);
     };
     return Move;
 }());
@@ -279,243 +296,17 @@ var Move = /** @class */ (function () {
 var Zoom = /** @class */ (function () {
     function Zoom() {
     }
-    Zoom.prototype.setToNaturalImgSize = function (toWidth, toHeight, scaleX, scaleY, e) {
-        var _this = this;
-        /**
-         * 踩坑记
-         * transform-origin 的参考点始终时对其初始位置来说的
-         * scale之后的元素, 实际的偏移路径等于 translate 的位移等于 位移 * scale
-         */
-        var mouseX = e.touches[0].clientX;
-        var mouseY = e.touches[0].clientY;
-        var curItem = this.imgItems[this.curIndex];
-        // 以下为旋转之后缩放时需要用到的参数
-        var curItemViewTop = curItem.getBoundingClientRect().top; //当前元素距离视口的top
-        var curItemViewLeft = curItem.getBoundingClientRect().left; //当前元素距离视口的left
-        var curItemTop = Number(curItem.dataset.top) || 0;
-        var curItemLeft = Number(curItem.dataset.left) || 0;
-        var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
-        var centerX = Number(curItem.dataset.initialWidth) / 2;
-        var centerY = Number(curItem.dataset.initialHeight) / 2;
-        var originWidth = curItem.style.width;
-        var originHeight = curItem.style.height;
-        switch (rotateDeg % 360) {
-            case 0:
-                var translateX = (-(mouseX - curItemViewLeft - centerX) * (scaleX - 1)) / scaleX;
-                if (toWidth == this.containerWidth) {
-                    translateX = 0;
-                }
-                curItem.style.cssText = ";\n                    top:" + curItemTop + "px;\n                    left:" + curItemLeft + "px;\n                    width:" + originWidth + ";\n                    height:" + originHeight + ";\n                    transform-origin: " + centerX + "px " + centerY + "px;\n                    transform: \n                        rotateZ(" + rotateDeg + "deg) \n                        scale3d(" + scaleX + "," + scaleY + ",1) \n                        translateY(" + (-(mouseY - curItemViewTop - centerY) * (scaleY - 1)) / scaleY + "px) \n                        translateX(" + translateX + "px) \n                    ;\n                ";
-                break;
-            case -180:
-            case 180:
-                curItem.style.cssText = ";\n                    top:" + curItemTop + "px;\n                    left: " + curItemLeft + "px;\n                    width:" + originWidth + ";\n                    height:" + originHeight + ";\n                    transform-origin: " + centerX + "px " + centerY + "px;\n                    transform: \n                        rotateZ(" + rotateDeg + "deg) scale3d(" + scaleX + "," + scaleY + ",1) \n                        translateY(" + ((mouseY - curItemViewTop - centerY) * (scaleY - 1)) / scaleY + "px) \n                        translateX(" + ((mouseX - curItemViewLeft - centerX) * (scaleX - 1)) / scaleX + "px) \n                    ;\n                ";
-                break;
-            case -90:
-            case 270:
-                /**
-                 * 笔记：
-                 * 以 y轴偏移举例，因为旋转 -90或270度之后，
-                 * y轴的位移实际由translateX控制，所以需要translateX控制其偏移
-                 * (mouseY - curItemViewTop - centerX) * (scaleX -1 ) 是一个点缩放前后产生的位移偏差
-                 * 再除以scaleX是因为啥呢，是因为上边可能讲过 translate x px 实际效果是 x * scaleX 的大小
-                 */
-                curItem.style.cssText = ";\n                    top: " + curItemTop + "px;\n                    left: " + curItemLeft + "px;\n                    width:" + originWidth + ";\n                    height:" + originHeight + ";\n                    transform-origin: " + centerX + "px " + centerY + "px ; \n                    transform: \n                        rotateZ(" + rotateDeg + "deg) \n                        scale3d(" + scaleX + "," + scaleY + ",1) \n                        translateX(" + ((mouseY - curItemViewTop - centerX) * (scaleX - 1)) / scaleX + "px) \n                        translateY(" + (-(mouseX - curItemViewLeft - centerY) * (scaleY - 1)) / scaleY + "px) \n                    ;\n                    \n                ";
-                break;
-            case -270:
-            case 90:
-                curItem.style.cssText = ";\n                        top: " + curItemTop + "px;\n                        left: " + curItemLeft + "px;\n                        width:" + originWidth + ";\n                        height:" + originHeight + ";\n                        transform-origin: " + centerX + "px " + centerY + "px ; \n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + (-(mouseY - curItemViewTop - centerX) * (scaleX - 1)) / scaleX + "px) \n                            translateY(" + ((mouseX - curItemViewLeft - centerY) * (scaleY - 1)) / scaleY + "px) \n                        ;\n                        \n                    ";
-                break;
-        }
-        // 放大之后 图片相对视口位置不变
-        var scaledX;
-        var scaledY;
-        if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
-            scaledX = (mouseX - curItemLeft) * scaleY;
-            scaledY = (mouseY - curItemTop) * scaleX;
-        }
-        else {
-            scaledX = (mouseX - curItemLeft) * scaleX;
-            scaledY = (mouseY - curItemTop) * scaleY;
-            // 以y轴偏移的计算为例，以下是setTimout 计算时公式的推导
-            //- (( mouseY - curItemTop ) * (scaleY - 1) - curItemTop)
-            // = curItemTop -  (mouseY - curItemTop)  * (scaleY - 1)   ;
-            // = curItemTop - ( mouseY- curItemTop)*scaleY + (mouseY - curItemTop)   
-            // = mouseY - ( mouseY- curItemTop)*scaleY
-            //  = - (scaledY - mouseY)
-        }
-        if (this.supportTransitionEnd) {
-            var end = this.supportTransitionEnd;
-            curItem.addEventListener(end, function () {
-                var left = -(scaledX - mouseX);
-                if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
-                    curItem.style.cssText = ";\n                        transform: rotateZ(" + rotateDeg + "deg);\n                        width: " + toHeight + "px;\n                        height: " + toWidth + "px;\n                        left: " + left + "px;\n                        top: " + -(scaledY - mouseY) + "px;\n                        transition: none;\n                    ";
-                }
-                else {
-                    if (toWidth == _this.containerWidth) {
-                        left = 0;
-                    }
-                    curItem.style.cssText = ";\n                        transform: rotateZ(" + rotateDeg + "deg);\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        left: " + left + "px;\n                        top: " + -(scaledY - mouseY) + "px;\n                        transition: none;\n                    ";
-                }
-                curItem.dataset.top = "" + -(scaledY - mouseY);
-                curItem.dataset.left = "" + left;
-                curItem.dataset.isEnlargement = 'enlargement';
-                _this.isAnimating = false;
-            }, { once: true });
-            return;
-        }
-        setTimeout(function () {
-            if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
-                curItem.style.cssText = ";\n                    transform: rotateZ(" + rotateDeg + "deg);\n                    width: " + toHeight + "px;\n                    height: " + toWidth + "px;\n                    left: " + -(scaledX - mouseX) + "px;\n                    top: " + -(scaledY - mouseY) + "px;\n                    transition: none;\n                ";
-            }
-            else {
-                curItem.style.cssText = ";\n                    transform: rotateZ(" + rotateDeg + "deg);\n                    width: " + toWidth + "px;\n                    height: " + toHeight + "px;\n                    left: " + -(scaledX - mouseX) + "px;\n                    top: " + -(scaledY - mouseY) + "px;\n                    transition: none;\n                ";
-            }
-            curItem.dataset.top = "" + -(scaledY - mouseY);
-            curItem.dataset.left = "" + -(scaledX - mouseX);
-            curItem.dataset.isEnlargement = 'enlargement';
-            _this.isAnimating = false;
-        }, 550);
-    };
-    Zoom.prototype.setToInitialSize = function (scaleX, scaleY, e) {
-        var _this = this;
-        var curItem = this.imgItems[this.curIndex];
-        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-        var curItemWidth = curItem.getBoundingClientRect().width;
-        var curItemHeight = curItem.getBoundingClientRect().height;
-        // 以下为旋转之后缩放时需要用到的参数
-        var curItemViewTop = curItem.getBoundingClientRect().top; //当前元素距离视口的top
-        var curItemViewLeft = curItem.getBoundingClientRect().left; //当前元素距离视口的left
-        var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
-        var toWidth;
-        var toHeight;
-        if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
-            toWidth = curItemHeight;
-            toHeight = curItemWidth;
-        }
-        else {
-            toWidth = curItemWidth;
-            toHeight = curItemHeight;
-        }
-        switch (rotateDeg % 360) {
-            case 0:
-                var centerX = curItemWidth / 2;
-                var centerY = curItemHeight / 2;
-                var top_1 = Number(curItem.dataset.top) || 0;
-                var left = Number(curItem.dataset.left) || 0;
-                var viewTopInitial = Number(curItem.dataset.initialTop);
-                var viewLeftInitial = Number(curItem.dataset.initialLeft);
-                var disteanceY = curItemViewTop + (centerY) * (1 - scaleY) - top_1 - viewTopInitial;
-                var distanceX = curItemViewLeft + (centerX) * (1 - scaleX) - left - viewLeftInitial;
-                curItem.style.cssText = ";\n                    top:" + curItem.dataset.top + "px;\n                    left:" + curItem.dataset.left + "px;\n                    width: " + toWidth + "px;\n                    height: " + toHeight + "px;\n                    transform-origin: " + centerX + "px " + centerY + "px;\n                    transform: \n                        rotateZ(" + rotateDeg + "deg) \n                        scale3d(" + scaleX + "," + scaleY + ",1) \n                        translateX(" + -(left + distanceX) / scaleX + "px) \n                        translateY(" + -(top_1 + disteanceY) / scaleY + "px)\n                    ;\n                ";
-                break;
-            case 180:
-            case -180:
-                {
-                    var centerX_1 = curItemWidth / 2;
-                    var centerY_1 = curItemHeight / 2;
-                    var viewTopInitial_1 = Number(curItem.dataset.initialTop);
-                    var viewLeftInitial_1 = Number(curItem.dataset.initialLeft);
-                    var top_2 = Number(curItem.dataset.top);
-                    var left_1 = Number(curItem.dataset.left) || 0;
-                    var disteanceY_1 = curItemViewTop + (centerY_1) * (1 - scaleY) - top_2 - viewTopInitial_1;
-                    var distanceX_1 = curItemViewLeft + (centerX_1) * (1 - scaleX) - left_1 - viewLeftInitial_1;
-                    curItem.style.cssText = ";\n                        top:" + top_2 + "px;\n                        left:" + left_1 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_1 + "px " + centerY_1 + "px;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + (left_1 + distanceX_1) / scaleX + "px) \n                            translateY(" + (top_2 + disteanceY_1) / scaleY + "px)\n                        ;\n                    ";
-                }
-                break;
-            case -90:
-            case 270:
-                {
-                    var centerX_2 = curItemHeight / 2;
-                    var centerY_2 = curItemWidth / 2;
-                    var intialItemWidth = Number(curItem.dataset.initialWidth);
-                    var intialItemHeight = Number(curItem.dataset.initialHeight);
-                    var conWidth = imgContainerRect.width;
-                    var conHeight = imgContainerRect.height;
-                    // 90 and 270 deg is derived from 0 deg state
-                    // next case-expression is same.
-                    var viewTopInitial_2 = (conHeight - intialItemWidth) / 2;
-                    var viewLeftInitial_2 = (conWidth - intialItemHeight) / 2;
-                    var top_3 = Number(curItem.dataset.top);
-                    var left_2 = Number(curItem.dataset.left);
-                    /**
-                     * 缩小的时候要时的图像的位置向原始位置靠近
-                     * 以y轴得位移举例
-                     * 放大之后 再缩小时 图像顶部移动的距离  centerX*(1-scaleY)
-                     *  这个式子是这么推导而来的  Math.abs(centerX* scaleY - centerX)
-                     * (这是缩放前后产生的位移距离)，
-                     * 减去top（这是使用translate抵消top时产生的y轴位移，使其位置和top等于0时的位置一样）
-                     * 这个时候就能得到缩小之后图像距离视口顶部的距离，然后再减去原始的高度（变形前的高度）
-                     * 就得到了我们最终需要使其在y轴上偏移的距离
-                     */
-                    var disteanceY_2 = curItemViewTop + (centerX_2) * (1 - scaleY) - top_3 - viewTopInitial_2;
-                    var distanceX_2 = curItemViewLeft + (centerY_2) * (1 - scaleX) - left_2 - viewLeftInitial_2;
-                    curItem.style.cssText = ";\n                        top:" + top_3 + "px;\n                        left:" + left_2 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_2 + "px " + centerY_2 + "px 0;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + (top_3 + disteanceY_2) / scaleY + "px) \n                            translateY(" + -(left_2 + distanceX_2) / scaleX + "px)\n                        ;\n\n                    ";
-                }
-                break;
-            case 90:
-            case -270:
-                {
-                    var centerX_3 = curItemHeight / 2;
-                    var centerY_3 = curItemWidth / 2;
-                    var intialItemWidth = Number(curItem.dataset.initialWidth);
-                    var intialItemHeight = Number(curItem.dataset.initialHeight);
-                    var conWidth = imgContainerRect.width;
-                    var conHeight = imgContainerRect.height;
-                    var viewTopInitial_3 = (conHeight - intialItemWidth) / 2;
-                    var viewLeftInitial_3 = (conWidth - intialItemHeight) / 2;
-                    var top_4 = Number(curItem.dataset.top);
-                    var left_3 = Number(curItem.dataset.left);
-                    var disteanceY_3 = curItemViewTop + (centerX_3) * (1 - scaleY) - top_4 - viewTopInitial_3;
-                    var distanceX_3 = curItemViewLeft + (centerY_3) * (1 - scaleX) - left_3 - viewLeftInitial_3;
-                    curItem.style.cssText = ";\n                        top:" + top_4 + "px;\n                        left:" + left_3 + "px;\n                        width: " + toWidth + "px;\n                        height: " + toHeight + "px;\n                        transform-origin: " + centerX_3 + "px " + centerY_3 + "px 0;\n                        transform: \n                            rotateZ(" + rotateDeg + "deg) \n                            scale3d(" + scaleX + "," + scaleY + ",1) \n                            translateX(" + -(top_4 + disteanceY_3) / scaleY + "px) \n                            translateY(" + (left_3 + distanceX_3) / scaleX + "px)\n                        ;\n\n                    ";
-                }
-                break;
-        }
-        curItem.dataset.top = curItem.dataset.initialTop;
-        curItem.dataset.left = curItem.dataset.initialLeft;
-        if (this.supportTransitionEnd) {
-            var end = this.supportTransitionEnd;
-            curItem.addEventListener(end, function (e) {
-                curItem.style.cssText = ";\n                        transform: rotateZ(" + rotateDeg + "deg);\n                        top:" + Number(curItem.dataset.initialTop) + "px;\n                        left: " + Number(curItem.dataset.initialLeft) + "px;\n                        width: " + curItem.dataset.initialWidth + "px;\n                        height: " + curItem.dataset.initialHeight + "px;\n                        transition: none; \n                        ";
-                {
-                    /**
-                     * bug fix on ios,
-                     * frequent zoom with double-click may
-                     * cause img fuzzy
-                     */
-                    var curImg_1 = curItem.querySelector("img");
-                    var preImgStyle_1 = curImg_1.style.cssText;
-                    curImg_1.style.cssText = "\n                            width: 100%;\n                            height: 100%;\n                        ";
-                    setTimeout(function () {
-                        curImg_1.style.cssText = preImgStyle_1;
-                    }, 10);
-                }
-                curItem.dataset.isEnlargement = 'shrink';
-                _this.isAnimating = false;
-            }, { once: true });
-            return;
-        }
-        setTimeout(function () {
-            curItem.style.cssText = ";\n                                transform: rotateZ(" + rotateDeg + "deg);\n                                top:" + Number(curItem.dataset.initialTop) + "px;\n                                left: " + Number(curItem.dataset.initialLeft) + "px;\n                                width: " + curItem.dataset.initialWidth + "px;\n                                height: " + curItem.dataset.initialHeight + "px;\n                                transition: none; \n                                ";
-            {
-                /**
-                 * bug fix on ios,
-                 * frequent zoom with double-click may
-                 * cause img fuzzy
-                 */
-                var curImg_2 = curItem.querySelector("img");
-                var preImgStyle_2 = curImg_2.style.cssText;
-                curImg_2.style.cssText = "\n                    width: 100%;\n                    height: 100%;\n                ";
-                setTimeout(function () {
-                    curImg_2.style.cssText = preImgStyle_2;
-                }, 10);
-            }
-            curItem.dataset.isEnlargement = 'shrink';
-            _this.isAnimating = false;
-        }, 550);
-    };
     Zoom.prototype.handleZoom = function (e) {
+        if (this.isNormalMove && this.normalMoved) {
+            return;
+        }
+        if (this.isAnimating) {
+            return;
+        }
+        if (this.actionExecutor.isLoadingError()) {
+            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+            return;
+        }
         if (!this.isZooming) {
             this.curStartPoint1 = {
                 x: this.curPoint1.x,
@@ -528,193 +319,1662 @@ var Zoom = /** @class */ (function () {
         }
         this.isZooming = true;
         this.isAnimating = true;
-        var curItem = this.imgItems[this.curIndex];
-        if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            this.isAnimating = false;
-            return;
-        }
-        var curItemWidth = curItem.getBoundingClientRect().width;
-        var curItemHeihgt = curItem.getBoundingClientRect().height;
-        var distaceBefore = Math.sqrt(Math.pow(this.curPoint1.x - this.curPoint2.x, 2) + Math.pow(this.curPoint1.y - this.curPoint2.y, 2));
-        var distanceNow = Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2));
-        var top = Number(curItem.dataset.top) || 0;
-        var left = Number(curItem.dataset.left) || 0;
-        var centerX = (this.curStartPoint1.x + this.curStartPoint2.x) / 2 - left;
-        var centerY = (this.curStartPoint1.y + this.curStartPoint2.y) / 2 - top;
+        var actionExecutor = this.actionExecutor;
+        var distaceBefore = (Math.pow(this.curPoint1.x - this.curPoint2.x, 2) + Math.pow(this.curPoint1.y - this.curPoint2.y, 2));
+        var distanceNow = (Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2));
+        var centerFingerX = (this.curStartPoint1.x + this.curStartPoint2.x) / 2;
+        var centerFingerY = (this.curStartPoint1.y + this.curStartPoint2.y) / 2;
+        var centerImgCenterX = actionExecutor.viewWidth / (2 * actionExecutor.dpr);
+        var centerImgCenterY = actionExecutor.viewHeight / (2 * actionExecutor.dpr);
         this.curPoint1.x = e.touches[0].clientX;
         this.curPoint1.y = e.touches[0].clientY;
         this.curPoint2.x = e.touches[1].clientX;
         this.curPoint2.y = e.touches[1].clientY;
-        var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
-        /**
-         * 踩坑记：
-         * 因为双指所确定的中心坐标 其参考起点始终是
-         * 相对于视口的，那么在图片不断放大之后 其所确定的中心坐标必然会较实际有所误差
-         * 所以这里在  放大的时候 同时需要在xy坐标加上其实际已经偏移的距离
-         * 因为放大之后偏移值必为负值，所以要减 负负得正嘛
-         */
-        if (distaceBefore > distanceNow) { //缩小
-            var centerX_4 = (this.curStartPoint1.x + this.curStartPoint2.x) / 2 - left;
-            var centerY_4 = (this.curStartPoint1.y + this.curStartPoint2.y) / 2 - top;
-            curItem.dataset.top = (top + (this.zoomScale) * centerY_4).toString();
-            curItem.dataset.left = (left + (this.zoomScale) * centerX_4).toString();
-            var width = curItemWidth * (1 - this.zoomScale);
-            var height = curItemHeihgt * (1 - this.zoomScale);
-            switch (Math.abs(rotateDeg % 360)) {
-                case 0:
-                case 180:
-                    if (width <= Number(curItem.dataset.initialWidth)) {
-                        width = Number(curItem.dataset.initialWidth);
-                        height = Number(curItem.dataset.initialHeight);
-                        curItem.dataset.top = curItem.dataset.initialTop;
-                        curItem.dataset.left = curItem.dataset.initialLeft;
-                        curItem.dataset.isEnlargement = 'shrink';
-                    }
-                    break;
-                case 90:
-                case 270:
-                    if (height <= Number(curItem.dataset.initialWidth)) {
-                        width = Number(curItem.dataset.initialHeight);
-                        height = Number(curItem.dataset.initialWidth);
-                        curItem.dataset.top = curItem.dataset.initialTop;
-                        curItem.dataset.left = curItem.dataset.initialLeft;
-                        curItem.dataset.isEnlargement = 'shrink';
-                    }
-                    break;
-            }
-            /**
-             * 采坑记：
-             * 旋转 90 270 这些体位的时候 ，width和height得交换下位置
-             * 下同
-             */
-            switch (Math.abs(rotateDeg % 360)) {
-                case 0:
-                case 180:
-                    curItem.style.cssText = "\n                            transform: rotateZ(" + rotateDeg + "deg); \n                            width: " + width + "px;\n                            height: " + height + "px;\n                            top: " + curItem.dataset.top + "px;\n                            left: " + curItem.dataset.left + "px;\n                    ";
-                    break;
-                case 90:
-                case 270:
-                    curItem.style.cssText = "\n                            transform: rotateZ(" + rotateDeg + "deg); \n                            height: " + width + "px;\n                            width: " + height + "px;\n                            left: " + curItem.dataset.left + "px;\n                            top: " + curItem.dataset.top + "px;\n                    ";
-                    break;
-            }
+        var x = 0, y = 0, sx = 1.0, sy = 1.0;
+        if (distaceBefore > distanceNow) { //缩小 retu
+            y = (centerFingerY - centerImgCenterY) * this.zoomScale;
+            x = (centerFingerX - centerImgCenterX) * this.zoomScale;
+            sx = 1 - this.zoomScale;
+            sy = 1 - this.zoomScale;
         }
         else if (distaceBefore < distanceNow) { //放大
-            curItem.dataset.isEnlargement = 'enlargement';
-            switch (Math.abs(rotateDeg % 360)) {
-                case 0:
-                case 180:
-                    {
-                        // biggest width for zoom in
-                        var maxWidth = this.screenWidth * 4;
-                        if (curItemWidth * (1 + this.zoomScale) > maxWidth) {
-                            this.isAnimating = false;
-                            return;
-                        }
-                        curItem.dataset.top = (top - (this.zoomScale) * centerY).toString();
-                        curItem.dataset.left = (left - (this.zoomScale) * centerX).toString();
-                        curItem.style.cssText += "\n                            width: " + curItemWidth * (1 + this.zoomScale) + "px;\n                            height: " + curItemHeihgt * (1 + this.zoomScale) + "px;\n                            top: " + curItem.dataset.top + "px;\n                            left: " + curItem.dataset.left + "px;\n                    ";
-                    }
-                    break;
-                case 90:
-                case 270:
-                    {
-                        // biggest width for zoom in
-                        var maxWidth = this.screenWidth * 4;
-                        if (curItemHeihgt * (1 + this.zoomScale) > maxWidth) {
-                            this.isAnimating = false;
-                            return;
-                        }
-                        curItem.dataset.top = (top - (this.zoomScale) * centerY).toString();
-                        curItem.dataset.left = (left - (this.zoomScale) * centerX).toString();
-                        curItem.style.cssText += "\n                            height: " + curItemWidth * (1 + this.zoomScale) + "px;\n                            width: " + curItemHeihgt * (1 + this.zoomScale) + "px;\n                            left: " + curItem.dataset.left + "px;\n                            top: " + curItem.dataset.top + "px;\n                    ";
-                    }
-                    break;
-            }
+            // scaleX = 1 + scaleRatio
+            // x*scaleX - x
+            // x(scaleX-1) = x * scaleRatio
+            y = -((centerFingerY - centerImgCenterY)) * this.zoomScale;
+            x = -((centerFingerX - centerImgCenterX)) * this.zoomScale;
+            sx = 1 + this.zoomScale;
+            sy = 1 + this.zoomScale;
         }
+        else {
+            this.isZooming = false;
+            this.isAnimating = false;
+            return;
+        }
+        actionExecutor.eventsHanlder.handleZoom(e, sx, sy, x, y);
+        this.isZooming = false;
         this.isAnimating = false;
     };
     return Zoom;
 }());
 
+var __awaiter$2 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator$2 = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var Rotate = /** @class */ (function () {
     function Rotate() {
     }
     Rotate.prototype.handleRotateLeft = function (e) {
-        var _this = this;
-        if (this.isAnimating) {
-            return;
-        }
-        var curItem = this.imgItems[this.curIndex];
-        var rotateDeg;
-        if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            return;
-        }
-        this.isAnimating = true;
-        if (curItem.dataset.rotateDeg) {
-            rotateDeg = Number(curItem.dataset.rotateDeg);
-        }
-        else {
-            rotateDeg = 0;
-        }
-        rotateDeg -= 90;
-        curItem.style.cssText += "\n            transition: transform 0.5s;\n            transform: rotateZ( " + rotateDeg + "deg );\n        ";
-        if (this.supportTransitionEnd) {
-            var end = this.supportTransitionEnd;
-            curItem.addEventListener(end, function () {
-                curItem.dataset.rotateDeg = rotateDeg.toString();
-                _this.isAnimating = false;
-            }, { once: true });
-            return;
-        }
-        setTimeout(function () {
-            curItem.dataset.rotateDeg = rotateDeg.toString();
-            _this.isAnimating = false;
-        }, 550);
+        return __awaiter$2(this, void 0, void 0, function () {
+            var changeDeg;
+            return __generator$2(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.isAnimating)
+                            return [2 /*return*/];
+                        if (this.actionExecutor.isLoadingError()) {
+                            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+                            return [2 /*return*/];
+                        }
+                        changeDeg = -1 * Math.PI / 2;
+                        this.isAnimating = true;
+                        return [4 /*yield*/, this.actionExecutor.rotateZ(changeDeg)];
+                    case 1:
+                        _a.sent();
+                        this.isAnimating = false;
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
     Rotate.prototype.handleRotateRight = function (e) {
-        var _this = this;
-        if (this.isAnimating) {
-            return;
-        }
-        var curItem = this.imgItems[this.curIndex];
-        var rotateDeg;
-        if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            return;
-        }
-        this.isAnimating = true;
-        if (curItem.dataset.rotateDeg) {
-            rotateDeg = Number(curItem.dataset.rotateDeg);
-        }
-        else {
-            rotateDeg = 0;
-        }
-        rotateDeg += 90;
-        curItem.style.cssText += "\n            transition: transform 0.5s;\n            transform: rotateZ( " + rotateDeg + "deg );\n        ";
-        if (this.supportTransitionEnd) {
-            var end = this.supportTransitionEnd;
-            curItem.addEventListener(end, function () {
-                curItem.dataset.rotateDeg = rotateDeg.toString();
-                _this.isAnimating = false;
-            }, { once: true });
-            return;
-        }
-        setTimeout(function () {
-            curItem.dataset.rotateDeg = rotateDeg.toString();
-            _this.isAnimating = false;
-        }, 550);
+        return __awaiter$2(this, void 0, void 0, function () {
+            var changeDeg;
+            return __generator$2(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.isAnimating)
+                            return [2 /*return*/];
+                        if (this.actionExecutor.isLoadingError()) {
+                            // 除了切屏之外对于加载错误的图片一律禁止其他操作
+                            return [2 /*return*/];
+                        }
+                        changeDeg = 1 * Math.PI / 2;
+                        this.isAnimating = true;
+                        return [4 /*yield*/, this.actionExecutor.rotateZ(changeDeg)];
+                    case 1:
+                        _a.sent();
+                        this.isAnimating = false;
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Rotate.prototype.handleRotate = function (e, changeDeg) {
     };
     return Rotate;
 }());
 
+var Animation = /** @class */ (function () {
+    function Animation() {
+    }
+    Animation.prototype.animate = function (_a) {
+        var _this = this;
+        var el = _a.el, prop = _a.prop, endStr = _a.endStr, timingFunction = _a.timingFunction, callback = _a.callback, duration = _a.duration;
+        if (this.isAnimating) {
+            return;
+        }
+        this.setTransitionProperty({
+            el: el,
+            timingFunction: timingFunction,
+            time: duration || 0.3,
+            prop: prop
+        });
+        el['style'][prop] = endStr;
+        el.addEventListener(this.supportTransitionEnd, function () {
+            _this.isAnimating = false;
+            typeof callback == 'function' && callback();
+        }, { once: true });
+    };
+    Animation.prototype.animateMultiValue = function (el, options, timingFunction, callback) {
+        var _this = this;
+        if (this.isAnimating) {
+            return;
+        }
+        this.isAnimating = true;
+        this.setTransitionProperty({
+            el: el,
+            time: 0.3,
+            timingFunction: timingFunction
+        });
+        var styleText = el.style.cssText;
+        options.forEach(function (_a) {
+            var prop = _a.prop, endStr = _a.endStr;
+            styleText += prop + ":" + endStr + ";";
+        });
+        el.style.cssText = styleText;
+        el.addEventListener(this.supportTransitionEnd, function () {
+            _this.isAnimating = false;
+            typeof callback == 'function' && callback();
+        }, { once: true });
+    };
+    Animation.prototype.computeStep = function (displacement, time) {
+        var v = displacement / time;
+        var frequency = 1000 / 60;
+        return v * frequency;
+    };
+    Animation.prototype.setTransitionProperty = function (_a) {
+        var el = _a.el, prop = _a.prop, time = _a.time, timingFunction = _a.timingFunction;
+        timingFunction = timingFunction || 'linear';
+        prop = prop || 'all';
+        el['style'][this.transitionEndPrefix] = " " + prop + " " + time + "s " + timingFunction;
+    };
+    // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
+    // ============================================================
+    Animation.prototype.transitionEnd = function () {
+        var el = document.createElement('bootstrap');
+        var transEndEventNames = {
+            'WebkitTransition': 'webkitTransitionEnd',
+            'MozTransition': 'transitionend',
+            'OTransition': 'oTransitionEnd',
+            'transition': 'transitionend'
+        };
+        var transEndPrefixNames = {
+            'WebkitTransition': '-webkit-transition',
+            'MozTransition': '-moz-transition',
+            'OTransition': '-o-transition',
+            'transition': 'transition'
+        };
+        for (var name in transEndEventNames) {
+            if (el.style[name] !== undefined) {
+                this.transitionEndPrefix = transEndPrefixNames[name];
+                return transEndEventNames[name];
+            }
+        }
+        throw '当前环境不支持transition ，无法使用该插件。\n Transition not supported,can\'t use this plugin.';
+    };
+    return Animation;
+}());
+
+var __spreadArray$2 = (undefined && undefined.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
+};
+var Matrix = /** @class */ (function () {
+    function Matrix() {
+    }
+    Matrix.prototype.matrixMultipy = function (a, b) {
+        var res = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            res[_i - 2] = arguments[_i];
+        }
+        var r = a.length;
+        var col = a[0].length;
+        var result = [];
+        for (var i = 0; i < r; i++) {
+            var row = a[i];
+            result[i] = [];
+            for (var j = 0; j < r; j++) {
+                var count = 0;
+                for (var x = 0; x < col; x++) {
+                    var item1 = row[x];
+                    var item2 = b[x][j];
+                    count += (item1 * item2);
+                }
+                result[i].push(count);
+            }
+        }
+        if (res.length) {
+            return this.matrixMultipy.apply(this, __spreadArray$2([result, res.splice(0, 1)[0]], res));
+        }
+        return result;
+    };
+    Matrix.prototype.matrixTostr = function (arr) {
+        var ans = '';
+        var lastIndex = arr.length - 1;
+        arr.forEach(function (item, index) {
+            item.forEach(function (item, innerIndex) {
+                ans += (item + (index == innerIndex && index == lastIndex ? '' : ','));
+            });
+        });
+        return "matrix3d(" + ans + ")";
+    };
+    Matrix.prototype.getTranslateMatrix = function (_a) {
+        var x = _a.x, y = _a.y, z = _a.z;
+        return [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [x, y, z, 1],
+        ];
+    };
+    Matrix.prototype.getRotateZMatrix = function (deg) {
+        return [
+            [Math.cos(deg), Math.sin(deg), 0, 0],
+            [-Math.sin(deg), Math.cos(deg), 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+        ];
+    };
+    Matrix.prototype.getScaleMatrix = function (_a) {
+        var x = _a.x, y = _a.y, z = _a.z;
+        return [
+            [x, 0, 0, 0],
+            [0, y, 0, 0],
+            [0, 0, z, 0],
+            [0, 0, 0, 1],
+        ];
+    };
+    return Matrix;
+}());
+
+var __spreadArray$1 = (undefined && undefined.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
+};
+var matrix = {
+    multiplyPoint: function (point, rowMatrix) {
+        var rest = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            rest[_i - 2] = arguments[_i];
+        }
+        var result = [];
+        for (var col = 0; col < 4; col++) {
+            result[col] = rowMatrix[col] * point[0] + rowMatrix[col + 4] * point[1]
+                +
+                    rowMatrix[col + 8] * point[2] + rowMatrix[col + 12] * point[3];
+        }
+        if (!rest.length) {
+            return result;
+        }
+        return matrix.multiplyPoint.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
+    },
+    multiplyMatrices: function (a, b) {
+        var rest = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            rest[_i - 2] = arguments[_i];
+        }
+        var result = [];
+        for (var row = 0; row < 4; row++) {
+            for (var col = 0; col < 4; col++) {
+                result[row * 4 + col] =
+                    a[row * 4] * b[col] + a[row * 4 + 1] * b[col + 4] +
+                        a[row * 4 + 2] * b[col + 8] + a[row * 4 + 3] * b[col + 12];
+            }
+        }
+        if (!rest.length) {
+            return result;
+        }
+        return matrix.multiplyMatrices.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
+    },
+    // https://www.songho.ca/opengl/gl_rotate.html
+    rotateByArbitrayAxis: function (x, y, z, deg) {
+        var cos = Math.cos, sin = Math.sin, pow = Math.pow;
+        var aNumber = (1 - cos(deg));
+        var c = cos(deg), s = sin(deg);
+        return [
+            aNumber * pow(x, 2) + c, aNumber * x * y - s * z, aNumber * x * z + s * y, 0,
+            aNumber * x * y + s * z, aNumber * pow(y, 2) + c, aNumber * y * z - s * x, 0,
+            aNumber * x * z - s * y, aNumber * y * z + s * x, aNumber * pow(z, 2) + c, 0,
+            0, 0, 0, 1
+        ];
+    },
+    multiplyArrayOfMatrices: function (matrices) {
+        var inputMatrix = matrices[0];
+        for (var i = 1; i < matrices.length; i++) {
+            inputMatrix = matrix.multiplyMatrices(inputMatrix, matrices[i]);
+        }
+        return inputMatrix;
+    },
+    rotateXMatrix: function (a) {
+        var cos = Math.cos;
+        var sin = Math.sin;
+        return [
+            1, 0, 0, 0,
+            0, cos(a), -sin(a), 0,
+            0, sin(a), cos(a), 0,
+            0, 0, 0, 1
+        ];
+    },
+    rotateYMatrix: function (deg) {
+        var cos = Math.cos;
+        var sin = Math.sin;
+        return [
+            cos(deg), 0, sin(deg), 0,
+            0, 1, 0, 0,
+            -sin(deg), 0, cos(deg), 0,
+            0, 0, 0, 1
+        ];
+    },
+    rotateZMatrix: function (a) {
+        var cos = Math.cos;
+        var sin = Math.sin;
+        return [
+            cos(a), -sin(a), 0, 0,
+            sin(a), cos(a), 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        ];
+    },
+    translateMatrix: function (x, y, z) {
+        return [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            x, y, z, 1
+        ];
+    },
+    scaleMatrix: function (w, h, d) {
+        return [
+            w, 0, 0, 0,
+            0, h, 0, 0,
+            0, 0, d, 0,
+            0, 0, 0, 1
+        ];
+    }
+};
+
 /**
- * image-preview [1.1.0]
- * author:zilong
- * https://github.com/daxiazilong
- * Released under the MIT License
+ * B(t) = p0(1-t)^3 + 3p1*t*(1-t)^2+3*p2*t^2(1-t) + p3*t^3;
+ * let p0 = (0,0) p3 = (1,1)
+ * B(t) = 3p1*t*(1-t)^2 + 3*p2*t^2(1-t) + t^3
  */
+var cubicBezier = /** @class */ (function () {
+    function cubicBezier(x1, y1, x2, y2) {
+        this.precision = 1e-7;
+        this.p1 = {
+            x: x1,
+            y: y1
+        };
+        this.p2 = {
+            x: x2,
+            y: y2
+        };
+    }
+    cubicBezier.prototype.getX = function (t) {
+        var x1 = this.p1.x, x2 = this.p2.x;
+        return 3 * x1 * t * Math.pow(1 - t, 2) + 3 * x2 * Math.pow(t, 2) * (1 - t) + Math.pow(t, 3);
+    };
+    cubicBezier.prototype.getY = function (t) {
+        var y1 = this.p1.y, y2 = this.p2.y;
+        return 3 * y1 * t * Math.pow(1 - t, 2) + 3 * y2 * Math.pow(t, 2) * (1 - t) + Math.pow(t, 3);
+    };
+    // https://github.com/amfe/amfe-cubicbezier/blob/master/src/index.js
+    cubicBezier.prototype.solveCurveX = function (x) {
+        var t2 = x;
+        var derivative;
+        var x2;
+        var p1x = this.p1.x, p2x = this.p2.x;
+        var ax = 3 * p1x - 3 * p2x + 1;
+        var bx = 3 * p2x - 6 * p1x;
+        var cx = 3 * p1x;
+        function sampleCurveDerivativeX(t) {
+            // `ax t^3 + bx t^2 + cx t' expanded using Horner 's rule.
+            return (3 * ax * t + 2 * bx) * t + cx;
+        }
+        // https://trac.webkit.org/browser/trunk/Source/WebCore/platform/animation
+        // First try a few iterations of Newton's method -- normally very fast.
+        // http://en.wikipedia.org/wiki/Newton's_method
+        for (var i = 0; i < 8; i++) {
+            // f(t)-x=0
+            x2 = this.getX(t2) - x;
+            if (Math.abs(x2) < this.precision) {
+                return t2;
+            }
+            derivative = sampleCurveDerivativeX(t2);
+            // == 0, failure
+            if (Math.abs(derivative) < this.precision) {
+                break;
+            }
+            t2 -= x2 / derivative;
+        }
+        // Fall back to the bisection method for reliability.
+        // bisection
+        // http://en.wikipedia.org/wiki/Bisection_method
+        var t1 = 1;
+        /* istanbul ignore next */
+        var t0 = 0;
+        /* istanbul ignore next */
+        t2 = x;
+        /* istanbul ignore next */
+        while (t1 > t0) {
+            x2 = this.getX(t2) - x;
+            if (Math.abs(x2) < this.precision) {
+                return t2;
+            }
+            if (x2 > 0) {
+                t1 = t2;
+            }
+            else {
+                t0 = t2;
+            }
+            t2 = (t1 + t0) / 2;
+        }
+        // Failure
+        return t2;
+    };
+    cubicBezier.prototype.solve = function (x) {
+        return this.getY(this.solveCurveX(x));
+    };
+    return cubicBezier;
+}());
+var linear = new cubicBezier(0, 0, 1, 1);
+new cubicBezier(.25, .1, .25, 1);
+new cubicBezier(.42, 0, 1, 1);
+new cubicBezier(0, 0, .58, 1);
+new cubicBezier(.42, 0, .58, 1);
+// run()
+
+var __awaiter$1 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator$1 = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var events = /** @class */ (function () {
+    function events(viewInstance) {
+        this.curBehaviorCanBreak = false;
+        this.throldDeg = Math.PI * 0.15;
+        this.viewInstance = viewInstance;
+    }
+    events.prototype.handleSingleStart = function (e) {
+        throw new Error('Method not implemented.');
+    };
+    events.prototype.handleDoubleClick = function (e) {
+        var _a = e.touches[0], clientX = _a.clientX, clientY = _a.clientY;
+        var viewInstance = this.viewInstance;
+        var _b = viewInstance.decideScaleRatio(clientX, clientY), scaleX = _b[0], scaleY = _b[1], dx = _b[2], dy = _b[3];
+        return viewInstance.scaleZPosition({ scaleX: scaleX, scaleY: scaleY, dx: dx, dy: dy });
+    };
+    events.prototype.handleMoveEnlage = function (e, x, y, z) {
+        var viewInstance = this.viewInstance;
+        x *= viewInstance.dpr;
+        y *= -viewInstance.dpr;
+        z *= viewInstance.dpr;
+        viewInstance.curPlane = viewInstance.positions.slice(viewInstance.curPointAt, viewInstance.curPointAt + 16);
+        viewInstance.transformCurplane(matrix.translateMatrix(x, y, 0));
+        viewInstance.bindPostion();
+        viewInstance.drawPosition();
+    };
+    events.prototype.handleMoveNormal = function (e, offset) {
+        var viewInstance = this.viewInstance;
+        var maxDeg = Math.PI / 2;
+        var deg = -offset / (viewInstance.viewWidth / viewInstance.dpr) * maxDeg;
+        viewInstance.rotatePosition(deg);
+    };
+    events.prototype.handleZoom = function (e, sx, sy, dx, dy) {
+        var viewInstance = this.viewInstance;
+        var _a = viewInstance.imgShape, nw = _a[0]; _a[1];
+        var _b = viewInstance.imgShapeInitinal, iW = _b[0]; _b[1];
+        nw = Math.abs(nw);
+        iW = Math.abs(iW);
+        var curItemRect = viewInstance.viewRect;
+        var curItemWidth = curItemRect.width * viewInstance.dpr;
+        // biggest width for zoom in
+        var maxWidth = nw * 4;
+        if (curItemWidth * sx > maxWidth) {
+            return;
+        }
+        var minWidth = iW;
+        if (curItemWidth * sx < minWidth) {
+            return;
+        }
+        dx *= viewInstance.dpr;
+        dy *= -viewInstance.dpr;
+        viewInstance.zoomCurPlan(sx, sy, dx, dy);
+    };
+    events.prototype.handleTEndEnNormal = function (e, offset) {
+        return __awaiter$1(this, void 0, void 0, function () {
+            var viewInstance, maxDeg, degX, plusOrMinus, beforeIndex, nextIndex;
+            return __generator$1(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        viewInstance = this.viewInstance;
+                        maxDeg = Math.PI / 2;
+                        degX = -offset / (viewInstance.viewWidth / viewInstance.dpr) * maxDeg;
+                        plusOrMinus = degX / Math.abs(degX);
+                        viewInstance.baseModel = viewInstance.modelMatrix;
+                        if (!(Math.abs(degX) >= this.throldDeg)) return [3 /*break*/, 6];
+                        beforeIndex = viewInstance.curIndex;
+                        nextIndex = viewInstance.curIndex + (plusOrMinus * 1);
+                        if (!(nextIndex == -1 || nextIndex == viewInstance.imgUrls.length)) return [3 /*break*/, 2];
+                        viewInstance.curIndex = beforeIndex;
+                        return [4 /*yield*/, viewInstance.rotate(-degX)];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 5];
+                    case 2: return [4 /*yield*/, viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX)];
+                    case 3:
+                        _a.sent();
+                        viewInstance.curIndex = nextIndex;
+                        viewInstance.modelMatrix = viewInstance.baseModel = viewInstance.initialModel;
+                        viewInstance.gl.uniformMatrix4fv(viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uModelViewMatrix'), false, viewInstance.modelMatrix);
+                        return [4 /*yield*/, viewInstance.draw(nextIndex)];
+                    case 4:
+                        _a.sent();
+                        _a.label = 5;
+                    case 5: return [3 /*break*/, 8];
+                    case 6: // 复原
+                    return [4 /*yield*/, viewInstance.rotate(-degX)];
+                    case 7:
+                        _a.sent();
+                        _a.label = 8;
+                    case 8:
+                        viewInstance.modelMatrix = viewInstance.baseModel = viewInstance.initialModel;
+                        return [2 /*return*/, 'handled'];
+                }
+            });
+        });
+    };
+    events.prototype.handleTEndEnlarge = function (e, x, y, z) {
+        return __awaiter$1(this, void 0, void 0, function () {
+            var viewInstance;
+            return __generator$1(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        viewInstance = this.viewInstance;
+                        x *= viewInstance.dpr;
+                        y *= -viewInstance.dpr;
+                        z *= viewInstance.dpr;
+                        console.log('handleTEndEnlarge', x, y, z);
+                        this.curBehaviorCanBreak = true;
+                        return [4 /*yield*/, viewInstance.moveCurPlane(x, y, 0)];
+                    case 1:
+                        _a.sent();
+                        this.curBehaviorCanBreak = false;
+                        if (x !== 0) {
+                            viewInstance.isBoudriedSide = true;
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    events.prototype.moveCurPlaneTo = function (x, y, z) {
+        return __awaiter$1(this, void 0, void 0, function () {
+            var viewInstance;
+            return __generator$1(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        viewInstance = this.viewInstance;
+                        x *= viewInstance.dpr;
+                        y *= -viewInstance.dpr;
+                        z *= viewInstance.dpr;
+                        this.curBehaviorCanBreak = true;
+                        return [4 /*yield*/, viewInstance.moveCurPlane(x, y, 0)];
+                    case 1:
+                        _a.sent();
+                        this.curBehaviorCanBreak = false;
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    return events;
+}());
+
+var errImgBase64 = 'data:image/svg+xml;base64,PHN2ZyB0PSIxNjI1ODExNDgwNTgyIiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEzNDIgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjYwNjkiIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cGF0aCBkPSJNMTIxNi4zNTcgMTM5LjAzYy0xMC4xNTctMTEuNDI3LTI0Ljc1OS0xNy43NzUtMzkuOTk1LTE4LjQxTDc0My40IDEwMy40OGwtMzIuMzc3IDczLjAwNiA0NS4wNzQgMTM1Ljg1Ni04MS4yNiAxNTQuMjY3IDMzLjAxMiAxMjQuNDI5IDgyLjUzIDEwNi42NTMgMTE5LjM1LTEwOS44MjdjMTEuNDI3LTEwLjc5MyAyOS44MzctMTAuMTU4IDM5Ljk5NCAxLjkwNGwxNTIuOTk3IDE2NS42OTRjMTAuNzkzIDExLjQyNyAxMC4xNTggMjkuODM3LTEuMjcgNDAuNjMtNS43MTMgNS4wNzgtMTIuNjk2IDguMjUzLTIwLjMxNCA3LjYxOGwtNDE5LjYzLTE2LjUwNi0yMC45NSA2MC4zMSAyMi44NTQgNTMuOTYyIDQ4Mi40OCAxOC40MWMzMS43NDIgMS4yNyA1OC40MDUtMjMuNDkgNTkuMDQtNTUuMjMxbDI2LjY2My02ODQuMzZjMC42MzUtMTUuMjM2LTQuNDQ0LTMwLjQ3Mi0xNS4yMzYtNDEuMjY1ek05MDYuNTU0IDQ1My4yNzdjLTQ3LjYxMy0xLjkwNC04NC40MzQtNDEuOS04Mi41My04OC44NzggMS45MDUtNDcuNjEzIDQxLjktODQuNDM0IDg4Ljg3OS04Mi41MyA0Ni45NzggMS45MDUgODQuNDM0IDQxLjkgODIuNTMgODguODc5LTEuOTA1IDQ2Ljk3OC00MS45IDg0LjQzNC04OC44NzkgODIuNTN6TTU5NS40ODIgODQ4LjE1bDE0LjYwMS02My40ODQtMzQwLjkxIDIzLjQ4OWMtMTUuODcxIDEuMjctMjkuMjAzLTEwLjE1OC0zMC40NzItMjYuMDI5YTI4LjEyIDI4LjEyIDAgMCAxIDYuOTgzLTIwLjk1TDQ5OC4zNSA0NzEuMDUzYzUuMDc5LTYuMzQ5IDEyLjY5Ny05LjUyMyAyMC45NS05LjUyMyA3LjYxOCAwIDE1LjIzNiAzLjE3NCAyMC45NSA4Ljg4OGw4NC40MzMgODguMjQzLTM2LjE4Ni05My45NTcgNjQuNzU0LTE2Mi41Mi01OS4wNC0xMzAuMTQyIDI0LjEyNC03NC45MTEtNDY0LjcwNCAzMi4zNzdjLTMxLjc0MiAxLjkwNC01NS4yMzIgMjkuMjAyLTUzLjMyNyA2MC45NDVsNDYuOTc4IDY4NC4zNmMwLjYzNSAxNS4yMzUgNy42MTggMjkuMjAyIDE5LjY4IDM4LjcyNSAxMS40MjggMTAuMTU3IDI2LjAyOSAxNS4yMzYgNDEuMjY1IDEzLjk2Nmw0MTUuMTg3LTI4LjU2OC0yNy45MzMtNTAuNzg3eiIgcC1pZD0iNjA3MCIgZmlsbD0iI2JmYmZiZiIvPjwvc3ZnPg==';
+
+// export default{
+function fps() {
+    var allCount = 0;
+    var start;
+    var stat = document.createElement('pre');
+    stat.style.cssText = "\n            position: fixed;\n            top: 0;\n            right: 0;\n            z-index:100;\n            padding: 10px;\n            font-size:12px;\n            background: rgba(255,255,255,0.5);\n            color:#000;\n        ";
+    document.body.append(stat);
+    function run() {
+        if (!start) {
+            start = Date.now();
+        }
+        allCount++;
+        // console.log(allCount)
+        if (Date.now() - start >= 1000) {
+            stat.innerHTML = allCount.toString();
+            allCount = 0;
+            start = Date.now();
+        }
+        requestAnimationFrame(run);
+    }
+    return run;
+}
+// }
+
+var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
+};
+var sourceFrag = "precision mediump float;\n\nvarying vec2 vTextureCoord;\nuniform sampler2D uSampler0;\nuniform vec2 iResolution;\nvoid main() {\n\n    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);\n    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;\n    gl_FragColor = color0;\n}";
+var sourceVer = "attribute vec4 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying mediump vec2 vTextureCoord;\n\nvoid main(void) {\n    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n    vTextureCoord = aTextureCoord;\n}";
+var easeOut1 = new cubicBezier(0.18, 0.96, 0.18, 0.96);
+function isPowerOf2(value) {
+    return (value & (value - 1)) == 0;
+}
+var forDev = 0;
+var webGl = /** @class */ (function () {
+    function webGl(_a) {
+        var images = _a.images;
+        this.dpr = window.devicePixelRatio || 1;
+        this.fieldOfViewInRadians = 0.1 * Math.PI;
+        this.zNear = 100.0;
+        this.zFar = 10000.0;
+        this.curIndex = 0;
+        this.defaultAnimateTime = 300;
+        this.indinces = new Map;
+        this.initialModel = [
+            1.0, 0, 0, 0,
+            0, 1.0, 0, 0,
+            0, 0, 1.0, 0,
+            0, 0, 0, 1.0
+        ];
+        this.baseModel = [
+            1.0, 0, 0, 0,
+            0, 1.0, 0, 0,
+            0, 0, 1.0, 0,
+            0, 0, 0, 1.0
+        ];
+        this.modelMatrix = [
+            1.0, 0, 0, 0,
+            0, 1.0, 0, 0,
+            0, 0, 1.0, 0,
+            0, 0, 0, 1.0
+        ];
+        this.positions = [];
+        this.imgs = [];
+        this.imgUrls = [];
+        this.imgShape = []; //快速定位旋转之后图片的尺寸
+        this.imgShapeInitinal = []; //快速定位旋转之后图片的尺寸
+        this.textures = new Map; //贴图 保存图片贴图
+        this.texturesOther = new Map; // 保存背景色及其他贴图
+        this.curPlane = []; // 动画执行前的当前面的位置信息
+        this.isBoudriedSide = false; //放大移动时 是否曾到达过边界 在移动放大得图片至超过边界后 恢复到最大边界位置后为true
+        this.curAimateBreaked = false; // 当前动画是否被打断
+        this.imgId = 0;
+        fps()();
+        this.gl = this.intialView();
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
+        this.imgUrls = images;
+        var gl = this.gl;
+        gl.enable(gl.DEPTH_TEST); // Enable depth testing
+        gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+        // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
+        // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
+        this.readyWebgl();
+        this.initData();
+        this.contextHandle();
+        this.eventsHanlder = new events(this);
+    }
+    webGl.prototype.contextHandle = function () {
+        var _this = this;
+        var canvas = this.ref;
+        canvas.addEventListener('webglcontextlost', function (e) {
+            _this.textures.clear();
+            _this.texturesOther.clear();
+            _this.ref.parentNode.removeChild(_this.ref);
+        });
+        canvas.addEventListener('webglcontextrestored', function (e) {
+            _this.gl = _this.intialView();
+            _this.gl.pixelStorei(_this.gl.UNPACK_FLIP_Y_WEBGL, 1);
+            var gl = _this.gl;
+            gl.enable(gl.DEPTH_TEST); // Enable depth testing
+            gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+            // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
+            // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
+            _this.readyWebgl();
+            _this.initData();
+            _this.contextHandle();
+        });
+    };
+    webGl.prototype.readyWebgl = function () {
+        this.shaderProgram = this.bindShader(this.gl, sourceFrag, sourceVer);
+        var projectionMatrix = this.createPerspectiveMatrix();
+        this.gl.useProgram(this.shaderProgram);
+        this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, 'uProjectionMatrix'), false, projectionMatrix);
+        this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'), false, this.modelMatrix);
+        this.setTextureCordinate();
+        this.initOtherTexture();
+    };
+    webGl.prototype.addImg = function (image, index) {
+        this.imgUrls.splice(index + 1, 0, image);
+        this.imgs.splice(index + 1, 0, null);
+        if (image instanceof Image) {
+            if (typeof image._id == 'undefined') {
+                image._id = this.imgId++;
+            }
+        }
+        index -= this.curIndex;
+        if (~[-2, -1, 0].indexOf(index)) {
+            this.draw(this.curIndex);
+        }
+    };
+    webGl.prototype.delImg = function (index) {
+        this.imgUrls.splice(index, 1);
+        this.imgs.splice(index, 1);
+        this.textures.delete(this.imgs[index]._id);
+        index -= this.curIndex;
+        if (~[-1, 0, 1].indexOf(index)) {
+            this.draw(this.curIndex);
+        }
+    };
+    webGl.prototype.initOtherTexture = function () {
+        var _this = this;
+        var gl = this.gl;
+        var texture = gl.createTexture();
+        // bgd of cubic
+        this.texturesOther.set(0, texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        //@ts-ignore
+        texture.cubicBgd = true;
+        var r = Math.round(Math.random() * 255);
+        var g = Math.round(Math.random() * 255);
+        var b = Math.round(Math.random() * 255);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([r, g, b, 255]));
+        // err img
+        var img = new Image();
+        img.onload = function () {
+            // 200 200
+            var textureErrImg = gl.createTexture();
+            _this.texturesOther.set(1, textureErrImg);
+            gl.bindTexture(gl.TEXTURE_2D, textureErrImg);
+            _this.texImage(img);
+            _this.setTexParameteri(img.width, img.height);
+        };
+        img.src = errImgBase64;
+        // document.body.append(img)
+    };
+    webGl.prototype.initData = function () {
+        this.draw(this.curIndex);
+    };
+    webGl.prototype.slideNext = function () {
+        this.rotate(0.5 * Math.PI);
+    };
+    // rotate around y axis
+    webGl.prototype.rotate = function (end) {
+        var _this = this;
+        return this.animate({
+            allTime: this.defaultAnimateTime,
+            timingFun: linear,
+            ends: [end],
+            playGame: (function () {
+                var play = _this.rotatePosition.bind(_this);
+                return function (curPos) {
+                    _this.clear();
+                    play(curPos);
+                };
+            })()
+        });
+    };
+    // rotate around z axis
+    webGl.prototype.rotateZ = function (deg) {
+        var _this = this;
+        this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16);
+        var curImgShape = this.imgShape;
+        var curImgShapeInitinal = this.imgShapeInitinal;
+        // 储存旋转位置变化信息
+        this.imgShape = matrix.multiplyPoint(curImgShape, matrix.rotateZMatrix(deg));
+        this.imgShapeInitinal = matrix.multiplyPoint(curImgShapeInitinal, matrix.rotateZMatrix(deg));
+        // todo . every rotate should reCenter the img center
+        var _a = this.curCenterCoordinate, curCenterX = _a[0], curCenterY = _a[1];
+        var dx = -curCenterX, dy = -curCenterY;
+        var playGame = function () {
+            var rest = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                rest[_i] = arguments[_i];
+            }
+            _this.transformCurplane(matrix.translateMatrix(rest[1], rest[2], 0), matrix.rotateZMatrix(rest[0]));
+            _this.bindPostion();
+            _this.drawPosition();
+        };
+        return this.animate({
+            allTime: this.defaultAnimateTime,
+            timingFun: linear,
+            ends: [deg, dx, dy],
+            playGame: playGame
+        });
+    };
+    webGl.prototype.genPostion = function (width, height, index) {
+        var _a;
+        var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        var viewWidth = this.viewWidth;
+        var sideZAxis = z - (viewWidth - width) / 2;
+        // console.log(z)
+        var positionsMap = [
+            [
+                -viewWidth / 2, -height / 2, sideZAxis - width, 1.0,
+                -viewWidth / 2, -height / 2, sideZAxis, 1.0,
+                -viewWidth / 2, height / 2, sideZAxis, 1.0,
+                -viewWidth / 2, height / 2, sideZAxis - width, 1.0,
+            ],
+            [
+                -width / 2, -height / 2, z, 1.0,
+                width / 2, -height / 2, z, 1.0,
+                width / 2, height / 2, z, 1.0,
+                -width / 2, height / 2, z, 1.0,
+            ],
+            [
+                viewWidth / 2, -height / 2, sideZAxis, 1.0,
+                viewWidth / 2, -height / 2, sideZAxis - width, 1.0,
+                viewWidth / 2, height / 2, sideZAxis - width, 1.0,
+                viewWidth / 2, height / 2, sideZAxis, 1.0,
+            ]
+        ];
+        var key = index - this.curIndex; // -1 , 0 , 1;
+        key += 1; // -1,0,1 -> 0,1,2
+        // 可以优化为插入
+        (_a = this.positions).push.apply(_a, positionsMap[key]);
+    };
+    /**
+     * 图片异步加载之后更新顶点坐标位置。
+     * @param index 相对于 curIndex 的位置 -1,0,1
+     */
+    webGl.prototype.updatePosition = function (img, index) {
+        var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        var viewWidth = this.viewWidth;
+        var naturalWidth = img.naturalWidth, naturalHeight = img.naturalHeight;
+        if (img.loadError) {
+            naturalWidth = naturalHeight = 200;
+        }
+        var _a = this.decideImgViewSize(naturalWidth * this.dpr, naturalHeight * this.dpr), width = _a[0], height = _a[1];
+        if (index == 0) {
+            this.imgShape = [naturalWidth * this.dpr, naturalHeight * this.dpr, 0, 1];
+            this.imgShapeInitinal = [width, height, 0, 1];
+        }
+        var sideZAxis = z - (viewWidth - width) / 2;
+        // console.log(z)
+        var positionsMap = [
+            [
+                -viewWidth / 2, -height / 2, sideZAxis - width, 1.0,
+                -viewWidth / 2, -height / 2, sideZAxis, 1.0,
+                -viewWidth / 2, height / 2, sideZAxis, 1.0,
+                -viewWidth / 2, height / 2, sideZAxis - width, 1.0,
+            ],
+            [
+                -width / 2, -height / 2, z, 1.0,
+                width / 2, -height / 2, z, 1.0,
+                width / 2, height / 2, z, 1.0,
+                -width / 2, height / 2, z, 1.0,
+            ],
+            [
+                viewWidth / 2, -height / 2, sideZAxis, 1.0,
+                viewWidth / 2, -height / 2, sideZAxis - width, 1.0,
+                viewWidth / 2, height / 2, sideZAxis - width, 1.0,
+                viewWidth / 2, height / 2, sideZAxis, 1.0,
+            ]
+        ];
+        var key = index;
+        var indexInPosition = this.curPointAt + key * 16;
+        key += 1; // -1,0,1 -> 0,1,2;
+        var curPlane = positionsMap[key];
+        for (var i = indexInPosition; i < indexInPosition + 16; i++) {
+            this.positions[i] = curPlane[i - indexInPosition];
+        }
+    };
+    webGl.prototype.bindPostion = function () {
+        var gl = this.gl;
+        var positions = this.positions;
+        var positionBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
+        {
+            var numComponents = 4;
+            var type = gl.FLOAT;
+            var normalize = false;
+            var stride = 0;
+            var offset = 0;
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            var aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
+            gl.vertexAttribPointer(aVerLocate, numComponents, type, normalize, stride, offset);
+            gl.enableVertexAttribArray(aVerLocate);
+        }
+    };
+    webGl.prototype.drawPosition = function () {
+        // 生成黑色立方体作为背景
+        this.clear();
+        var gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D, this.texturesOther.get(0));
+        for (var i = 0, L = 12; i < L; i += 4) {
+            this.bindIndex(i);
+        }
+        // 生成 真真的 图片
+        var faces = (this.positions.length / 4 - 12) / 4;
+        var textureIndex = (this.curIndex - 1);
+        (textureIndex < 0) && (textureIndex = 0);
+        for (var i = 0; i < faces; i++, textureIndex++) {
+            var img = this.imgs[textureIndex];
+            if (img) {
+                this.bindTexture(img, img._id);
+            }
+            else {
+                // loading
+                console.log("shouldn't have");
+            }
+            this.bindIndex(12 + i * 4);
+        }
+        // console.log('\n')
+        // console.log( this.positions )
+    };
+    webGl.prototype.rotatePosition = function (deg) {
+        var zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        var centerX = this.viewWidth / 2;
+        this.modelMatrix = matrix.multiplyMatrices(this.baseModel, matrix.translateMatrix(0, 0, centerX - zInitial), // 挪到坐标原点
+        matrix.rotateYMatrix(deg), //开始旋转
+        matrix.translateMatrix(0, 0, zInitial - (centerX)) // 挪到原位置
+        );
+        this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'), false, this.modelMatrix);
+        this.drawPosition();
+    };
+    webGl.prototype.scaleZPosition = function (_a) {
+        var _this = this;
+        var scaleX = _a.scaleX, scaleY = _a.scaleY, dx = _a.dx, dy = _a.dy;
+        this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16);
+        var playGame = function () {
+            var rest = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                rest[_i] = arguments[_i];
+            }
+            rest[0] += 1;
+            rest[1] += 1;
+            _this.transformCurplane(matrix.scaleMatrix(rest[0], rest[1], 1), matrix.translateMatrix(rest[2], rest[3], 0));
+            _this.bindPostion();
+            _this.drawPosition();
+        };
+        return this.animate({
+            allTime: this.defaultAnimateTime,
+            timingFun: linear,
+            ends: [scaleX, scaleY, dx, dy],
+            playGame: playGame
+        });
+    };
+    webGl.prototype.moveCurPlane = function (x, y, z) {
+        var _this = this;
+        var dx = x;
+        var dy = y;
+        this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16);
+        var playGame = function () {
+            var rest = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                rest[_i] = arguments[_i];
+            }
+            _this.transformCurplane(matrix.translateMatrix(rest[0], rest[1], 0));
+            _this.bindPostion();
+            _this.drawPosition();
+        };
+        return this.animate({
+            allTime: 800,
+            timingFun: easeOut1,
+            ends: [dx, dy],
+            playGame: playGame
+        });
+    };
+    webGl.prototype.transformCurplane = function (a) {
+        var matrixes = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            matrixes[_i - 1] = arguments[_i];
+        }
+        var positions = this.positions;
+        var curPlane = this.curPlane;
+        for (var i = this.curPointAt; i < this.curPointAt + 16; i += 4) {
+            var planeIndex = i - this.curPointAt;
+            var x = curPlane[planeIndex], y = curPlane[planeIndex + 1], z = curPlane[planeIndex + 2], w = curPlane[planeIndex + 3];
+            var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArray([[x, y, z, w],
+                a], matrixes));
+            for (var j = i; j < 4 + i; j++) {
+                positions[j] = newPoint[j - i];
+            }
+        }
+    };
+    webGl.prototype.zoomCurPlan = function (sx, sy, dx, dy) {
+        this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16);
+        this.transformCurplane(matrix.scaleMatrix(sx, sy, 1), matrix.translateMatrix(dx, dy, 0));
+        this.bindPostion();
+        this.drawPosition();
+    };
+    webGl.prototype.setTextureCordinate = function () {
+        var gl = this.gl;
+        var textureCoordBuffer = this.gl.createBuffer();
+        gl.bindBuffer(this.gl.ARRAY_BUFFER, textureCoordBuffer);
+        var textureCoordinates = [
+            // Front
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            //  right
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            // left
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            // Front
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            //  right
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            // left
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+        ];
+        gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textureCoordinates), this.gl.STATIC_DRAW);
+        {
+            var numComponents = 2;
+            var type = gl.FLOAT;
+            var normalize = false;
+            var stride = 0;
+            var offset = 0;
+            gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+            var textureLocate = gl.getAttribLocation(this.shaderProgram, 'aTextureCoord');
+            gl.vertexAttribPointer(textureLocate, numComponents, type, normalize, stride, offset);
+            gl.enableVertexAttribArray(textureLocate);
+        }
+        // Bind the texture to texture unit 0
+        gl.activeTexture(gl['TEXTURE0']);
+        // Tell the shader we bound the texture to texture unit 0
+        gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler0'), 0);
+    };
+    webGl.prototype.bindTexture = function (image, id) {
+        if (image.loadError) {
+            this.updateOtherTexture(1);
+            return;
+        }
+        if (!image.complete) { //loading ing
+            this.updateOtherTexture(0);
+            return;
+        }
+        if (this.textures.get(id)) { // 该图片已经创建过贴图 直接拿来复用
+            this.updateTexture(id, image);
+            return;
+        }
+        var gl = this.gl;
+        var texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        this.textures.set(id, texture);
+        this.texImage(image);
+        this.setTexParameteri(image.width, image.height);
+    };
+    webGl.prototype.updateTexture = function (id, image) {
+        var gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D, this.textures.get(id));
+        this.setTexParameteri(image.width, image.height);
+    };
+    webGl.prototype.updateOtherTexture = function (id) {
+        var gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D, this.texturesOther.get(id));
+        this.setTexParameteri(0, 3); // default
+    };
+    webGl.prototype.texImage = function (image) {
+        var gl = this.gl;
+        var level = 0;
+        var internalFormat = gl.RGBA;
+        var srcFormat = gl.RGBA;
+        var srcType = gl.UNSIGNED_BYTE;
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
+    };
+    webGl.prototype.setTexParameteri = function (width, height) {
+        var gl = this.gl;
+        // WebGL1 has different requirements for power of 2 images
+        // vs non power of 2 images so check if the image is a
+        // power of 2 in both dimensions.
+        if (isPowerOf2(width) && isPowerOf2(height)) {
+            // Yes, it's a power of 2. Generate mips.
+            gl.generateMipmap(gl.TEXTURE_2D);
+        }
+        else {
+            // No, it's not a power of 2. Turn of mips and set
+            // wrapping to clamp to edge
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); //gl.LINEAR_MIPMAP_LINE
+        }
+    };
+    webGl.prototype.bindIndex = function (index) {
+        var gl = this.gl;
+        var indices = [
+            index, index + 1, index + 2,
+            index, index + 2, index + 3,
+        ];
+        var drawType = gl.TRIANGLES;
+        if (this.indinces.has(index)) {
+            var indexBuffer_1 = this.indinces.get(index);
+            {
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_1);
+                var vertexCount = indices.length;
+                var type = gl.UNSIGNED_SHORT;
+                var offset = 0;
+                gl.drawElements(drawType, vertexCount, type, offset);
+                // gl.drawArrays(gl.TRIANGLES,index,vertexCount)
+            }
+            return;
+        }
+        var indexBuffer = this.gl.createBuffer();
+        this.indinces[index] = indexBuffer;
+        gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        // console.log(indices)
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
+        {
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+            var vertexCount = indices.length;
+            var type = gl.UNSIGNED_SHORT;
+            var offset = 0;
+            gl.drawElements(drawType, vertexCount, type, offset);
+            // gl.drawArrays(gl.TRIANGLES,index,vertexCount)
+        }
+    };
+    webGl.prototype.generateCube = function (width, height) {
+        var _a;
+        var cubeMove = 0.1;
+        width = this.viewWidth;
+        height = this.viewHeight;
+        var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev - cubeMove;
+        width -= cubeMove;
+        height -= cubeMove;
+        var positionCube = [
+            // left
+            -width / 2, -height / 2, z - width, 1.0,
+            -width / 2, -height / 2, z, 1.0,
+            -width / 2, height / 2, z, 1.0,
+            -width / 2, height / 2, z - width, 1.0,
+            //front
+            -width / 2, -height / 2, z, 1.0,
+            width / 2, -height / 2, z, 1.0,
+            width / 2, height / 2, z, 1.0,
+            -width / 2, height / 2, z, 1.0,
+            // right
+            width / 2, -height / 2, z, 1.0,
+            width / 2, -height / 2, z - width, 1.0,
+            width / 2, height / 2, z - width, 1.0,
+            width / 2, height / 2, z, 1.0,
+        ];
+        (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
+    };
+    /**
+     * @param clientX 缩放点得x坐标
+     * @param clientY 缩放点得y坐标
+     * @returns [缩放x比率,缩放y比率,x轴偏移 y轴偏移]
+     */
+    webGl.prototype.decideScaleRatio = function (clientX, clientY) {
+        var width = 0, height = 0;
+        var centerX = this.viewWidth / (2);
+        var centerY = this.viewHeight / (2);
+        var rect = this.viewRect;
+        var curWidth = rect.width * this.dpr;
+        var curHeight = rect.height * this.dpr;
+        var curImgShape = this.imgShape;
+        var nw = curImgShape[0], nh = curImgShape[1];
+        nw = Math.abs(nw);
+        nh = Math.abs(nh);
+        var scaleX, scaleY, dx = 0, dy = 0;
+        clientX *= this.dpr;
+        clientY *= this.dpr;
+        if (this.isEnlargementForScale) { // 放大双击得时候就缩小
+            var _a = this.imgShapeInitinal, initialWidth = _a[0], initinalHeight = _a[1];
+            width = Math.abs(initialWidth);
+            height = Math.abs(initinalHeight);
+            // eg. if ratio is 0.2 then result is -0.8 ,during animate  it becomes 1 0.9 .0.8 
+            scaleX = width / curWidth - 1;
+            scaleY = height / curHeight - 1;
+            //  it's should be the offset of the img's center Point
+            //  this coordinate center is 0 , 0  on the center of screen
+            var _b = this.curCenterCoordinate, curCenterX = _b[0], curCenterY = _b[1];
+            dx = -(curCenterX * (1 + scaleX));
+            dy = -(curCenterY * (1 + scaleY));
+        }
+        else { //缩小得时候双击就放大
+            if (this.curIsLongImg()) {
+                width = this.viewWidth;
+                height = nh / nw * width;
+            }
+            else {
+                width = nw;
+                height = nh;
+            }
+            scaleX = width / curWidth - 1;
+            scaleY = height / curHeight - 1;
+            dx = -((clientX - centerX) * (scaleX));
+            dy = ((clientY - centerY) * (scaleY));
+            if (this.curIsLongImg()) { // a long img dont need a horisontal offset
+                dx = 0;
+            }
+        }
+        return [
+            scaleX,
+            scaleY,
+            dx,
+            dy
+        ];
+    };
+    /**
+     *
+     * @param imgWidth 图片宽度
+     * @param imgHeight 图片高度
+     * @returns  返回适配当前视口得图片宽高
+     */
+    webGl.prototype.decideImgViewSize = function (imgWidth, imgHeight) {
+        var width = 0, height = 0;
+        if (this.viewWidth >= imgWidth) {
+            width = imgWidth;
+        }
+        else {
+            width = this.viewWidth;
+        }
+        height = imgHeight / imgWidth * width;
+        if (height > this.viewHeight) {
+            height = this.viewHeight;
+            width = height * imgWidth / imgHeight;
+        }
+        return [
+            width,
+            height
+        ];
+    };
+    webGl.prototype.draw = function (index) {
+        this.positions = []; // 期望positions只保留一个底层的立方体，三个展示图片的面 共计六个面
+        var imgLength = this.imgUrls.length;
+        var maxWidth = 0, maxHeight = 0;
+        for (var i = index - 1; i <= index + 1; i++) {
+            if (i !== -1 && i <= imgLength - 1) {
+                var image = void 0;
+                if (this.imgs[i]) {
+                    image = this.imgs[i];
+                }
+                else if (typeof this.imgUrls[i] == 'string') {
+                    image = this.loadImage(this.imgUrls[i], i);
+                }
+                else {
+                    image = this.imgUrls[i];
+                }
+                this.imgs[i] = image;
+                var naturalWidth = image.naturalWidth, naturalHeight = image.naturalHeight;
+                if (image.loadError) { // a load wrong img
+                    naturalWidth = naturalHeight = 200; // default size. here maybe 
+                }
+                var _a = this.decideImgViewSize(naturalWidth * this.dpr, naturalHeight * this.dpr), width = _a[0], height = _a[1];
+                if (i == this.curIndex) {
+                    this.imgShape = [naturalWidth * this.dpr, naturalHeight * this.dpr, 0, 1];
+                    this.imgShapeInitinal = [width, height, 0, 1];
+                }
+                this.genPostion(width, height, i);
+                maxWidth = Math.max(width, maxWidth);
+                maxHeight = Math.max(height, maxHeight);
+            }
+        }
+        this.generateCube(maxWidth, maxHeight);
+        this.bindPostion();
+        this.drawPosition();
+    };
+    webGl.prototype.createPerspectiveMatrix = function () {
+        var fieldOfViewInRadians = this.fieldOfViewInRadians;
+        var aspectRatio = this.viewWidth / this.viewHeight;
+        var near = this.zNear;
+        var far = this.zFar;
+        var f = 1.0 / Math.tan(fieldOfViewInRadians / 2);
+        var rangeInv = 1 / (near - far);
+        return [
+            f / aspectRatio, 0, 0, 0,
+            0, f, 0, 0,
+            0, 0, (near + far) * rangeInv, -1,
+            0, 0, near * far * rangeInv * 2, 0
+        ];
+    };
+    Object.defineProperty(webGl.prototype, "curPointAt", {
+        get: function () {
+            var curPointAt = (4) * 16;
+            if (this.curIndex == 0) {
+                curPointAt = 3 * 16;
+            }
+            return curPointAt;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(webGl.prototype, "IsBoundaryLeft", {
+        get: function () {
+            var rect = this.viewRect;
+            return Math.round(rect.left) >= 0 && this.isBoudriedSide;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(webGl.prototype, "isBoundaryRight", {
+        get: function () {
+            var rect = this.viewRect;
+            return Math.round(rect.right * this.dpr) <= Math.round(((this.viewWidth / 1))) && this.isBoudriedSide;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    webGl.prototype.curIsLongImg = function () {
+        var _a = this.imgShape, naturalWidth = _a[0], naturalHeight = _a[1];
+        return Math.abs(naturalWidth) * 2.5 < Math.abs(naturalHeight);
+    };
+    Object.defineProperty(webGl.prototype, "curCenterCoordinate", {
+        get: function () {
+            var curPlaneIndex = this.curPointAt;
+            var curCenterX = (this.positions[curPlaneIndex] + this.positions[curPlaneIndex + 8]) / 2;
+            var curCenterY = (this.positions[curPlaneIndex + 1] + this.positions[curPlaneIndex + 9]) / 2;
+            return [
+                curCenterX,
+                curCenterY
+            ];
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(webGl.prototype, "viewRect", {
+        /**
+         * a position ,return this rect's coordinate like htmlElement.getBoundingClientRect()
+         */
+        get: function () {
+            var topOriginX = -this.viewWidth / 2;
+            var topOriginY = this.viewHeight / 2;
+            var curPlaneIndex = this.curPointAt;
+            var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            // 点的位置会旋转的,旋转之后 再去用固定的坐标计算的时候你就把握不住
+            //  so dynamic find the correct coordinate
+            //  
+            for (var i = curPlaneIndex; i < curPlaneIndex + 16; i += 4) {
+                var x = this.positions[i];
+                var y = this.positions[i + 1];
+                minX = Math.min(x, minX);
+                maxX = Math.max(x, maxX);
+                minY = Math.min(y, minY);
+                maxY = Math.max(y, maxY);
+            }
+            var width = Math.abs(minX - maxX);
+            var height = Math.abs(minY - maxY);
+            return {
+                left: (minX - topOriginX) / this.dpr,
+                right: (maxX - topOriginX) / this.dpr,
+                width: width / this.dpr,
+                height: height / this.dpr,
+                top: -(maxY - topOriginY) / this.dpr,
+                bottom: -(minY - topOriginY) / this.dpr,
+            };
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(webGl.prototype, "curPlanePosition", {
+        /**
+         *    top      right
+         *    bottom   bottomright
+         */
+        get: function () {
+            this.curPointAt;
+            return [];
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(webGl.prototype, "isEnlargement", {
+        /**
+         * should return a value that indicate whether the curViewRect over the viewPort's boundry
+         */
+        get: function () {
+            var _a = this.imgShapeInitinal; _a[0]; _a[1];
+            var viewRect = this.viewRect;
+            return (viewRect.width * this.dpr - 1 > this.viewWidth
+                ||
+                    viewRect.height * this.dpr - 1 > this.viewHeight);
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(webGl.prototype, "isEnlargementForScale", {
+        /**
+         * should return curViewRect is enlarge or shrink compare with initialSize;
+         */
+        get: function () {
+            var _a = this.imgShapeInitinal, iw = _a[0], ih = _a[1];
+            var rect = this.viewRect;
+            return rect.width * this.dpr > Math.abs(iw) || rect.height * this.dpr > Math.abs(ih);
+        },
+        enumerable: false,
+        configurable: true
+    });
+    webGl.prototype.isLoadingError = function (index) {
+        arguments.length == 0 && (index = this.curIndex);
+        return this.imgs[index]['loadError']; // to do 定义错误图片样式
+    };
+    webGl.prototype.loadImage = function (src, index) {
+        var _this = this;
+        var img = new Image();
+        img._id = this.imgId++;
+        this.imgs[index] = img;
+        var isHandled = false;
+        img.onload = function () {
+            if (isHandled) {
+                return;
+            }
+            isHandled = true;
+            _this.handleImgLoaded(img, index);
+        };
+        img.onerror = function () {
+            if (isHandled) {
+                return;
+            }
+            isHandled = true;
+            img.loadError = true;
+            _this.handleImgLoaded(img, index);
+        };
+        img.crossOrigin = 'anonymous';
+        (img.src = src);
+        return img;
+    };
+    webGl.prototype.handleImgLoaded = function (img, index) {
+        if (~[-1, 0, 1].indexOf(index - this.curIndex)) {
+            this.updatePosition(img, index - this.curIndex);
+            this.bindPostion();
+            this.drawPosition();
+        }
+    };
+    webGl.prototype.clear = function () {
+        var gl = this.gl;
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clearDepth(1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    };
+    webGl.prototype.bindShader = function (gl, sourceFrag, sourceVer) {
+        var vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, sourceVer);
+        var fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, sourceFrag);
+        var shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+            return null;
+        }
+        return shaderProgram;
+    };
+    webGl.prototype.loadShader = function (gl, type, source) {
+        var shader = gl.createShader(type);
+        // Send the source to the shader object
+        gl.shaderSource(shader, source);
+        // Compile the shader program
+        gl.compileShader(shader);
+        // See if it compiled successfully
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    };
+    webGl.prototype.createPlane = function (_a) {
+        _a.x; _a.y; _a.width; _a.height;
+        return {};
+    };
+    webGl.prototype.intialView = function () {
+        var canvas = document.createElement('canvas');
+        canvas.style.cssText = "\n            position: absolute;\n            top: 0;\n            left:0;\n            z-index: 9;\n            width:" + window.innerWidth + "px;\n            height:" + window.innerHeight + "px;\n            user-select:none;\n            font-size:0;\n        ";
+        document.body.style.overflow = "hidden";
+        canvas.width = window.innerWidth * this.dpr;
+        canvas.height = window.innerHeight * this.dpr;
+        this.ref = canvas;
+        var gl = canvas.getContext('webgl', { antialias: true });
+        if (!gl) {
+            alert('webgl is not supported. please use before version.');
+        }
+        this.viewWidth = canvas.width;
+        this.viewHeight = canvas.height;
+        // gl.viewport(0,0,this.viewWidth,this.viewHeight)
+        return gl;
+    };
+    webGl.prototype.animate = function (_a) {
+        var _this = this;
+        var allTime = _a.allTime, timingFun = _a.timingFun, ends = _a.ends, playGame = _a.playGame, callback = _a.callback;
+        var startTime = Date.now();
+        var curTime = startTime;
+        var resolve;
+        var pro = new Promise(function (res) { return (resolve = res); });
+        var eL = ends.length;
+        var run = function () {
+            if (_this.curAimateBreaked) {
+                resolve([false, 3]);
+                _this.curAimateBreaked = false;
+                return;
+            }
+            var offsetT = curTime - startTime;
+            offsetT > allTime && (offsetT = allTime);
+            var curX = (offsetT) / allTime;
+            curX > 1 && (curX = 1);
+            var curEnd = timingFun.solve(curX);
+            if (curEnd >= 1) {
+                curEnd = 1;
+            }
+            var ans = new Array(eL);
+            ends.forEach(function (end, index) {
+                ans[index] = end * curEnd;
+            });
+            playGame.apply(void 0, ans);
+            if (curX < 1) {
+                requestAnimationFrame(run);
+            }
+            else {
+                callback && callback();
+                resolve([false, 1]);
+            }
+            curTime = Date.now();
+        };
+        run();
+        return pro;
+    };
+    return webGl;
+}());
+
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var ImagePreview = /** @class */ (function () {
     function ImagePreview(options) {
         this.options = options;
@@ -728,8 +1988,10 @@ var ImagePreview = /** @class */ (function () {
         this.zoomScale = 0.05; //缩放比例
         this.isZooming = false; //是否在进行双指缩放
         this.isAnimating = false; // 是否在动画中
-        this.isMotionless = true; // 是否没有产生位移，用于左右切换图片或者拖动放大之后的图片
-        this.isEnlargeMove = false; // 大图下得切屏
+        this.isEnlargeMove = false; // 大图下得切屏 slide next/before img
+        this.isNormalMove = false; // is moveNormal
+        this.normalMoved = false; // 手指移动上下一张切换的时候有没有产生位移 双指缩放时若此值为true则不进行缩放
+        this.maxMovePointCounts = 3; // max point count while collect moving point.
         this.prefix = "__";
         this.defToggleClass = 'defToggleClass';
         this.movePoints = []; //收集移动点，判断滑动方向
@@ -740,16 +2002,28 @@ var ImagePreview = /** @class */ (function () {
             rotateLeft: 'handleRotateLeft',
             rotateRight: 'handleRotateRight'
         };
+        this.initalMatrix = [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 1, 1],
+        ];
         if (options.selector) {
+            // options里拿到图片
             this.bindTrigger();
         }
+        this.actionExecutor = new webGl({
+            images: this.options.imgs
+        });
+        this.taskExecuteAfterTEnd = new Map;
         this.envClient = this.testEnv();
         this.supportTransitionEnd = this.transitionEnd();
         this.genFrame();
         this.handleReausetAnimate(); //requestAnimationFrame兼容性
-        this.threshold = this.containerWidth / 4;
         this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
+        this.imgContainer.matrix = this.initalMatrix;
         this.containerWidth = this.imgContainer.getBoundingClientRect().width;
+        this.threshold = this.containerWidth / 4;
         this.imgItems = this.imgContainer.querySelectorAll("." + this.prefix + "item");
         this[this.envClient + 'RecordInitialData'](this.imgItems);
         this.maxMoveX = this.containerWidth / 2;
@@ -762,25 +2036,44 @@ var ImagePreview = /** @class */ (function () {
     ImagePreview.prototype.handleMove = function (e) { };
     ImagePreview.prototype.handleMoveNormal = function (e) { };
     ImagePreview.prototype.handleMoveEnlage = function (e) { };
+    ImagePreview.prototype.handleRotate = function (e, changeDeg) { };
     ImagePreview.prototype.handleRotateLeft = function (e) { };
     ImagePreview.prototype.handleRotateRight = function (e) { };
-    ImagePreview.prototype.autoMove = function (curItem, deg, startX, startY, _a) {
-        var maxTop = _a.maxTop, minTop = _a.minTop, maxLeft = _a.maxLeft, minLeft = _a.minLeft;
+    ImagePreview.prototype.setTransitionProperty = function (_a) {
+        _a.el; _a.time; _a.timingFunction; _a.prop;
     };
-    ImagePreview.prototype.pcInitial = function () {
-        var _this = this;
-        this.ref.addEventListener('click', this.handlePcClick.bind(this));
-        this.ref.querySelector("." + this.prefix + "close").addEventListener('click', this.close.bind(this));
-        var timer;
-        window.addEventListener('resize', function (e) {
-            clearTimeout(timer);
-            setTimeout(function () {
-                _this.containerWidth = _this.imgContainer.getBoundingClientRect().width;
-                var index = _this.curIndex;
-                _this.imgContainerMoveX = -index * _this.containerWidth;
-                _this.imgContainer.style.left = _this.imgContainerMoveX + "px";
-            }, 17);
-        });
+    ImagePreview.prototype.animate = function (_a) {
+        _a.el; _a.prop; _a.endStr; _a.timingFunction; _a.callback; _a.duration;
+    };
+    ImagePreview.prototype.animateMultiValue = function (el, options, timingFunction, callback) { };
+    ImagePreview.prototype.computeStep = function (displacement, time) { return 0; };
+    ImagePreview.prototype.transitionEnd = function () { return ''; };
+    ImagePreview.prototype.autoMove = function (deg, startX, startY, _a) {
+        _a.maxTop; _a.minTop; _a.maxLeft; _a.minLeft;
+        return Promise.resolve(1);
+    };
+    ImagePreview.prototype.matrixMultipy = function (a, b) {
+        var res = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            res[_i - 2] = arguments[_i];
+        }
+        return [];
+    };
+    ImagePreview.prototype.matrixTostr = function (arr) { return ''; };
+    ImagePreview.prototype.getTranslateMatrix = function (_a) {
+        _a.x; _a.y; _a.z;
+        return [];
+    };
+    ImagePreview.prototype.getRotateZMatrix = function (deg) { return []; };
+    ImagePreview.prototype.getScaleMatrix = function (_a) {
+        _a.x; _a.y; _a.z;
+        return [];
+    };
+    ImagePreview.prototype.insertImageAfter = function (image, index) {
+        this.actionExecutor.addImg(image, index);
+    };
+    ImagePreview.prototype.delImage = function (index) {
+        this.actionExecutor.delImg(index);
     };
     ImagePreview.prototype.mobileInitial = function () {
         this.ref.addEventListener('touchstart', this.handleTouchStart.bind(this));
@@ -804,94 +2097,56 @@ var ImagePreview = /** @class */ (function () {
             });
         });
     };
+    ImagePreview.prototype.addTouchEndTask = function (type, task) {
+        if (!this.taskExecuteAfterTEnd.has(type)) {
+            this.taskExecuteAfterTEnd.set(type, task);
+        }
+    };
     ImagePreview.prototype.mobileRecordInitialData = function (els) {
         var _this = this;
         /**
          * 记录并设置初始top，left值
          */
-        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-        var imgContainerHeight = imgContainerRect.height;
-        els.forEach(function (el, key, parent) {
-            var img = el.querySelector('img');
-            var imgRect = img.getBoundingClientRect();
-            if (img.complete) {
-                var imgContainerRect_1 = _this.imgContainer.getBoundingClientRect();
-                var imgContainerHeight_1 = imgContainerRect_1.height;
-                var imgContainerWidth = imgContainerRect_1.width;
-                var styleObj = el.getBoundingClientRect();
-                if (imgContainerHeight_1 < styleObj.height) {
-                    el.style.cssText = "\n                        height: 100%;\n                        width: auto;\n                    ";
-                    img.style.cssText = "\n                        height: 100%;\n                        width: auto;\n                    ";
-                }
-                styleObj = el.getBoundingClientRect();
-                var top_1 = (imgContainerHeight_1 - styleObj.height) / 2;
-                var left = (imgContainerWidth - styleObj.width) / 2;
-                el.dataset.initialWidth = styleObj.width.toString();
-                el.dataset.initialHeight = styleObj.height.toString();
-                el.dataset.top = top_1.toString();
-                el.dataset.initialTop = top_1.toString();
-                el.dataset.left = left.toString();
-                el.dataset.initialLeft = left.toString();
-                el.dataset.viewTopInitial = styleObj.top.toString();
-                el.dataset.viewLeftInitial = styleObj.left.toString();
-                el.dataset.loaded = "true";
-                el.style.top = top_1 + "px";
-                el.style.left = left + "px";
+        var record = function (el, img) {
+            var imgContainerRect = _this.imgContainer.getBoundingClientRect();
+            var imgContainerHeight = imgContainerRect.height;
+            var imgContainerWidth = imgContainerRect.width;
+            var styleObj = el.getBoundingClientRect();
+            var imgNaturalWidth = img.naturalWidth;
+            var imgNaturalHeight = img.naturalHeight;
+            var scaleX = imgContainerWidth / imgNaturalWidth;
+            var imgShouldHeight = imgContainerWidth * imgNaturalHeight / imgNaturalWidth;
+            var scaleY = imgShouldHeight / imgNaturalHeight;
+            if (imgContainerHeight < styleObj.height) { // long img fill column direction. width auto fit
+                scaleY = imgContainerHeight / imgNaturalHeight;
+                var imgShouldWeidth = imgContainerHeight * imgNaturalWidth / imgNaturalHeight;
+                scaleX = imgShouldWeidth / imgNaturalWidth;
+                img.style.cssText = "\n                    height: 100%;\n                    width: auto;\n                ";
             }
-            else {
-                el.dataset.loaded = "false";
-                img.onload = (function (el) {
-                    return function () {
-                        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-                        var imgContainerHeight = imgContainerRect.height;
-                        var imgContainerWidth = imgContainerRect.width;
-                        var styleObj = el.getBoundingClientRect();
-                        if (imgContainerHeight < styleObj.height) {
-                            el.style.cssText = "\n                                height: 100%;\n                                width: auto;\n                            ";
-                            img.style.cssText = "\n                                height: 100%;\n                                width: auto;\n                            ";
-                        }
-                        styleObj = el.getBoundingClientRect();
-                        var top = (imgContainerHeight - styleObj.height) / 2;
-                        var left = (imgContainerWidth - styleObj.width) / 2;
-                        el.dataset.initialWidth = styleObj.width.toString();
-                        el.dataset.initialHeight = styleObj.height.toString();
-                        el.dataset.top = top.toString();
-                        el.dataset.initialTop = top.toString();
-                        el.dataset.left = left.toString();
-                        el.dataset.initialLeft = left.toString();
-                        el.dataset.viewTopInitial = styleObj.top.toString();
-                        el.dataset.viewLeftInitial = styleObj.left.toString();
-                        el.dataset.loaded = "true";
-                        el.style.top = top + "px";
-                        el.style.left = left + "px";
-                    };
-                })(el).bind(_this);
-                img.onerror = (function (el) {
-                    return function (e) {
-                        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-                        var imgContainerHeight = imgContainerRect.height;
-                        var styleObj = el.getBoundingClientRect();
-                        var top = (imgContainerHeight - styleObj.height) / 2;
-                        el.dataset.initialWidth = styleObj.width.toString();
-                        el.dataset.initialHeight = styleObj.height.toString();
-                        el.dataset.top = top.toString();
-                        el.dataset.initialTop = top.toString();
-                        el.dataset.loaded = "false";
-                        el.style.top = top + "px";
-                        (e.currentTarget).alt = "图片加载错误";
-                    };
-                })(el).bind(_this);
-            }
-        });
+            var top = -(imgNaturalHeight - imgContainerHeight) / 2;
+            var left = -(imgNaturalWidth - imgContainerWidth) / 2;
+            el.dataset.loaded = "true";
+            el.rotateDeg = 0;
+            el.matrix = _this.initalMatrix;
+            el.matrix = _this.matrixMultipy(el.matrix, _this.getScaleMatrix({ x: scaleX, y: scaleY, z: 1 }), _this.getTranslateMatrix({ x: left, y: top, z: 0 }));
+            el.intialMatrix = el.matrix;
+            el.style.cssText = "\n                width: " + img.naturalWidth + "px;\n                height: " + img.naturalHeight + "px;\n                transform:" + _this.matrixTostr(el.matrix) + ";\n            ";
+            el.dataset.initialWidth = (styleObj.width * scaleX).toString();
+            el.dataset.initialHeight = (styleObj.height * scaleY).toString();
+            el.dataset.top = top.toString();
+            el.dataset.initialTop = top.toString();
+            el.dataset.left = left.toString();
+            el.dataset.initialLeft = left.toString();
+            el.dataset.viewTopInitial = styleObj.top.toString();
+            el.dataset.viewLeftInitial = styleObj.left.toString();
+        };
+        this.recordInitialData(els, record);
     };
     ImagePreview.prototype.pcRecordInitialData = function (els) {
         var _this = this;
-        /**
-         * 记录并设置初始top，left值
-         */
-        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-        var imgContainerHeight = imgContainerRect.height;
         var record = function (el, img) {
+            var imgContainerRect = _this.imgContainer.getBoundingClientRect();
+            var imgContainerHeight = imgContainerRect.height;
             var imgBoundingRect = img.getBoundingClientRect();
             var top = 0;
             var left = 0;
@@ -913,38 +2168,42 @@ var ImagePreview = /** @class */ (function () {
             el.dataset.initialLeft = left.toString();
             el.dataset.viewTopInitial = imgBoundingRect.top.toString();
             el.dataset.viewLeftInitial = imgBoundingRect.left.toString();
+            el.dataset.rotateDeg = '0';
             el.dataset.loaded = "true";
             el.style.top = top + "px";
             el.style.left = left + "px";
         };
+        this.recordInitialData(els, record);
+    };
+    ImagePreview.prototype.recordInitialData = function (els, record) {
+        var _this = this;
+        /**
+         * 记录并设置初始top，left值
+         */
         els.forEach(function (el) {
-            var img = el.querySelector('img');
+            var img = el;
             if (img.complete) {
                 record(el, img);
             }
             else {
                 el.dataset.loaded = "false";
-                img.onload = (function () {
-                    return function () {
-                        record(el, img);
-                    };
-                })().bind(_this);
-                img.onerror = (function (el) {
-                    return function (e) {
-                        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-                        var imgContainerHeight = imgContainerRect.height;
-                        var styleObj = el.getBoundingClientRect();
-                        var top = (imgContainerHeight - styleObj.height) / 2;
-                        el.dataset.initialWidth = styleObj.width.toString();
-                        el.dataset.initialHeight = styleObj.height.toString();
-                        el.dataset.top = top.toString();
-                        el.dataset.initialTop = top.toString();
-                        el.dataset.loaded = "false";
-                        el.style.top = top + "px";
-                        (e.currentTarget).alt = "图片加载错误";
-                    };
-                })(el).bind(_this);
+                img.onload = function () {
+                    record(el, img);
+                };
             }
+            img.onerror = function (e) {
+                var imgContainerRect = _this.imgContainer.getBoundingClientRect();
+                var imgContainerHeight = imgContainerRect.height;
+                var styleObj = el.getBoundingClientRect();
+                var top = (imgContainerHeight - styleObj.height) / 2;
+                el.dataset.initialWidth = styleObj.width.toString();
+                el.dataset.initialHeight = styleObj.height.toString();
+                el.dataset.top = top.toString();
+                el.dataset.initialTop = top.toString();
+                el.dataset.loaded = "false";
+                el.style.top = top + "px";
+                (e.currentTarget).alt = "图片加载错误";
+            };
         });
     };
     ImagePreview.prototype.handlePcClick = function (e) {
@@ -958,8 +2217,6 @@ var ImagePreview = /** @class */ (function () {
         }
     };
     ImagePreview.prototype.handleTouchStart = function (e) {
-        // preventDefault is very import, because if not do this, we will get 
-        // an error last-Click-Time on wx.
         e.preventDefault();
         switch (e.touches.length) {
             case 1:
@@ -979,20 +2236,20 @@ var ImagePreview = /** @class */ (function () {
             x: e.touches[1].clientX,
             y: e.touches[1].clientY
         };
+        this.startX = (e.touches[0].clientX);
+        this.startY = (e.touches[0].clientY);
     };
     ImagePreview.prototype.handleOneStart = function (e) {
+        var _this = this;
         /**
          * 这里把操作派发
          */
-        var _this = this;
         var type = (e.target).dataset.type;
         if (this.operateMaps[type]) {
             this[this.operateMaps[type]](e);
             return;
         }
-        this.touchStartX = this.startX = Math.round(e.touches[0].clientX);
-        this.touchStartY = this.startY = Math.round(e.touches[0].clientY);
-        if ((new Date()).getTime() - this.lastClick < 300) {
+        if (Date.now() - this.lastClick < 300) {
             /*
                 启动一个定时器，如果双击事件发生后就
                 取消单击事件的执行
@@ -1005,16 +2262,15 @@ var ImagePreview = /** @class */ (function () {
                 _this.handleClick(e);
             }, 300);
         }
-        this.lastClick = (new Date()).getTime();
+        this.lastClick = Date.now();
         this.getMovePoints(e);
+        this.startXForDirection = e.touches[0].clientX;
     };
     ImagePreview.prototype.handleClick = function (e) {
         var close = (this.ref.querySelector("." + this.prefix + "close"));
         var bottom = (this.ref.querySelector("." + this.prefix + "bottom"));
         this.showTools = !this.showTools;
-        if (this.isAnimating) {
-            return;
-        }
+        if (this.isAnimating) ;
         if (this.showTools) {
             close.style.display = 'block';
             bottom.style.display = 'block';
@@ -1025,460 +2281,146 @@ var ImagePreview = /** @class */ (function () {
         }
     };
     ImagePreview.prototype.handleDoubleClick = function (e) {
-        if (this.isAnimating)
-            return;
-        this.isAnimating = true;
-        var curItem = this.imgItems[this.curIndex];
-        var curImg = curItem.querySelector('img');
-        if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-            this.isAnimating = false;
-            return;
-        }
-        var curItemWidth = curItem.getBoundingClientRect().width;
-        var curItemHeight = curItem.getBoundingClientRect().height;
-        var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
-        var toWidth;
-        var toHeight;
-        if (Math.abs(rotateDeg % 360) == 90 || Math.abs(rotateDeg % 360) == 270) {
-            if (curImg.naturalWidth > curItemHeight) {
-                toWidth = curImg.naturalHeight;
-            }
-            else {
-                toWidth = curItemHeight;
-            }
-            if (curImg.naturalHeight > curItemWidth) {
-                toHeight = curImg.naturalWidth;
-            }
-            else {
-                toHeight = curItemWidth;
-            }
-        }
-        else {
-            if (curImg.naturalWidth > curItemWidth) {
-                toWidth = curImg.naturalWidth;
-            }
-            else {
-                toWidth = curItemWidth;
-            }
-            if (curImg.naturalHeight > curItemHeight) {
-                toHeight = curImg.naturalHeight;
-            }
-            else {
-                toHeight = curItemHeight;
-            }
-            // 竖直状态下 长图的双击放大放大至设备的宽度大小，
-            if (curItemWidth < this.containerWidth) //长图的初始宽度应该小于屏幕宽度
-                if (toHeight > toWidth) {
-                    if (toWidth >= this.containerWidth) {
-                        toWidth = this.containerWidth;
-                        toHeight = (curImg.naturalHeight / curImg.naturalWidth) * toWidth;
-                    }
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        console.log(this.isAnimating, 'handleDoubleClick');
+                        if (this.isAnimating) {
+                            return [2 /*return*/];
+                        }
+                        this.isAnimating = true;
+                        showDebugger(this.isAnimating.toString());
+                        return [4 /*yield*/, this.actionExecutor.eventsHanlder.handleDoubleClick(e)];
+                    case 1:
+                        _a.sent();
+                        this.isAnimating = false;
+                        showDebugger("animation done." + this.isAnimating.toString());
+                        return [2 /*return*/];
                 }
-        }
-        var scaleX;
-        var scaleY;
-        var isBigSize = curItem.dataset.isEnlargement == "enlargement";
-        if (isBigSize) { //当前浏览元素为大尺寸时执行缩小操作，小尺寸执行放大操作
-            switch (Math.abs(rotateDeg % 360)) {
-                case 0:
-                case 180:
-                    scaleX = Number(curItem.dataset.initialWidth) / curItemWidth;
-                    scaleY = Number(curItem.dataset.initialHeight) / curItemHeight;
-                    break;
-                case 90:
-                case 270:
-                    scaleX = Number(curItem.dataset.initialWidth) / curItemHeight;
-                    scaleY = Number(curItem.dataset.initialHeight) / curItemWidth;
-                    break;
-            }
-        }
-        else {
-            scaleX = toWidth / curItemWidth;
-            scaleY = toHeight / curItemHeight;
-        }
-        if (scaleX > 1 && scaleY > 1) { //放大
-            this.setToNaturalImgSize(toWidth, toHeight, scaleX, scaleY, e);
-        }
-        else if (scaleX < 1 && scaleY < 1) {
-            this.setToInitialSize(scaleX, scaleY, e);
-        }
-        else {
-            this.isAnimating = false;
-        }
+            });
+        });
     };
     ImagePreview.prototype.handleToucnEnd = function (e) {
         e.preventDefault();
-        this.movePoints = []; //重置收集手指移动时要收集得点
-        this.performerRecordMove = 0; //重置收集收支移动点的计时器
-        if (e.touches.length == 0 && this.isZooming) { //重置是否正在进行双指缩放操作
-            // someOperate;
-            this.isZooming = false;
-        }
-        //动画正在进行时，或者不是单指操作时,或者根本没有产生位移，一律不处理
-        if (this.isAnimating || e.changedTouches.length !== 1 || this.isMotionless) {
-            return;
-        }
-        var type = (e.target).dataset.type;
-        if (this.operateMaps[type]) {
-            return;
-        }
-        var curItem = this.imgItems[this.curIndex];
-        this.isMotionless = true;
-        this.isEnlargeMove = false;
-        var isBoundary = curItem.dataset.toLeft == 'true' || curItem.dataset.toRight == 'true';
-        if (curItem.dataset.isEnlargement == 'enlargement') {
-            // 放大的时候,如果到达边界还是进行正常的切屏操作
-            // for long-img operate it solely
-            if (isBoundary) {
-                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                var imgContainerRect = this.imgContainer.getBoundingClientRect();
-                var conWidth = imgContainerRect.width;
-                var curItemViewLeft = curItem.getBoundingClientRect().left;
-                var curItemViewRight = curItem.getBoundingClientRect().right;
-                if (curItemViewLeft < 0 || curItemViewRight > conWidth) {
-                    curItem.dataset.toLeft = 'false';
-                    curItem.dataset.toRight = 'false';
-                    this.handleTEndEnNormal(e);
-                }
-                else {
-                    if (this.fingerDirection == 'vertical') {
-                        this.handleTEndEnlarge(e);
-                    }
-                    else if (this.fingerDirection == 'horizontal') {
-                        this.handleTEndEnNormal(e);
-                    }
-                }
-            }
-            else {
-                this.handleTEndEnlarge(e);
-            }
-        }
-        else {
-            //正常情况下的
-            this.handleTEndEnNormal(e);
-        }
-        this.fingerDirection = '';
+        var taskArray = Array.
+            from(this.taskExecuteAfterTEnd.values())
+            .sort(function (a, b) { return b.priority - a.priority; });
+        taskArray.forEach(function (item) {
+            item.callback(e);
+        });
+        this.taskExecuteAfterTEnd.clear();
     };
     ImagePreview.prototype.handleTEndEnlarge = function (e) {
-        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-        var conWidth = imgContainerRect.width;
-        var conHeight = imgContainerRect.height;
-        var curItem = this.imgItems[this.curIndex];
-        var curImg = curItem.querySelector('img');
-        var curItemWidth = curItem.getBoundingClientRect().width;
-        var curItemHeihgt = curItem.getBoundingClientRect().height;
-        var curItemViewLeft = curItem.getBoundingClientRect().left;
-        var curItemViewRight = curItem.getBoundingClientRect().right;
-        /**
-         * 旋转后会产生偏移值
-         */
-        var offsetX = 0;
-        var offsetY = 0;
-        var rotateDeg = Number(curItem.dataset.rotateDeg || '0');
-        switch (Math.abs(rotateDeg % 360)) {
-            case 90:
-            case 270:
-                /**
-                 * 以x轴为例子
-                 * curItemWidth / 2,为中心点的坐标，
-                 * curitemHeight / 2,是顶部距离中心点的坐标
-                 * 二者的差值即为x轴的偏移
-                 */
-                offsetX = (curItemWidth - curItemHeihgt) / 2;
-                offsetY = (curItemHeihgt - curItemWidth) / 2;
-                break;
-        }
-        var maxTop = offsetY;
-        var minTop = conHeight - curItemHeihgt + offsetY;
-        var maxLeft = offsetX;
-        var minLeft = conWidth - curItemWidth + offsetX;
-        var curItemTop = Number(curItem.dataset.top);
-        var curItemLeft = Number(curItem.dataset.left);
-        /**
-         * 1s 60 次
-         * 我需要在0.3s 完成这项操作
-         *
-         */
-        var recoverY = false;
-        var recoverX = false;
-        var stepY;
-        var stepX;
-        var startX;
-        var endX;
-        var startY;
-        var endY;
-        if (curItemLeft > maxLeft) {
-            stepX = this.computeStep(curItemLeft - maxLeft, this.slideTime);
-            startX = curItemLeft;
-            endX = maxLeft;
-            recoverX = true;
-        }
-        else if (curItemLeft < minLeft) {
-            stepX = this.computeStep(curItemLeft - minLeft, this.slideTime);
-            startX = curItemLeft;
-            endX = minLeft;
-            recoverX = true;
-        }
-        if (curItemTop > maxTop) {
-            stepY = this.computeStep((curItemTop - maxTop), this.slideTime);
-            startY = curItemTop;
-            endY = maxTop;
-            recoverY = true;
-        }
-        else if (curItemTop < minTop) {
-            stepY = this.computeStep((curItemTop - minTop), this.slideTime);
-            startY = curItemTop;
-            endY = minTop;
-            recoverY = true;
-        }
-        // 如果容器内能完整展示图片就不需要移动至边界
-        if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
-            recoverX = false;
-            curItem.dataset.toLeft = 'true';
-            curItem.dataset.toRight = 'true';
-        }
-        if (curItemHeihgt <= conHeight) {
-            recoverY = false;
-            curItem.dataset.toTop = 'true';
-            curItem.dataset.toBottom = 'true';
-        }
-        if (recoverX && recoverY) {
-            this.animateMultiValue(curItem, [
-                {
-                    prop: 'left',
-                    start: startX,
-                    end: endX,
-                    step: -stepX
-                }, {
-                    prop: 'top',
-                    start: startY,
-                    end: endY,
-                    step: -stepY
+        return __awaiter(this, void 0, void 0, function () {
+            var actionExecutor, curItemRect, conWidth, conHeight, curItemWidth, curItemHeihgt, curItemViewTop, curItemViewLeft, curItemViewRight, maxTop, minTop, maxLeft, minLeft, curItemTop, curItemLeft, recoverY, recoverX, endX, endY, endPoint, startPoint, dx, dy, degree, touchTime, boundryObj;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        actionExecutor = this.actionExecutor;
+                        curItemRect = actionExecutor.viewRect;
+                        conWidth = actionExecutor.viewWidth / actionExecutor.dpr;
+                        conHeight = actionExecutor.viewHeight / actionExecutor.dpr;
+                        curItemWidth = curItemRect.width;
+                        curItemHeihgt = curItemRect.height;
+                        curItemViewTop = curItemRect.top;
+                        curItemViewLeft = curItemRect.left;
+                        curItemViewRight = curItemRect.right;
+                        maxTop = 0;
+                        minTop = conHeight - curItemHeihgt;
+                        maxLeft = 0;
+                        minLeft = conWidth - curItemWidth;
+                        curItemTop = curItemRect.top;
+                        curItemLeft = curItemRect.left;
+                        recoverY = false;
+                        recoverX = false;
+                        endX = 0;
+                        endY = 0;
+                        if (curItemLeft > maxLeft) {
+                            endX = maxLeft - curItemLeft;
+                            recoverX = true;
+                        }
+                        else if (curItemLeft < minLeft) {
+                            endX = minLeft - curItemLeft;
+                            recoverX = true;
+                        }
+                        if (curItemTop > maxTop) {
+                            endY = maxTop - curItemTop;
+                            recoverY = true;
+                        }
+                        else if (curItemTop < minTop) {
+                            endY = minTop - curItemTop;
+                            recoverY = true;
+                        }
+                        // 如果容器内能完整展示图片就不需要移动至边界
+                        if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
+                            recoverX = false;
+                            endX = 0;
+                        }
+                        if (curItemHeihgt <= conHeight) {
+                            recoverY = false;
+                            endY = 0;
+                        }
+                        if (!(recoverX || recoverY)) return [3 /*break*/, 2];
+                        this.isAnimating = true;
+                        return [4 /*yield*/, actionExecutor.eventsHanlder.handleTEndEnlarge(e, endX, endY, 0)];
+                    case 1:
+                        _a.sent();
+                        this.isAnimating = false;
+                        return [3 /*break*/, 4];
+                    case 2:
+                        this.moveEndTime = Date.now();
+                        endPoint = {
+                            x: this.startX,
+                            y: this.startY
+                        };
+                        startPoint = {
+                            x: this.touchStartX,
+                            y: this.touchStartY
+                        };
+                        dx = endPoint.x - startPoint.x;
+                        dy = endPoint.y - startPoint.y;
+                        degree = Math.atan2(dy, dx) * 180 / Math.PI;
+                        touchTime = this.moveEndTime - this.moveStartTime;
+                        if (!(touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5))) return [3 /*break*/, 4];
+                        boundryObj = { maxTop: maxTop, minTop: minTop, maxLeft: maxLeft, minLeft: conWidth - curItemWidth };
+                        this.isAnimating = true;
+                        return [4 /*yield*/, this.autoMove(degree, curItemViewLeft, curItemViewTop, boundryObj)];
+                    case 3:
+                        _a.sent();
+                        this.isAnimating = false;
+                        _a.label = 4;
+                    case 4:
+                        this.moveStartTime = 0;
+                        return [2 /*return*/];
                 }
-            ]);
-            curItem.dataset.left = "" + endX;
-            curItem.dataset.top = "" + endY;
-            if (endX == maxLeft) {
-                //toLeft 即为到达左边界的意思下同
-                curItem.dataset.toLeft = 'true';
-                curItem.dataset.toRight = 'false';
-            }
-            else if (endX == minLeft) {
-                curItem.dataset.toLeft = 'false';
-                curItem.dataset.toRight = 'true';
-            }
-            if (endY == maxTop) {
-                curItem.dataset.toTop = 'true';
-                curItem.dataset.toBottom = 'false';
-            }
-            else if (endY == minTop) {
-                curItem.dataset.toTop = 'false';
-                curItem.dataset.toBottom = 'true';
-            }
-        }
-        else if (recoverX) {
-            this.animate(curItem, 'left', startX, endX, -stepX);
-            curItem.dataset.left = "" + endX;
-            if (endX == maxLeft) {
-                //toLeft 即为到达左边界的意思下同
-                curItem.dataset.toLeft = 'true';
-                curItem.dataset.toRight = 'false';
-            }
-            else if (endX == minLeft) {
-                curItem.dataset.toLeft = 'false';
-                curItem.dataset.toRight = 'true';
-            }
-        }
-        else if (recoverY) {
-            this.animate(curItem, 'top', startY, endY, -stepY);
-            curItem.dataset.top = "" + endY;
-            if (endY == maxTop) {
-                curItem.dataset.toTop = 'true';
-                curItem.dataset.toBottom = 'false';
-            }
-            else if (endY == minTop) {
-                curItem.dataset.toTop = 'false';
-                curItem.dataset.toBottom = 'true';
-            }
-        }
-        else {
-            // 如果容器内能完整展示图片就不需要移动至边界
-            if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
-                curItem.dataset.toLeft = 'true';
-                curItem.dataset.toRight = 'true';
-            }
-            else {
-                curItem.dataset.toLeft = 'false';
-                curItem.dataset.toRight = 'false';
-            }
-            curItem.dataset.toTop = 'false';
-            curItem.dataset.toBottom = 'false';
-            this.moveEndTime = (new Date).getTime();
-            var endPoint = {
-                x: this.startX,
-                y: this.startY
-            };
-            var startPoint = {
-                x: this.touchStartX,
-                y: this.touchStartY
-            };
-            var dx = endPoint.x - startPoint.x;
-            var dy = endPoint.y - startPoint.y;
-            var degree = Math.atan2(dy, dx) * 180 / Math.PI;
-            var touchTime = this.moveEndTime - this.moveStartTime;
-            // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
-            // bug fix: on android , there dx,dy is 0,still trigger moveEvent, since add distance restrict
-            // 上边确定的degree时 Math.atan2会返回这个向量相对原点的偏移角度，我们借此拿到直线的斜率进而根据直线方程确定
-            // 要滑动的x y的值
-            if (touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5)) {
-                var boundryObj = { maxTop: maxTop, minTop: minTop, maxLeft: maxLeft, minLeft: minLeft };
-                this.autoMove(curItem, degree, curItemLeft, curItemTop, boundryObj);
-            }
-        }
-        this.moveStartTime = 0;
+            });
+        });
     };
     ImagePreview.prototype.handleTEndEnNormal = function (e) {
-        var endX = Math.round(e.changedTouches[0].clientX);
-        if (endX - this.touchStartX >= this.threshold) { //前一张
-            if (this.curIndex == 0) { //第一张
-                this.slideSelf();
-                return;
-            }
-            this.curIndex--;
-            this.slidePrev();
-        }
-        else if (endX - this.touchStartX <= -this.threshold) { //后一张
-            if (this.curIndex + 1 == this.imgsNumber) { //最后一张
-                this.slideSelf();
-                return;
-            }
-            this.curIndex++;
-            this.slideNext();
-        }
-        else { //复原
-            this.slideSelf();
-        }
-    };
-    ImagePreview.prototype.slideNext = function () {
-        var endX = -(this.curIndex * this.containerWidth);
-        if (endX < -(this.containerWidth * this.imgsNumber - 1)) {
-            endX = -(this.containerWidth * this.imgsNumber - 1);
-            this.curIndex = this.imgsNumber - 1;
-        }
-        var step = this.computeStep(Math.abs(endX - this.imgContainerMoveX), this.slideTime);
-        if (this.imgContainerMoveX < endX) { /* infinite move */
-            this.slideSelf();
-            return;
-        }
-        this.animate(this.imgContainer, 'transform', this.imgContainerMoveX, endX, -step);
-    };
-    ImagePreview.prototype.slidePrev = function () {
-        var endX = -(this.curIndex * this.containerWidth);
-        if (endX > 0) {
-            endX = 0;
-            this.curIndex = 0;
-        }
-        if (this.imgContainerMoveX > endX) { /* infinite move */
-            this.slideSelf();
-            return;
-        }
-        var step = this.computeStep(Math.abs(endX - this.imgContainerMoveX), this.slideTime);
-        this.animate(this.imgContainer, 'transform', this.imgContainerMoveX, endX, step);
-    };
-    ImagePreview.prototype.slideSelf = function () {
-        var endX = -(this.curIndex * this.containerWidth);
-        if (endX < this.imgContainerMoveX) {
-            var step = this.computeStep(Math.abs(endX - this.imgContainerMoveX), this.slideTime);
-            this.animate(this.imgContainer, 'transform', this.imgContainerMoveX, endX, -step);
-        }
-        else {
-            var step = this.computeStep(Math.abs(endX - this.imgContainerMoveX), this.slideTime);
-            this.animate(this.imgContainer, 'transform', this.imgContainerMoveX, endX, step);
-        }
-    };
-    ImagePreview.prototype.animate = function (el, prop, start, end, step) {
-        var _this = this;
-        if (this.isAnimating) {
-            return;
-        }
-        this.isAnimating = true;
-        if (Math.abs(end - start) < Math.abs(step)) {
-            step = end - start;
-        }
-        function processStyle() {
-            switch (prop) {
-                case 'transform':
-                    el.style.left = " " + (start + step) + "px";
-                    break;
-                case 'top':
-                    el.style.top = start + step + "px";
-                    break;
-                case 'left':
-                    el.style.left = start + step + "px";
-                    break;
-            }
-        }
-        processStyle();
-        start += step;
-        var move = function () {
-            if (Math.abs(end - start) < Math.abs(step)) {
-                step = end - start;
-            }
-            processStyle();
-            start += step;
-            if (start !== end) {
-                requestAnimationFrame(move);
-            }
-            else {
-                if (prop == 'transform') {
-                    _this.imgContainerMoveX = end;
+        return __awaiter(this, void 0, void 0, function () {
+            var endX, eventsHanlder, offset;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.isAnimating) {
+                            return [2 /*return*/];
+                        }
+                        endX = (e.changedTouches[0].clientX);
+                        eventsHanlder = this.actionExecutor.eventsHanlder;
+                        offset = endX - this.touchStartX;
+                        if (offset === 0) {
+                            return [2 /*return*/];
+                        }
+                        this.isAnimating = true;
+                        return [4 /*yield*/, eventsHanlder.handleTEndEnNormal(e, offset)];
+                    case 1:
+                        _a.sent();
+                        this.isAnimating = false;
+                        return [2 /*return*/];
                 }
-                _this.isAnimating = false;
-            }
-        };
-        if (start !== end) {
-            requestAnimationFrame(move);
-        }
-        else {
-            if (prop == 'transform') {
-                this.imgContainerMoveX = end;
-            }
-            this.isAnimating = false;
-        }
-    };
-    ImagePreview.prototype.animateMultiValue = function (el, options) {
-        var _this = this;
-        if (this.isAnimating) {
-            return;
-        }
-        this.isAnimating = true;
-        var processStyle = function () {
-            var isFullFilled = true;
-            for (var i = 0, L = options.length; i < L; i++) {
-                var item = options[i];
-                if (Math.abs(item.start - item.end) < Math.abs(item.step)) {
-                    item.step = item.end - item.start;
-                }
-                item.start += item.step;
-                el.style[item.prop] = item.start + "px";
-                if (item.start !== item.end) {
-                    isFullFilled = false;
-                }
-            }
-            if (isFullFilled) {
-                _this.isAnimating = false;
-            }
-            else {
-                requestAnimationFrame(processStyle);
-            }
-        };
-        processStyle();
-    };
-    ImagePreview.prototype.computeStep = function (displacement, time) {
-        var v = displacement / time;
-        var frequency = 1000 / 60;
-        return v * frequency;
+            });
+        });
     };
     ImagePreview.prototype.genFrame = function () {
         var _this = this;
@@ -1490,15 +2432,11 @@ var ImagePreview = /** @class */ (function () {
         }
         this.imgsNumber = images.length;
         var index = images.indexOf(curImg);
-        var imagesHtml = '';
         if (index == -1) {
             index = 0;
         }
         this.curIndex = index;
         this.imgContainerMoveX = -(index * this.containerWidth);
-        images.forEach(function (src) {
-            imagesHtml += "\n            <div class=\"" + _this.prefix + "itemWraper\">\n                <div class=\"" + _this.prefix + "item\">\n                    <img src=\"" + src + "\">\n                </div>\n            </div>\n            ";
-        });
         var genStyle = function (prop) {
             switch (prop) {
                 case 'conBackground':
@@ -1539,14 +2477,14 @@ var ImagePreview = /** @class */ (function () {
                 default: return '';
             }
         };
-        var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\">\n                    " + imagesHtml + "\n                </div>\n                <div class=\"" + this.prefix + "bottom\">\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\"  t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
+        var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\"></div>\n                <div class=\"" + this.prefix + "bottom\">\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\"  t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
         var isIPhoneX = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 375 && window.screen.height === 812;
         // iPhone XS Max
         var isIPhoneXSMax = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 414 && window.screen.height === 896;
         // iPhone XR
         var isIPhoneXR = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 2 && window.screen.width === 414 && window.screen.height === 896;
         var needHigher = isIPhoneX || isIPhoneXSMax || isIPhoneXR;
-        var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: " + genStyle('conBackground') + ";\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            \n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 1;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                transform: translateX( " + this.imgContainerMoveX + "px );\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100% ;\n                height: 100%;\n                overflow: hidden;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item{\n                box-sizing:border-box;\n                position: absolute;\n                width: 100% ;\n                height: " + genStyle('itemHeight') + ";\n                overflow-x: " + genStyle('itemScroll') + ";\n                overflow-y:" + genStyle('itemScroll') + ";\n                font-size: 0;\n                text-align: " + genStyle('item-text-align') + ";\n                white-space: normal;\n                transition: transform 0.5s;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item::-webkit-scrollbar {\n                width: 5px;\n                height: 8px;\n                background-color: #aaa;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item::-webkit-scrollbar-thumb {\n                background: #000;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "item img{\n                width: " + genStyle('imgWidth') + ";\n                height: auto;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: " + (needHigher ? 20 : 0) + "px;\n                left: 20px;\n                right: 20px;\n                padding: 0 10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 42px;\n                height: 42px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                box-sizing: border-box;\n                width: 100%;\n                height: 100%;\n                padding:10px;\n            }\n        ";
+        var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: " + genStyle('conBackground') + ";\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            \n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 10;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            \n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: " + (needHigher ? 20 : 0) + "px;\n                left: 20px;\n                right: 20px;\n                z-index: 10;\n                padding: 0 10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 42px;\n                height: 42px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                box-sizing: border-box;\n                width: 100%;\n                height: 100%;\n                padding:10px;\n            }\n        ";
         this.ref = document.createElement('div');
         this.ref.className = this.prefix + "imagePreviewer";
         this.ref.innerHTML = html;
@@ -1556,6 +2494,7 @@ var ImagePreview = /** @class */ (function () {
             styleElem.innerHTML = style;
             document.querySelector('head').appendChild(styleElem);
         }
+        this.ref.querySelector("." + this.prefix + "imgContainer").append(this.actionExecutor.ref);
         document.body.appendChild(this.ref);
     };
     ImagePreview.prototype.handleReausetAnimate = function () {
@@ -1582,9 +2521,21 @@ var ImagePreview = /** @class */ (function () {
     ImagePreview.prototype.show = function (index) {
         this.curIndex = index;
         this[this.envClient + 'ReadyShow']();
+        var translateX = -index * this.containerWidth - this.imgContainerMoveX;
         this.containerWidth = this.imgContainer.getBoundingClientRect().width;
         this.imgContainerMoveX = -index * this.containerWidth;
-        this.imgContainer.style.left = this.imgContainerMoveX + "px";
+        this.imgContainer.matrix = this.matrixMultipy(this.imgContainer.matrix, [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [translateX, 0, 0, 1]
+        ]);
+        this.setTransitionProperty({
+            el: this.imgContainer,
+            time: 0
+        });
+        this.matrixTostr(this.imgContainer.matrix);
+        // this.imgContainer.style.transform = `${transformStr}`;
         this.toggleClass(this.ref, this.defToggleClass);
     };
     ImagePreview.prototype.mobileReadyShow = function () { };
@@ -1605,9 +2556,40 @@ var ImagePreview = /** @class */ (function () {
         ref.className = classes.join(' ');
     };
     ImagePreview.prototype.getMovePoints = function (e) {
+        var _this = this;
+        if (this.movePoints.length > this.maxMovePointCounts) {
+            return;
+        }
         this.movePoints.push({
             x: e.touches[0].clientX,
             y: e.touches[0].clientY
+        });
+        var type = 'resetMovePoints';
+        this.addTouchEndTask(type, {
+            priority: 1,
+            callback: function () { return (_this.movePoints = []); }
+        }); //重置收集手指移动时要收集得点))
+    };
+    ImagePreview.prototype.decideMoveDirection = function () {
+        var _this = this;
+        var L = this.movePoints.length;
+        var endPoint = this.movePoints[L - 1];
+        var startPoint = this.movePoints[0];
+        var dx = endPoint.x - startPoint.x;
+        var dy = endPoint.y - startPoint.y;
+        var degree = Math.atan2(dy, dx) * 180 / Math.PI;
+        if (Math.abs(90 - Math.abs(degree)) < 30) {
+            this.fingerDirection = 'vertical';
+        }
+        else {
+            this.fingerDirection = 'horizontal';
+        }
+        var type = 'resetFingerDirection';
+        this.addTouchEndTask(type, {
+            priority: 1,
+            callback: function () {
+                _this.fingerDirection = '';
+            }
         });
     };
     ImagePreview.prototype.destroy = function () {
@@ -1621,26 +2603,9 @@ var ImagePreview = /** @class */ (function () {
             return 'pc';
         }
     };
-    // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
-    // ============================================================
-    ImagePreview.prototype.transitionEnd = function () {
-        var el = document.createElement('bootstrap');
-        var transEndEventNames = {
-            'WebkitTransition': 'webkitTransitionEnd',
-            'MozTransition': 'transitionend',
-            'OTransition': 'oTransitionEnd otransitionend',
-            'transition': 'transitionend'
-        };
-        for (var name in transEndEventNames) {
-            if (el.style[name] !== undefined) {
-                return transEndEventNames[name];
-            }
-        }
-        return ''; // explicit for ie8 (  ._.)
-    };
     return ImagePreview;
 }());
-applyMixins(ImagePreview, [Move, Zoom, Rotate]);
+applyMixins(ImagePreview, [Move, Zoom, Rotate, Animation, Matrix]);
 function applyMixins(derivedCtor, baseCtors) {
     baseCtors.forEach(function (baseCtor) {
         Object.getOwnPropertyNames(baseCtor.prototype).forEach(function (name) {

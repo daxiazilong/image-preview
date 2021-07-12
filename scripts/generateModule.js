@@ -7,11 +7,11 @@ try{
     function compile(index){
         let mod = moduler[index];
         let filename = `${releasePath}\\image-preview-${mod}.js`;
-        childProcess.exec(`..\\node_modules\\.bin\\rollup -c -f ${mod} -o ${filename}`,(err)=>{
+        childProcess.exec(`..\\node_modules\\.bin\\rollup -c -f ${mod} -o ${filename}`,(err,stdout)=>{
+            console.log(stdout)
             if(err){
                 console.log(err)
                 console.log('编译失败')
-
                 return;
             }
             console.log(` ${filename} 编译成功`)
