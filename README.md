@@ -60,3 +60,6 @@ imgObj.distory();
 ```
 ### communicate
 yon can join qq-group 977121370 and chat with me.
+
+sincerely invite experience [2.0](https://daxiazilong.github.io/image-preview/index.html)
+
