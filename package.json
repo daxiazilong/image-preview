@@ -13,7 +13,6 @@
     "url": "https://github.com/daxiazilong/image-preview"
   },
   "author": "zilong",
-  "license": "MIT",
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^15.12.1",
@@ -31,5 +30,7 @@
     "skip": {
       "tag": true
     }
-  }
+  },
+  "license": "MIT"
+
 }
