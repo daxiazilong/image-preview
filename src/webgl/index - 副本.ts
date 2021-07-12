@@ -1,28 +1,7 @@
-
-const sourceFrag = `precision mediump float;
-
-varying vec2 vTextureCoord;
-uniform sampler2D uSampler0;
-uniform vec2 iResolution;
-void main() {
-
-    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);
-    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;
-    gl_FragColor = color0;
-}`;
-const sourceVer = `attribute vec4 aVertexPosition;
-attribute vec2 aTextureCoord;
-
-uniform mat4 uModelViewMatrix;
-uniform mat4 uProjectionMatrix;
-
-varying mediump vec2 vTextureCoord;
-
-void main(void) {
-    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-    vTextureCoord = aTextureCoord;
-}`;
-
+'####'
+import { sourceFrag } from './shaders/fragment-shader.frag'
+import { sourceVer } from './shaders/vertext-shader.vert';
+'####'
 import { matrix } from './matrix'
 import { cubicBezier,linear,easeOut ,easeIn,easeInOut} from '../animation/animateJs'
 import { events } from './eventSystem/index'

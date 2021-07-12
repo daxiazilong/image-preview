@@ -1,9 +1,7 @@
-import {ImagePreview}  from './image-preview'
-import {ImagePreviewVue} from '../vueComponent/index'
-
-const Vue = require('vue');
-const obj = new ImagePreview({
-    curImg:'/testImage/IMG_0512.JPG',
+import { ImagePreview } from './image-preview';
+var Vue = require('vue');
+var obj = new ImagePreview({
+    curImg: '/testImage/IMG_0512.JPG',
     imgs: [
         '/testImage/main_body3.png',
         'http://image.uc.cn/s/wemedia/s/upload/2019/120ded45c1c6ac2e7735ab375ac25311.png',
@@ -20,11 +18,12 @@ const obj = new ImagePreview({
         '/testImage/BBC82C020430AED149F8D18A0849D241.png'
     ]
 });
-obj.show(0)
-setTimeout( () => {;
+obj.show(0);
+setTimeout(function () {
+    ;
     // obj.insertImageAfter('/testImage/IMG_0512.JPG',0)
     // obj.delImage(0)
-} ,500)
+}, 500);
 // Vue.use(ImagePreviewVue)
 // new Vue({
 //     el:'#el',
@@ -52,13 +51,6 @@ setTimeout( () => {;
 //     }
 // })
 var statShow = document.querySelector('#stat');
-
-window.onerror=function(message, source, lineno, colno, error){
-    statShow.innerHTML=`
-        ${message}
-        ${source}
-        ${lineno}
-        ${colno}
-        ${error}
-    `;
-}
+window.onerror = function (message, source, lineno, colno, error) {
+    statShow.innerHTML = "\n        " + message + "\n        " + source + "\n        " + lineno + "\n        " + colno + "\n        " + error + "\n    ";
+};

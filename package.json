@@ -1,13 +1,14 @@
 {
   "name": "image-preview",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "image-preview",
   "scripts": {
     "start": "webpack serve --open Chrome.exe --mode=development",
-    "build": "node gen-version.js && tsc --project ./src",
-    "genModule": "build.cmd",
-    "release": "standard-version",
-    "rollup": "rollup -c"
+    "build": "node scripts/beforeBuild.js && npm run genModule",
+    "compileTs":"tsc --project ./src",
+    "buildTest":"webpack --mode=none",
+    "genModule": ".\\scripts\\genModule.cmd",
+    "release": "standard-version"
   },
   "repository": {
     "url": "https://github.com/daxiazilong/image-preview"

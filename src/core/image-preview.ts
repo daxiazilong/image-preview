@@ -1,10 +1,9 @@
 /**
- * image-preview [1.1.0]
+ * image-preview [2.0.0]
  * author:zilong
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
-import { off } from 'process';
 import { Move, Zoom, Rotate } from '../action/index';
 import { Animation } from '../animation/index'
 import { Matrix } from '../matrix/index'
