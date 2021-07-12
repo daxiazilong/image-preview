@@ -61,3 +61,5 @@ imgObj.distory();
 试用/使用途中如果有任何问题
 都可以加入这个qq群977121370与我交流.
 
+
+诚邀体验 [2.0](https://daxiazilong.github.io/image-preview/index.html)
