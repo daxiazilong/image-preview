@@ -9,7 +9,11 @@ let  compilePath = {
   test: './src/core/test.ts'
 }
 const output = dev ? 'debug' : 'release';
-
+if(!dev){
+  compilePath = {
+    test: './src/core/test.ts'
+  }
+}
 var plugins = [new HtmlWebpackPlugin({
   title: 'this is dev mode!',
   template: './debug/template.html'

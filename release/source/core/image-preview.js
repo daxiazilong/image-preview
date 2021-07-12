@@ -43,7 +43,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import { Move, Zoom, Rotate } from '../action/index';
 import { Animation } from '../animation/index';
 import { Matrix } from '../matrix/index';
-import { showDebugger } from '../tools/index';
+// import { showDebugger } from '../tools/index';
 import { webGl } from '../webgl/index';
 var ImagePreview = /** @class */ (function () {
     function ImagePreview(options) {
@@ -367,12 +367,12 @@ var ImagePreview = /** @class */ (function () {
                             return [2 /*return*/];
                         }
                         this.isAnimating = true;
-                        showDebugger(this.isAnimating.toString());
+                        // showDebugger(this.isAnimating.toString())
                         return [4 /*yield*/, this.actionExecutor.eventsHanlder.handleDoubleClick(e)];
                     case 1:
+                        // showDebugger(this.isAnimating.toString())
                         _a.sent();
                         this.isAnimating = false;
-                        showDebugger("animation done." + this.isAnimating.toString());
                         return [2 /*return*/];
                 }
             });
@@ -600,23 +600,8 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.mobileBeforeClose = function () { };
     ImagePreview.prototype.show = function (index) {
-        this.curIndex = index;
-        this[this.envClient + 'ReadyShow']();
-        var translateX = -index * this.containerWidth - this.imgContainerMoveX;
-        this.containerWidth = this.imgContainer.getBoundingClientRect().width;
-        this.imgContainerMoveX = -index * this.containerWidth;
-        this.imgContainer.matrix = this.matrixMultipy(this.imgContainer.matrix, [
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 1, 0],
-            [translateX, 0, 0, 1]
-        ]);
-        this.setTransitionProperty({
-            el: this.imgContainer,
-            time: 0
-        });
-        var transformStr = this.matrixTostr(this.imgContainer.matrix);
-        // this.imgContainer.style.transform = `${transformStr}`;
+        this.actionExecutor.curIndex = index;
+        this.actionExecutor.draw(index);
         this.toggleClass(this.ref, this.defToggleClass);
     };
     ImagePreview.prototype.mobileReadyShow = function () { };

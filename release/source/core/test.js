@@ -1,5 +1,4 @@
 import { ImagePreview } from './image-preview';
-var Vue = require('vue');
 var obj = new ImagePreview({
     curImg: '/testImage/IMG_0512.JPG',
     imgs: [
@@ -23,6 +22,7 @@ setTimeout(function () {
     ;
     // obj.insertImageAfter('/testImage/IMG_0512.JPG',0)
     // obj.delImage(0)
+    // obj.show(3)
 }, 500);
 // Vue.use(ImagePreviewVue)
 // new Vue({

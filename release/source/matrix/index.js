@@ -1,7 +1,9 @@
-var __spreadArray = (this && this.__spreadArray) || function (to, from) {
-    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-        to[j] = from[i];
-    return to;
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
 };
 var Matrix = /** @class */ (function () {
     function Matrix() {
@@ -28,7 +30,7 @@ var Matrix = /** @class */ (function () {
             }
         }
         if (res.length) {
-            return this.matrixMultipy.apply(this, __spreadArray([result, res.splice(0, 1)[0]], res));
+            return this.matrixMultipy.apply(this, __spreadArrays([result, res.splice(0, 1)[0]], res));
         }
         return result;
     };

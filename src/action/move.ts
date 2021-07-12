@@ -2,7 +2,7 @@
  * move action
  */
 import { ImagePreview } from '../core/image-preview'
-import { showDebugger } from '../tools/index';
+// import { showDebugger } from '../tools/index';
 
 export class Move{
     handleMove(this: ImagePreview,e: TouchEvent & MouseEvent){
@@ -128,11 +128,14 @@ export class Move{
         }     
     }
     handleMoveNormal(this: ImagePreview, e: TouchEvent & MouseEvent ){
-        showDebugger(`
-        moveNormal:${Date.now()}
-        this.isAnimating :${this.isAnimating }
-        this.touchStartX:${this.touchStartX}
-        `)
+        // showDebugger(`
+        // moveNormal:${Date.now()}
+        // this.isAnimating :${this.isAnimating }
+        // this.touchStartX:${this.touchStartX}
+        // `)
+        if(e.touches.length !== 1 ){
+            return;
+        }
         if( this.isAnimating){
             return;
         }
@@ -174,11 +177,11 @@ export class Move{
         
     }
     handleMoveEnlage( this: ImagePreview,e: TouchEvent & MouseEvent ){;
-        showDebugger(`
-            handlemoveEnlarge:this.isZooming ${this.isZooming}
-            this.isAnimating:${this.isAnimating}
-             ${Date.now()}
-        `)
+        // showDebugger(`
+        //     handlemoveEnlarge:this.isZooming ${this.isZooming}
+        //     this.isAnimating:${this.isAnimating}
+        //      ${Date.now()}
+        // `)
         if( this.actionExecutor.isLoadingError() ){
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;

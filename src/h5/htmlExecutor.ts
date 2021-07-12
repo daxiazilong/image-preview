@@ -869,4 +869,28 @@ class htmlExecutor{
             }
         })
     }
+    show(index: number) {
+        this.curIndex = index;
+        this[this.envClient + 'ReadyShow']();
+
+        let translateX = -index * this.containerWidth - this.imgContainerMoveX;
+        this.containerWidth = this.imgContainer.getBoundingClientRect().width;
+        this.imgContainerMoveX = -index * this.containerWidth;
+
+        this.imgContainer.matrix = this.matrixMultipy(this.imgContainer.matrix,
+            [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [translateX, 0, 0, 1]
+            ]
+        )
+        this.setTransitionProperty({
+            el: this.imgContainer,
+            time: 0
+        })
+        let transformStr = this.matrixTostr(this.imgContainer.matrix)
+        // this.imgContainer.style.transform = `${transformStr}`;
+        this.toggleClass(this.ref, this.defToggleClass)
+    }
 }

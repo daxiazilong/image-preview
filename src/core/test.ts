@@ -1,7 +1,14 @@
-import {ImagePreview}  from './image-preview'
-import {ImagePreviewVue} from '../vueComponent/index'
-
-const Vue = require('vue');
+import {ImagePreview}  from './image-preview';
+let isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
+if(!isMobile){
+    if(confirm(`
+        主要适配移动端项目
+        Mainly suitable for mobile terminal
+    `)){
+    }else{
+    };
+    throw 1;
+}
 const obj = new ImagePreview({
     curImg:'/testImage/IMG_0512.JPG',
     imgs: [
@@ -24,6 +31,8 @@ obj.show(0)
 setTimeout( () => {;
     // obj.insertImageAfter('/testImage/IMG_0512.JPG',0)
     // obj.delImage(0)
+// obj.show(3)
+
 } ,500)
 // Vue.use(ImagePreviewVue)
 // new Vue({

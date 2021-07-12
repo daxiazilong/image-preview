@@ -6,7 +6,7 @@
     "start": "webpack serve --open Chrome.exe --mode=development",
     "build": "node scripts/beforeBuild.js && npm run genModule",
     "compileTs":"tsc --project ./src",
-    "buildTest":"webpack --mode=none",
+    "buildTest":"webpack --mode=production",
     "genModule": ".\\scripts\\genModule.cmd",
     "release": "standard-version"
   },

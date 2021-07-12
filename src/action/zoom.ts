@@ -2,7 +2,7 @@
  * zoom action
  */
 import { ImagePreview } from '../core/image-preview'
-import { showDebugger } from '../tools/index';
+// import { showDebugger } from '../tools/index';
 
 export class Zoom {
     handleZoom(this: ImagePreview, e: TouchEvent & MouseEvent): void {

@@ -38,7 +38,7 @@ import { matrix } from "../matrix";
 var events = /** @class */ (function () {
     function events(viewInstance) {
         this.curBehaviorCanBreak = false;
-        this.throldDeg = Math.PI * 0.15;
+        this.throldDeg = Math.PI * 0.12;
         this.viewInstance = viewInstance;
     }
     events.prototype.handleSingleStart = function (e) {

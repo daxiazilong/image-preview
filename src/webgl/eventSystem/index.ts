@@ -5,7 +5,7 @@ import { matrix } from "../matrix";
 export class events {
     viewInstance: webGl;
     curBehaviorCanBreak: boolean = false;
-    throldDeg: number = Math.PI * 0.15;
+    throldDeg: number = Math.PI * 0.12;
     constructor(viewInstance: webGl) {
         this.viewInstance = viewInstance;
     }

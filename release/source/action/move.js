@@ -1,4 +1,4 @@
-import { showDebugger } from '../tools/index';
+// import { showDebugger } from '../tools/index';
 var Move = /** @class */ (function () {
     function Move() {
     }
@@ -125,7 +125,14 @@ var Move = /** @class */ (function () {
     };
     Move.prototype.handleMoveNormal = function (e) {
         var _this = this;
-        showDebugger("\n        moveNormal:" + Date.now() + "\n        this.isAnimating :" + this.isAnimating + "\n        this.touchStartX:" + this.touchStartX + "\n        ");
+        // showDebugger(`
+        // moveNormal:${Date.now()}
+        // this.isAnimating :${this.isAnimating }
+        // this.touchStartX:${this.touchStartX}
+        // `)
+        if (e.touches.length !== 1) {
+            return;
+        }
         if (this.isAnimating) {
             return;
         }
@@ -163,7 +170,11 @@ var Move = /** @class */ (function () {
     };
     Move.prototype.handleMoveEnlage = function (e) {
         ;
-        showDebugger("\n            handlemoveEnlarge:this.isZooming " + this.isZooming + "\n            this.isAnimating:" + this.isAnimating + "\n             " + Date.now() + "\n        ");
+        // showDebugger(`
+        //     handlemoveEnlarge:this.isZooming ${this.isZooming}
+        //     this.isAnimating:${this.isAnimating}
+        //      ${Date.now()}
+        // `)
         if (this.actionExecutor.isLoadingError()) {
             // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
