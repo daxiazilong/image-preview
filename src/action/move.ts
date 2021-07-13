@@ -132,10 +132,8 @@ export class Move{
         // moveNormal:${Date.now()}
         // this.isAnimating :${this.isAnimating }
         // this.touchStartX:${this.touchStartX}
+        // e.touches.length:${e.touches.length}
         // `)
-        if(e.touches.length !== 1 ){
-            return;
-        }
         if( this.isAnimating){
             return;
         }
@@ -144,6 +142,7 @@ export class Move{
         }
         
         if( !this.isNormalMove ){
+
             this.touchStartX = this.startX = (e.touches[0].clientX);
             this.touchStartY = this.startY = (e.touches[0].clientY);
         }
@@ -165,6 +164,10 @@ export class Move{
             const type = 'normalMoved';
             const task = (e) => {
                 (this.normalMoved = false);
+                // other finger change the offset 
+                let curX: number = (e.changedTouches[0].clientX);
+                let offset = curX - this.touchStartX;
+                eventsHanlder.handleMoveNormal(e,offset);
                 this.handleTEndEnNormal.bind(this)(e)
             };
             this.addTouchEndTask(type,{

@@ -61,3 +61,4 @@ imgObj.distory();
 ```
 ### communicate
 yon can join qq-group 977121370 and chat with me.
+1. maintain the transform state of a picture and recalculate the next state with some css property is very difficultb

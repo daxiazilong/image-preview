@@ -24,8 +24,4 @@ export class Rotate{
         await this.actionExecutor.rotateZ(changeDeg);
         this.isAnimating = false;
     }
-    handleRotate(this: ImagePreview,e: TouchEvent & MouseEvent,changeDeg:number){
-        
-    }
-    
 }

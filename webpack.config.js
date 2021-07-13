@@ -3,27 +3,21 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const version = process.env.npm_package_version;
-const dev = (process.argv[2].split('=')[1]) == "development";
+const mode = (process.argv[2].split('=')[1]);
+const dev =  mode == "development";
 let  compilePath = {
-  imagePreview: './src/core/image-preview.ts',
   test: './src/core/test.ts'
 }
 const output = dev ? 'debug' : 'release';
-if(!dev){
-  compilePath = {
-    test: './src/core/test.ts'
-  }
-}
 var plugins = [new HtmlWebpackPlugin({
   title: 'this is dev mode!',
   template: './debug/template.html'
 })];
-
 if (dev) {
   plugins.push(new webpack.HotModuleReplacementPlugin({}))
 }
-
 module.exports = {
+  mode,
   entry: compilePath,
   module: {
     rules: [

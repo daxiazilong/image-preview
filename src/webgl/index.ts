@@ -192,9 +192,9 @@ class webGl {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         //@ts-ignore
         texture.cubicBgd = true;
-        const r = Math.round( Math.random() * 255 )
-        const g = Math.round( Math.random() * 255 )
-        const b = Math.round( Math.random() * 255 )
+        const r = 0//Math.round( Math.random() * 255 )
+        const g = 0//Math.round( Math.random() * 255 )
+        const b = 0//Math.round( Math.random() * 255 )
         gl.texImage2D(
             gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, 
             gl.UNSIGNED_BYTE,

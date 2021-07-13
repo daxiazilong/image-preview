@@ -52,6 +52,8 @@ class ImagePreview implements
 
     maxMovePointCounts: number = 3; // max point count while collect moving point.
 
+    touchIdentifier = 0;
+
     public prefix: string = "__"
     public ref: HTMLElement;
     public imgContainer: HTMLElement & { matrix: Array<Array<number>> };
@@ -368,9 +370,6 @@ class ImagePreview implements
             x: e.touches[1].clientX,
             y: e.touches[1].clientY
         };
-
-        this.startX = (e.touches[0].clientX);
-        this.startY = (e.touches[0].clientY);
 
     }
     handleOneStart(e: TouchEvent & MouseEvent): void {
