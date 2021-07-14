@@ -129,10 +129,8 @@ var Move = /** @class */ (function () {
         // moveNormal:${Date.now()}
         // this.isAnimating :${this.isAnimating }
         // this.touchStartX:${this.touchStartX}
+        // e.touches.length:${e.touches.length}
         // `)
-        if (e.touches.length !== 1) {
-            return;
-        }
         if (this.isAnimating) {
             return;
         }
@@ -159,6 +157,10 @@ var Move = /** @class */ (function () {
             var type_1 = 'normalMoved';
             var task = function (e) {
                 (_this.normalMoved = false);
+                // other finger change the offset 
+                var curX = (e.changedTouches[0].clientX);
+                var offset = curX - _this.touchStartX;
+                eventsHanlder.handleMoveNormal(e, offset);
                 _this.handleTEndEnNormal.bind(_this)(e);
             };
             this.addTouchEndTask(type_1, {

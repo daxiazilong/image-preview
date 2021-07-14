@@ -83,8 +83,6 @@ var Rotate = /** @class */ (function () {
             });
         });
     };
-    Rotate.prototype.handleRotate = function (e, changeDeg) {
-    };
     return Rotate;
 }());
 export { Rotate };

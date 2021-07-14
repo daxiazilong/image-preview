@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { ImagePreview } from '../core/image-preview'
 
 export class Animation {

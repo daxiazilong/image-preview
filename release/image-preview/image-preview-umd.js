@@ -4,21 +4,7 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.imagePreviewModule = {}));
 }(this, (function (exports) { 'use strict';
 
-    /**
-    * 移动端自己调试要显示的数据
-    */
-    var msgs = [];
-    var timer;
-    function showDebugger(msg) {
-        clearTimeout(timer);
-        msgs.push(msg);
-        var stat = document.getElementById('stat');
-        timer = setTimeout(function () {
-            stat.innerHTML = "<pre style=\"word-break: break-all;white-space: pre-line;\">" + msgs.join('\n') + "</pre>";
-            msgs = [];
-        }, 200);
-    }
-
+    // import { showDebugger } from '../tools/index';
     var Move = /** @class */ (function () {
         function Move() {
         }
@@ -144,7 +130,12 @@
         };
         Move.prototype.handleMoveNormal = function (e) {
             var _this = this;
-            showDebugger("\n        moveNormal:" + Date.now() + "\n        this.isAnimating :" + this.isAnimating + "\n        this.touchStartX:" + this.touchStartX + "\n        ");
+            // showDebugger(`
+            // moveNormal:${Date.now()}
+            // this.isAnimating :${this.isAnimating }
+            // this.touchStartX:${this.touchStartX}
+            // e.touches.length:${e.touches.length}
+            // `)
             if (this.isAnimating) {
                 return;
             }
@@ -171,6 +162,10 @@
                 var type_1 = 'normalMoved';
                 var task = function (e) {
                     (_this.normalMoved = false);
+                    // other finger change the offset 
+                    var curX = (e.changedTouches[0].clientX);
+                    var offset = curX - _this.touchStartX;
+                    eventsHanlder.handleMoveNormal(e, offset);
                     _this.handleTEndEnNormal.bind(_this)(e);
                 };
                 this.addTouchEndTask(type_1, {
@@ -181,7 +176,11 @@
             eventsHanlder.handleMoveNormal(e, offset);
         };
         Move.prototype.handleMoveEnlage = function (e) {
-            showDebugger("\n            handlemoveEnlarge:this.isZooming " + this.isZooming + "\n            this.isAnimating:" + this.isAnimating + "\n             " + Date.now() + "\n        ");
+            // showDebugger(`
+            //     handlemoveEnlarge:this.isZooming ${this.isZooming}
+            //     this.isAnimating:${this.isAnimating}
+            //      ${Date.now()}
+            // `)
             if (this.actionExecutor.isLoadingError()) {
                 // 除了切屏之外对于加载错误的图片一律禁止其他操作
                 return;
@@ -295,6 +294,7 @@
         return Move;
     }());
 
+    // import { showDebugger } from '../tools/index';
     var Zoom = /** @class */ (function () {
         function Zoom() {
         }
@@ -445,163 +445,7 @@
                 });
             });
         };
-        Rotate.prototype.handleRotate = function (e, changeDeg) {
-        };
         return Rotate;
-    }());
-
-    var Animation = /** @class */ (function () {
-        function Animation() {
-        }
-        Animation.prototype.animate = function (_a) {
-            var _this = this;
-            var el = _a.el, prop = _a.prop, endStr = _a.endStr, timingFunction = _a.timingFunction, callback = _a.callback, duration = _a.duration;
-            if (this.isAnimating) {
-                return;
-            }
-            this.setTransitionProperty({
-                el: el,
-                timingFunction: timingFunction,
-                time: duration || 0.3,
-                prop: prop
-            });
-            el['style'][prop] = endStr;
-            el.addEventListener(this.supportTransitionEnd, function () {
-                _this.isAnimating = false;
-                typeof callback == 'function' && callback();
-            }, { once: true });
-        };
-        Animation.prototype.animateMultiValue = function (el, options, timingFunction, callback) {
-            var _this = this;
-            if (this.isAnimating) {
-                return;
-            }
-            this.isAnimating = true;
-            this.setTransitionProperty({
-                el: el,
-                time: 0.3,
-                timingFunction: timingFunction
-            });
-            var styleText = el.style.cssText;
-            options.forEach(function (_a) {
-                var prop = _a.prop, endStr = _a.endStr;
-                styleText += prop + ":" + endStr + ";";
-            });
-            el.style.cssText = styleText;
-            el.addEventListener(this.supportTransitionEnd, function () {
-                _this.isAnimating = false;
-                typeof callback == 'function' && callback();
-            }, { once: true });
-        };
-        Animation.prototype.computeStep = function (displacement, time) {
-            var v = displacement / time;
-            var frequency = 1000 / 60;
-            return v * frequency;
-        };
-        Animation.prototype.setTransitionProperty = function (_a) {
-            var el = _a.el, prop = _a.prop, time = _a.time, timingFunction = _a.timingFunction;
-            timingFunction = timingFunction || 'linear';
-            prop = prop || 'all';
-            el['style'][this.transitionEndPrefix] = " " + prop + " " + time + "s " + timingFunction;
-        };
-        // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
-        // ============================================================
-        Animation.prototype.transitionEnd = function () {
-            var el = document.createElement('bootstrap');
-            var transEndEventNames = {
-                'WebkitTransition': 'webkitTransitionEnd',
-                'MozTransition': 'transitionend',
-                'OTransition': 'oTransitionEnd',
-                'transition': 'transitionend'
-            };
-            var transEndPrefixNames = {
-                'WebkitTransition': '-webkit-transition',
-                'MozTransition': '-moz-transition',
-                'OTransition': '-o-transition',
-                'transition': 'transition'
-            };
-            for (var name in transEndEventNames) {
-                if (el.style[name] !== undefined) {
-                    this.transitionEndPrefix = transEndPrefixNames[name];
-                    return transEndEventNames[name];
-                }
-            }
-            throw '当前环境不支持transition ，无法使用该插件。\n Transition not supported,can\'t use this plugin.';
-        };
-        return Animation;
-    }());
-
-    var __spreadArray$2 = (undefined && undefined.__spreadArray) || function (to, from) {
-        for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-            to[j] = from[i];
-        return to;
-    };
-    var Matrix = /** @class */ (function () {
-        function Matrix() {
-        }
-        Matrix.prototype.matrixMultipy = function (a, b) {
-            var res = [];
-            for (var _i = 2; _i < arguments.length; _i++) {
-                res[_i - 2] = arguments[_i];
-            }
-            var r = a.length;
-            var col = a[0].length;
-            var result = [];
-            for (var i = 0; i < r; i++) {
-                var row = a[i];
-                result[i] = [];
-                for (var j = 0; j < r; j++) {
-                    var count = 0;
-                    for (var x = 0; x < col; x++) {
-                        var item1 = row[x];
-                        var item2 = b[x][j];
-                        count += (item1 * item2);
-                    }
-                    result[i].push(count);
-                }
-            }
-            if (res.length) {
-                return this.matrixMultipy.apply(this, __spreadArray$2([result, res.splice(0, 1)[0]], res));
-            }
-            return result;
-        };
-        Matrix.prototype.matrixTostr = function (arr) {
-            var ans = '';
-            var lastIndex = arr.length - 1;
-            arr.forEach(function (item, index) {
-                item.forEach(function (item, innerIndex) {
-                    ans += (item + (index == innerIndex && index == lastIndex ? '' : ','));
-                });
-            });
-            return "matrix3d(" + ans + ")";
-        };
-        Matrix.prototype.getTranslateMatrix = function (_a) {
-            var x = _a.x, y = _a.y, z = _a.z;
-            return [
-                [1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, 1, 0],
-                [x, y, z, 1],
-            ];
-        };
-        Matrix.prototype.getRotateZMatrix = function (deg) {
-            return [
-                [Math.cos(deg), Math.sin(deg), 0, 0],
-                [-Math.sin(deg), Math.cos(deg), 0, 0],
-                [0, 0, 1, 0],
-                [0, 0, 0, 1],
-            ];
-        };
-        Matrix.prototype.getScaleMatrix = function (_a) {
-            var x = _a.x, y = _a.y, z = _a.z;
-            return [
-                [x, 0, 0, 0],
-                [0, y, 0, 0],
-                [0, 0, z, 0],
-                [0, 0, 0, 1],
-            ];
-        };
-        return Matrix;
     }());
 
     var __spreadArray$1 = (undefined && undefined.__spreadArray) || function (to, from) {
@@ -841,7 +685,7 @@
     var events = /** @class */ (function () {
         function events(viewInstance) {
             this.curBehaviorCanBreak = false;
-            this.throldDeg = Math.PI * 0.15;
+            this.throldDeg = Math.PI * 0.12;
             this.viewInstance = viewInstance;
         }
         events.prototype.handleSingleStart = function (e) {
@@ -1132,9 +976,9 @@
             gl.bindTexture(gl.TEXTURE_2D, texture);
             //@ts-ignore
             texture.cubicBgd = true;
-            var r = Math.round(Math.random() * 255);
-            var g = Math.round(Math.random() * 255);
-            var b = Math.round(Math.random() * 255);
+            var r = 0; //Math.round( Math.random() * 255 )
+            var g = 0; //Math.round( Math.random() * 255 )
+            var b = 0; //Math.round( Math.random() * 255 )
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([r, g, b, 255]));
             // err img
             var img = new Image();
@@ -1994,6 +1838,7 @@
             this.isNormalMove = false; // is moveNormal
             this.normalMoved = false; // 手指移动上下一张切换的时候有没有产生位移 双指缩放时若此值为true则不进行缩放
             this.maxMovePointCounts = 3; // max point count while collect moving point.
+            this.touchIdentifier = 0;
             this.prefix = "__";
             this.defToggleClass = 'defToggleClass';
             this.movePoints = []; //收集移动点，判断滑动方向
@@ -2019,57 +1864,25 @@
             });
             this.taskExecuteAfterTEnd = new Map;
             this.envClient = this.testEnv();
-            this.supportTransitionEnd = this.transitionEnd();
             this.genFrame();
             this.handleReausetAnimate(); //requestAnimationFrame兼容性
             this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
             this.imgContainer.matrix = this.initalMatrix;
             this.containerWidth = this.imgContainer.getBoundingClientRect().width;
             this.threshold = this.containerWidth / 4;
-            this.imgItems = this.imgContainer.querySelectorAll("." + this.prefix + "item");
-            this[this.envClient + 'RecordInitialData'](this.imgItems);
             this.maxMoveX = this.containerWidth / 2;
             this.minMoveX = -this.containerWidth * (this.imgsNumber - 0.5);
             this[this.envClient + 'Initial']();
         }
-        ImagePreview.prototype.setToNaturalImgSize = function (toWidth, toHeight, scaleX, scaleY, e) { };
-        ImagePreview.prototype.setToInitialSize = function (scaleX, scaleY, e) { };
         ImagePreview.prototype.handleZoom = function (e) { };
         ImagePreview.prototype.handleMove = function (e) { };
         ImagePreview.prototype.handleMoveNormal = function (e) { };
         ImagePreview.prototype.handleMoveEnlage = function (e) { };
-        ImagePreview.prototype.handleRotate = function (e, changeDeg) { };
         ImagePreview.prototype.handleRotateLeft = function (e) { };
         ImagePreview.prototype.handleRotateRight = function (e) { };
-        ImagePreview.prototype.setTransitionProperty = function (_a) {
-            _a.el; _a.time; _a.timingFunction; _a.prop;
-        };
-        ImagePreview.prototype.animate = function (_a) {
-            _a.el; _a.prop; _a.endStr; _a.timingFunction; _a.callback; _a.duration;
-        };
-        ImagePreview.prototype.animateMultiValue = function (el, options, timingFunction, callback) { };
-        ImagePreview.prototype.computeStep = function (displacement, time) { return 0; };
-        ImagePreview.prototype.transitionEnd = function () { return ''; };
         ImagePreview.prototype.autoMove = function (deg, startX, startY, _a) {
             _a.maxTop; _a.minTop; _a.maxLeft; _a.minLeft;
             return Promise.resolve(1);
-        };
-        ImagePreview.prototype.matrixMultipy = function (a, b) {
-            var res = [];
-            for (var _i = 2; _i < arguments.length; _i++) {
-                res[_i - 2] = arguments[_i];
-            }
-            return [];
-        };
-        ImagePreview.prototype.matrixTostr = function (arr) { return ''; };
-        ImagePreview.prototype.getTranslateMatrix = function (_a) {
-            _a.x; _a.y; _a.z;
-            return [];
-        };
-        ImagePreview.prototype.getRotateZMatrix = function (deg) { return []; };
-        ImagePreview.prototype.getScaleMatrix = function (_a) {
-            _a.x; _a.y; _a.z;
-            return [];
         };
         ImagePreview.prototype.insertImageAfter = function (image, index) {
             this.actionExecutor.addImg(image, index);
@@ -2104,120 +1917,6 @@
                 this.taskExecuteAfterTEnd.set(type, task);
             }
         };
-        ImagePreview.prototype.mobileRecordInitialData = function (els) {
-            var _this = this;
-            /**
-             * 记录并设置初始top，left值
-             */
-            var record = function (el, img) {
-                var imgContainerRect = _this.imgContainer.getBoundingClientRect();
-                var imgContainerHeight = imgContainerRect.height;
-                var imgContainerWidth = imgContainerRect.width;
-                var styleObj = el.getBoundingClientRect();
-                var imgNaturalWidth = img.naturalWidth;
-                var imgNaturalHeight = img.naturalHeight;
-                var scaleX = imgContainerWidth / imgNaturalWidth;
-                var imgShouldHeight = imgContainerWidth * imgNaturalHeight / imgNaturalWidth;
-                var scaleY = imgShouldHeight / imgNaturalHeight;
-                if (imgContainerHeight < styleObj.height) { // long img fill column direction. width auto fit
-                    scaleY = imgContainerHeight / imgNaturalHeight;
-                    var imgShouldWeidth = imgContainerHeight * imgNaturalWidth / imgNaturalHeight;
-                    scaleX = imgShouldWeidth / imgNaturalWidth;
-                    img.style.cssText = "\n                    height: 100%;\n                    width: auto;\n                ";
-                }
-                var top = -(imgNaturalHeight - imgContainerHeight) / 2;
-                var left = -(imgNaturalWidth - imgContainerWidth) / 2;
-                el.dataset.loaded = "true";
-                el.rotateDeg = 0;
-                el.matrix = _this.initalMatrix;
-                el.matrix = _this.matrixMultipy(el.matrix, _this.getScaleMatrix({ x: scaleX, y: scaleY, z: 1 }), _this.getTranslateMatrix({ x: left, y: top, z: 0 }));
-                el.intialMatrix = el.matrix;
-                el.style.cssText = "\n                width: " + img.naturalWidth + "px;\n                height: " + img.naturalHeight + "px;\n                transform:" + _this.matrixTostr(el.matrix) + ";\n            ";
-                el.dataset.initialWidth = (styleObj.width * scaleX).toString();
-                el.dataset.initialHeight = (styleObj.height * scaleY).toString();
-                el.dataset.top = top.toString();
-                el.dataset.initialTop = top.toString();
-                el.dataset.left = left.toString();
-                el.dataset.initialLeft = left.toString();
-                el.dataset.viewTopInitial = styleObj.top.toString();
-                el.dataset.viewLeftInitial = styleObj.left.toString();
-            };
-            this.recordInitialData(els, record);
-        };
-        ImagePreview.prototype.pcRecordInitialData = function (els) {
-            var _this = this;
-            var record = function (el, img) {
-                var imgContainerRect = _this.imgContainer.getBoundingClientRect();
-                var imgContainerHeight = imgContainerRect.height;
-                var imgBoundingRect = img.getBoundingClientRect();
-                var top = 0;
-                var left = 0;
-                var width = imgBoundingRect.width;
-                var height = imgBoundingRect.height;
-                if (imgBoundingRect.width > img.naturalWidth) {
-                    width = img.naturalWidth;
-                    height = img.naturalHeight;
-                }
-                left = (_this.containerWidth - width) / 2;
-                top = (imgContainerHeight - height) / 2;
-                top < 0 && (top = 0);
-                el.style.width = width + 'px';
-                el.dataset.initialWidth = width.toString();
-                el.dataset.initialHeight = height.toString();
-                el.dataset.top = top.toString();
-                el.dataset.initialTop = top.toString();
-                el.dataset.left = left.toString();
-                el.dataset.initialLeft = left.toString();
-                el.dataset.viewTopInitial = imgBoundingRect.top.toString();
-                el.dataset.viewLeftInitial = imgBoundingRect.left.toString();
-                el.dataset.rotateDeg = '0';
-                el.dataset.loaded = "true";
-                el.style.top = top + "px";
-                el.style.left = left + "px";
-            };
-            this.recordInitialData(els, record);
-        };
-        ImagePreview.prototype.recordInitialData = function (els, record) {
-            var _this = this;
-            /**
-             * 记录并设置初始top，left值
-             */
-            els.forEach(function (el) {
-                var img = el;
-                if (img.complete) {
-                    record(el, img);
-                }
-                else {
-                    el.dataset.loaded = "false";
-                    img.onload = function () {
-                        record(el, img);
-                    };
-                }
-                img.onerror = function (e) {
-                    var imgContainerRect = _this.imgContainer.getBoundingClientRect();
-                    var imgContainerHeight = imgContainerRect.height;
-                    var styleObj = el.getBoundingClientRect();
-                    var top = (imgContainerHeight - styleObj.height) / 2;
-                    el.dataset.initialWidth = styleObj.width.toString();
-                    el.dataset.initialHeight = styleObj.height.toString();
-                    el.dataset.top = top.toString();
-                    el.dataset.initialTop = top.toString();
-                    el.dataset.loaded = "false";
-                    el.style.top = top + "px";
-                    (e.currentTarget).alt = "图片加载错误";
-                };
-            });
-        };
-        ImagePreview.prototype.handlePcClick = function (e) {
-            /**
-             * 这里把操作派发
-             */
-            var type = (e.target).dataset.type;
-            if (this.operateMaps[type]) {
-                this[this.operateMaps[type]](e);
-                return;
-            }
-        };
         ImagePreview.prototype.handleTouchStart = function (e) {
             e.preventDefault();
             switch (e.touches.length) {
@@ -2238,8 +1937,6 @@
                 x: e.touches[1].clientX,
                 y: e.touches[1].clientY
             };
-            this.startX = (e.touches[0].clientX);
-            this.startY = (e.touches[0].clientY);
         };
         ImagePreview.prototype.handleOneStart = function (e) {
             var _this = this;
@@ -2292,12 +1989,12 @@
                                 return [2 /*return*/];
                             }
                             this.isAnimating = true;
-                            showDebugger(this.isAnimating.toString());
+                            // showDebugger(this.isAnimating.toString())
                             return [4 /*yield*/, this.actionExecutor.eventsHanlder.handleDoubleClick(e)];
                         case 1:
+                            // showDebugger(this.isAnimating.toString())
                             _a.sent();
                             this.isAnimating = false;
-                            showDebugger("animation done." + this.isAnimating.toString());
                             return [2 /*return*/];
                     }
                 });
@@ -2521,23 +2218,8 @@
         };
         ImagePreview.prototype.mobileBeforeClose = function () { };
         ImagePreview.prototype.show = function (index) {
-            this.curIndex = index;
-            this[this.envClient + 'ReadyShow']();
-            var translateX = -index * this.containerWidth - this.imgContainerMoveX;
-            this.containerWidth = this.imgContainer.getBoundingClientRect().width;
-            this.imgContainerMoveX = -index * this.containerWidth;
-            this.imgContainer.matrix = this.matrixMultipy(this.imgContainer.matrix, [
-                [1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, 1, 0],
-                [translateX, 0, 0, 1]
-            ]);
-            this.setTransitionProperty({
-                el: this.imgContainer,
-                time: 0
-            });
-            this.matrixTostr(this.imgContainer.matrix);
-            // this.imgContainer.style.transform = `${transformStr}`;
+            this.actionExecutor.curIndex = index;
+            this.actionExecutor.draw(index);
             this.toggleClass(this.ref, this.defToggleClass);
         };
         ImagePreview.prototype.mobileReadyShow = function () { };
@@ -2607,7 +2289,7 @@
         };
         return ImagePreview;
     }());
-    applyMixins(ImagePreview, [Move, Zoom, Rotate, Animation, Matrix]);
+    applyMixins(ImagePreview, [Move, Zoom, Rotate]);
     function applyMixins(derivedCtor, baseCtors) {
         baseCtors.forEach(function (baseCtor) {
             Object.getOwnPropertyNames(baseCtor.prototype).forEach(function (name) {

@@ -28,8 +28,7 @@ export class Move{
 
         const curItemViewLeft: number = viewRect.left;
         const curItemViewRight: number = viewRect.right;
-        const imgContainerRect : ClientRect  = this.imgContainer.getBoundingClientRect();
-        const conWidth: number = imgContainerRect.width;
+        const conWidth: number = this.actionExecutor.viewWidth / this.actionExecutor.dpr;
 
         /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
          * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
@@ -76,7 +75,6 @@ export class Move{
                         this.handleMoveEnlage(e);
                     }
                 }
-                
             }else{
                 //正常情况下的移动是图片左右切换
                 this.handleMoveNormal(e)

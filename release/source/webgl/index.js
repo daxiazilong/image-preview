@@ -1,9 +1,7 @@
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
 };
 var sourceFrag = "precision mediump float;\n\nvarying vec2 vTextureCoord;\nuniform sampler2D uSampler0;\nuniform vec2 iResolution;\nvoid main() {\n\n    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);\n    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;\n    gl_FragColor = color0;\n}";
 var sourceVer = "attribute vec4 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying mediump vec2 vTextureCoord;\n\nvoid main(void) {\n    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n    vTextureCoord = aTextureCoord;\n}";
@@ -131,9 +129,9 @@ var webGl = /** @class */ (function () {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         //@ts-ignore
         texture.cubicBgd = true;
-        var r = Math.round(Math.random() * 255);
-        var g = Math.round(Math.random() * 255);
-        var b = Math.round(Math.random() * 255);
+        var r = 0; //Math.round( Math.random() * 255 )
+        var g = 0; //Math.round( Math.random() * 255 )
+        var b = 0; //Math.round( Math.random() * 255 )
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([r, g, b, 255]));
         // err img
         var img = new Image();
@@ -384,7 +382,7 @@ var webGl = /** @class */ (function () {
         for (var i = this.curPointAt; i < this.curPointAt + 16; i += 4) {
             var planeIndex = i - this.curPointAt;
             var x = curPlane[planeIndex], y = curPlane[planeIndex + 1], z = curPlane[planeIndex + 2], w = curPlane[planeIndex + 3];
-            var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArrays([[x, y, z, w],
+            var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArray([[x, y, z, w],
                 a], matrixes));
             for (var j = i; j < 4 + i; j++) {
                 positions[j] = newPoint[j - i];
@@ -566,7 +564,7 @@ var webGl = /** @class */ (function () {
             width / 2, height / 2, z - width, 1.0,
             width / 2, height / 2, z, 1.0,
         ];
-        (_a = this.positions).splice.apply(_a, __spreadArrays([0, 0], positionCube));
+        (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
     };
     /**
      * @param clientX 缩放点得x坐标

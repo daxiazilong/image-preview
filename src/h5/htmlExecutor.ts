@@ -893,4 +893,150 @@ class htmlExecutor{
         // this.imgContainer.style.transform = `${transformStr}`;
         this.toggleClass(this.ref, this.defToggleClass)
     }
+    mobileRecordInitialData(els: NodeListOf<HTMLElement>) {
+        /**
+         * 记录并设置初始top，left值
+         */
+        const record = (el: interFaceElementMatrix, img: HTMLImageElement) => {
+
+            const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+            const imgContainerHeight: number = imgContainerRect.height;
+            const imgContainerWidth: number = imgContainerRect.width;
+            const styleObj: ClientRect = el.getBoundingClientRect();
+
+            const imgNaturalWidth = img.naturalWidth;
+            const imgNaturalHeight = img.naturalHeight;
+
+            let scaleX = imgContainerWidth / imgNaturalWidth;
+            const imgShouldHeight = imgContainerWidth * imgNaturalHeight / imgNaturalWidth;
+            let scaleY = imgShouldHeight / imgNaturalHeight;
+
+            if (imgContainerHeight < styleObj.height) {// long img fill column direction. width auto fit
+                scaleY = imgContainerHeight / imgNaturalHeight;
+                const imgShouldWeidth = imgContainerHeight * imgNaturalWidth / imgNaturalHeight;
+                scaleX = imgShouldWeidth / imgNaturalWidth
+                img.style.cssText = `
+                    height: 100%;
+                    width: auto;
+                `;
+            }
+            const top: number = -(imgNaturalHeight - imgContainerHeight) / 2;
+            const left: number = -(imgNaturalWidth - imgContainerWidth) / 2;
+
+            
+            el.dataset.loaded = "true";
+            el.rotateDeg = 0;
+
+            el.matrix = this.initalMatrix;
+            el.matrix = this.matrixMultipy(el.matrix,
+                this.getScaleMatrix({ x: scaleX, y: scaleY, z: 1 }),
+                this.getTranslateMatrix({ x: left, y: top, z: 0 })
+            );
+            el.intialMatrix = el.matrix;
+
+            el.style.cssText = `
+                width: ${img.naturalWidth}px;
+                height: ${img.naturalHeight}px;
+                transform:${this.matrixTostr(el.matrix)};
+            `;
+
+            el.dataset.initialWidth = ( styleObj.width * scaleX ).toString();
+            el.dataset.initialHeight = ( styleObj.height * scaleY ).toString();
+            el.dataset.top = top.toString();
+            el.dataset.initialTop = top.toString();
+            el.dataset.left = left.toString();
+            el.dataset.initialLeft = left.toString();
+            el.dataset.viewTopInitial = styleObj.top.toString();
+            el.dataset.viewLeftInitial = styleObj.left.toString();
+        }
+        this.recordInitialData(els, record)
+
+    }
+    pcRecordInitialData(els: NodeListOf<HTMLElement>) {
+        const record = (el: HTMLElement, img: HTMLImageElement) => {
+            let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+            let imgContainerHeight: number = imgContainerRect.height;
+            let imgBoundingRect: ClientRect = img.getBoundingClientRect();
+
+            let top: number = 0;
+            let left: number = 0;
+            let width: number = imgBoundingRect.width;
+            let height: number = imgBoundingRect.height;
+
+            if (imgBoundingRect.width > img.naturalWidth) {
+                width = img.naturalWidth;
+                height = img.naturalHeight;
+            }
+
+            left = (this.containerWidth - width) / 2;
+            top = (imgContainerHeight - height) / 2;
+            top < 0 && (top = 0)
+            el.style.width = width + 'px';
+
+            el.dataset.initialWidth = width.toString();
+            el.dataset.initialHeight = height.toString();
+            el.dataset.top = top.toString();
+            el.dataset.initialTop = top.toString();
+            el.dataset.left = left.toString();
+            el.dataset.initialLeft = left.toString();
+            el.dataset.viewTopInitial = imgBoundingRect.top.toString();
+            el.dataset.viewLeftInitial = imgBoundingRect.left.toString();
+            el.dataset.rotateDeg = '0';
+            el.dataset.loaded = "true";
+
+            el.style.top = `${top}px`;
+            el.style.left = `${left}px`;
+        }
+
+        this.recordInitialData(els, record)
+
+    }
+    recordInitialData(els: NodeListOf<HTMLElement>, record: Function) {
+        /**
+         * 记录并设置初始top，left值
+         */
+        els.forEach((el) => {
+            const img = el as HTMLImageElement;
+            if (img.complete) {
+                record(el, img);
+            } else {
+                el.dataset.loaded = "false";
+                img.onload = function () {
+                    record(el, img)
+                }
+            }
+            img.onerror = (e: Event) => {
+
+                let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
+                let imgContainerHeight: number = imgContainerRect.height;
+                const styleObj: ClientRect = el.getBoundingClientRect();
+
+                const top: number = (imgContainerHeight - styleObj.height) / 2;
+
+                el.dataset.initialWidth = styleObj.width.toString();
+                el.dataset.initialHeight = styleObj.height.toString();
+                el.dataset.top = top.toString();
+                el.dataset.initialTop = top.toString();
+
+                el.dataset.loaded = "false";
+
+                el.style.top = `${top}px`;
+
+                (<HTMLImageElement>(e.currentTarget)).alt = "图片加载错误"
+            }
+        })
+
+    }
+    handlePcClick(e: MouseEvent): void {
+        /**
+         * 这里把操作派发
+         */
+
+        const type: string = (<HTMLElement>(e.target)).dataset.type;
+
+        if (this.operateMaps[type]) {
+            this[this.operateMaps[type]](e);
+            return
+        }
+    }
 }

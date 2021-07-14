@@ -27,9 +27,9 @@ const sourceFrag = \`${fragSource}\`;
 const sourceVer = \`${verTexSource}\`;
 `)
 fs.writeFileSync(`${webglDir}/index.ts`,copiedWebglSource)
-
+console.log('ts编译开始')
 childProcess.exec(`npm run compileTs`,(err)=>{
-    // fs.writeFileSync(`${webglDir}/index.ts`,webglSource)
+    fs.writeFileSync(`${webglDir}/index.ts`,webglSource)
     if(err){
         console.log(err)
         console.log('编译失败')

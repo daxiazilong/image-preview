@@ -765,5 +765,120 @@ var htmlExecutor = /** @class */ (function () {
         // this.imgContainer.style.transform = `${transformStr}`;
         this.toggleClass(this.ref, this.defToggleClass);
     };
+    htmlExecutor.prototype.mobileRecordInitialData = function (els) {
+        var _this = this;
+        /**
+         * 记录并设置初始top，left值
+         */
+        var record = function (el, img) {
+            var imgContainerRect = _this.imgContainer.getBoundingClientRect();
+            var imgContainerHeight = imgContainerRect.height;
+            var imgContainerWidth = imgContainerRect.width;
+            var styleObj = el.getBoundingClientRect();
+            var imgNaturalWidth = img.naturalWidth;
+            var imgNaturalHeight = img.naturalHeight;
+            var scaleX = imgContainerWidth / imgNaturalWidth;
+            var imgShouldHeight = imgContainerWidth * imgNaturalHeight / imgNaturalWidth;
+            var scaleY = imgShouldHeight / imgNaturalHeight;
+            if (imgContainerHeight < styleObj.height) { // long img fill column direction. width auto fit
+                scaleY = imgContainerHeight / imgNaturalHeight;
+                var imgShouldWeidth = imgContainerHeight * imgNaturalWidth / imgNaturalHeight;
+                scaleX = imgShouldWeidth / imgNaturalWidth;
+                img.style.cssText = "\n                    height: 100%;\n                    width: auto;\n                ";
+            }
+            var top = -(imgNaturalHeight - imgContainerHeight) / 2;
+            var left = -(imgNaturalWidth - imgContainerWidth) / 2;
+            el.dataset.loaded = "true";
+            el.rotateDeg = 0;
+            el.matrix = _this.initalMatrix;
+            el.matrix = _this.matrixMultipy(el.matrix, _this.getScaleMatrix({ x: scaleX, y: scaleY, z: 1 }), _this.getTranslateMatrix({ x: left, y: top, z: 0 }));
+            el.intialMatrix = el.matrix;
+            el.style.cssText = "\n                width: " + img.naturalWidth + "px;\n                height: " + img.naturalHeight + "px;\n                transform:" + _this.matrixTostr(el.matrix) + ";\n            ";
+            el.dataset.initialWidth = (styleObj.width * scaleX).toString();
+            el.dataset.initialHeight = (styleObj.height * scaleY).toString();
+            el.dataset.top = top.toString();
+            el.dataset.initialTop = top.toString();
+            el.dataset.left = left.toString();
+            el.dataset.initialLeft = left.toString();
+            el.dataset.viewTopInitial = styleObj.top.toString();
+            el.dataset.viewLeftInitial = styleObj.left.toString();
+        };
+        this.recordInitialData(els, record);
+    };
+    htmlExecutor.prototype.pcRecordInitialData = function (els) {
+        var _this = this;
+        var record = function (el, img) {
+            var imgContainerRect = _this.imgContainer.getBoundingClientRect();
+            var imgContainerHeight = imgContainerRect.height;
+            var imgBoundingRect = img.getBoundingClientRect();
+            var top = 0;
+            var left = 0;
+            var width = imgBoundingRect.width;
+            var height = imgBoundingRect.height;
+            if (imgBoundingRect.width > img.naturalWidth) {
+                width = img.naturalWidth;
+                height = img.naturalHeight;
+            }
+            left = (_this.containerWidth - width) / 2;
+            top = (imgContainerHeight - height) / 2;
+            top < 0 && (top = 0);
+            el.style.width = width + 'px';
+            el.dataset.initialWidth = width.toString();
+            el.dataset.initialHeight = height.toString();
+            el.dataset.top = top.toString();
+            el.dataset.initialTop = top.toString();
+            el.dataset.left = left.toString();
+            el.dataset.initialLeft = left.toString();
+            el.dataset.viewTopInitial = imgBoundingRect.top.toString();
+            el.dataset.viewLeftInitial = imgBoundingRect.left.toString();
+            el.dataset.rotateDeg = '0';
+            el.dataset.loaded = "true";
+            el.style.top = top + "px";
+            el.style.left = left + "px";
+        };
+        this.recordInitialData(els, record);
+    };
+    htmlExecutor.prototype.recordInitialData = function (els, record) {
+        var _this = this;
+        /**
+         * 记录并设置初始top，left值
+         */
+        els.forEach(function (el) {
+            var img = el;
+            if (img.complete) {
+                record(el, img);
+            }
+            else {
+                el.dataset.loaded = "false";
+                img.onload = function () {
+                    record(el, img);
+                };
+            }
+            img.onerror = function (e) {
+                var imgContainerRect = _this.imgContainer.getBoundingClientRect();
+                var imgContainerHeight = imgContainerRect.height;
+                var styleObj = el.getBoundingClientRect();
+                var top = (imgContainerHeight - styleObj.height) / 2;
+                el.dataset.initialWidth = styleObj.width.toString();
+                el.dataset.initialHeight = styleObj.height.toString();
+                el.dataset.top = top.toString();
+                el.dataset.initialTop = top.toString();
+                el.dataset.loaded = "false";
+                el.style.top = top + "px";
+                (e.currentTarget).alt = "图片加载错误";
+            };
+        });
+    };
+    htmlExecutor.prototype.handlePcClick = function (e) {
+        /**
+         * 这里把操作派发
+         */
+        var type = (e.target).dataset.type;
+        if (this.operateMaps[type]) {
+            this[this.operateMaps[type]](e);
+            return;
+        }
+    };
     return htmlExecutor;
 }());
+export {};

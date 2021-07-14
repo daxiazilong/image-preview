@@ -1,28 +1,7 @@
-
-const sourceFrag = `precision mediump float;
-
-varying vec2 vTextureCoord;
-uniform sampler2D uSampler0;
-uniform vec2 iResolution;
-void main() {
-
-    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);
-    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;
-    gl_FragColor = color0;
-}`;
-const sourceVer = `attribute vec4 aVertexPosition;
-attribute vec2 aTextureCoord;
-
-uniform mat4 uModelViewMatrix;
-uniform mat4 uProjectionMatrix;
-
-varying mediump vec2 vTextureCoord;
-
-void main(void) {
-    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-    vTextureCoord = aTextureCoord;
-}`;
-
+'####'
+import { sourceVer } from './shaders/vertext-shader.vert'
+import { sourceFrag } from './shaders/fragment-shader.frag'
+'####'
 import { matrix } from './matrix'
 import { cubicBezier,linear,easeOut ,easeIn,easeInOut} from '../animation/animateJs'
 import { events } from './eventSystem/index'
@@ -158,8 +137,20 @@ class webGl {
         
     }
     addImg(image: string | image , index: number){
+
+        const beforL = this.imgUrls.length;
+        let indexShouldInImgs = index + 1;
+        if( index <= -1 ){
+            index = -1;
+            indexShouldInImgs = 0
+        }else if(index > beforL){
+            index = beforL;
+            indexShouldInImgs = beforL;
+        }
         this.imgUrls.splice(index + 1,0,image);
-        this.imgs.splice(index + 1, 0 ,null);
+        
+        // use splice will make  different  order between imgs and imgUrls
+        this.imgs[indexShouldInImgs] = null;
         if( image instanceof Image ){
             if( typeof image._id == 'undefined' ){
                 image._id = this.imgId++;
@@ -167,16 +158,25 @@ class webGl {
         }
         
         index -= this.curIndex;
-
+        // the inserted index is -1 0 1 , is in current view so need draw again
         if( ~[-2,-1,0].indexOf(index) ){
+            console.log(this.imgUrls)
+            console.log(this.imgs)
             this.draw(this.curIndex)
         }
     }
     delImg(index:number){
-
+        const beforL = this.imgUrls.length;
+        if( index <= -1 ){
+            index = 0;
+        }else if(index >= beforL){
+            index = beforL - 1;
+        }
         this.imgUrls.splice(index,1);
+        if(this.imgs[index]){
+            this.textures.delete(this.imgs[index]._id);
+        }
         this.imgs.splice(index, 1);
-        this.textures.delete(this.imgs[index]._id);
 
         index -= this.curIndex;
         if( ~[-1,0,1].indexOf(index) ){
@@ -184,7 +184,6 @@ class webGl {
         }
     }
     initOtherTexture(){
-
         const gl = this.gl;
         const texture = gl.createTexture();
         // bgd of cubic

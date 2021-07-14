@@ -41,8 +41,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
  * Released under the MIT License
  */
 import { Move, Zoom, Rotate } from '../action/index';
-import { Animation } from '../animation/index';
-import { Matrix } from '../matrix/index';
 // import { showDebugger } from '../tools/index';
 import { webGl } from '../webgl/index';
 var ImagePreview = /** @class */ (function () {
@@ -62,6 +60,7 @@ var ImagePreview = /** @class */ (function () {
         this.isNormalMove = false; // is moveNormal
         this.normalMoved = false; // 手指移动上下一张切换的时候有没有产生位移 双指缩放时若此值为true则不进行缩放
         this.maxMovePointCounts = 3; // max point count while collect moving point.
+        this.touchIdentifier = 0;
         this.prefix = "__";
         this.defToggleClass = 'defToggleClass';
         this.movePoints = []; //收集移动点，判断滑动方向
@@ -87,58 +86,25 @@ var ImagePreview = /** @class */ (function () {
         });
         this.taskExecuteAfterTEnd = new Map;
         this.envClient = this.testEnv();
-        this.supportTransitionEnd = this.transitionEnd();
         this.genFrame();
         this.handleReausetAnimate(); //requestAnimationFrame兼容性
         this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
         this.imgContainer.matrix = this.initalMatrix;
         this.containerWidth = this.imgContainer.getBoundingClientRect().width;
         this.threshold = this.containerWidth / 4;
-        this.imgItems = this.imgContainer.querySelectorAll("." + this.prefix + "item");
-        this[this.envClient + 'RecordInitialData'](this.imgItems);
         this.maxMoveX = this.containerWidth / 2;
         this.minMoveX = -this.containerWidth * (this.imgsNumber - 0.5);
         this[this.envClient + 'Initial']();
     }
-    ImagePreview.prototype.setToNaturalImgSize = function (toWidth, toHeight, scaleX, scaleY, e) { };
-    ImagePreview.prototype.setToInitialSize = function (scaleX, scaleY, e) { };
     ImagePreview.prototype.handleZoom = function (e) { };
     ImagePreview.prototype.handleMove = function (e) { };
     ImagePreview.prototype.handleMoveNormal = function (e) { };
     ImagePreview.prototype.handleMoveEnlage = function (e) { };
-    ImagePreview.prototype.handleRotate = function (e, changeDeg) { };
     ImagePreview.prototype.handleRotateLeft = function (e) { };
     ImagePreview.prototype.handleRotateRight = function (e) { };
-    ImagePreview.prototype.setTransitionProperty = function (_a) {
-        var el = _a.el, time = _a.time, timingFunction = _a.timingFunction, prop = _a.prop;
-    };
-    ImagePreview.prototype.animate = function (_a) {
-        var el = _a.el, prop = _a.prop, endStr = _a.endStr, timingFunction = _a.timingFunction, callback = _a.callback, duration = _a.duration;
-    };
-    ImagePreview.prototype.animateMultiValue = function (el, options, timingFunction, callback) { };
-    ImagePreview.prototype.computeStep = function (displacement, time) { return 0; };
-    ImagePreview.prototype.transitionEnd = function () { return ''; };
-    ;
     ImagePreview.prototype.autoMove = function (deg, startX, startY, _a) {
         var maxTop = _a.maxTop, minTop = _a.minTop, maxLeft = _a.maxLeft, minLeft = _a.minLeft;
         return Promise.resolve(1);
-    };
-    ImagePreview.prototype.matrixMultipy = function (a, b) {
-        var res = [];
-        for (var _i = 2; _i < arguments.length; _i++) {
-            res[_i - 2] = arguments[_i];
-        }
-        return [];
-    };
-    ImagePreview.prototype.matrixTostr = function (arr) { return ''; };
-    ImagePreview.prototype.getTranslateMatrix = function (_a) {
-        var x = _a.x, y = _a.y, z = _a.z;
-        return [];
-    };
-    ImagePreview.prototype.getRotateZMatrix = function (deg) { return []; };
-    ImagePreview.prototype.getScaleMatrix = function (_a) {
-        var x = _a.x, y = _a.y, z = _a.z;
-        return [];
     };
     ImagePreview.prototype.insertImageAfter = function (image, index) {
         this.actionExecutor.addImg(image, index);
@@ -175,120 +141,6 @@ var ImagePreview = /** @class */ (function () {
             this.taskExecuteAfterTEnd.set(type, task);
         }
     };
-    ImagePreview.prototype.mobileRecordInitialData = function (els) {
-        var _this = this;
-        /**
-         * 记录并设置初始top，left值
-         */
-        var record = function (el, img) {
-            var imgContainerRect = _this.imgContainer.getBoundingClientRect();
-            var imgContainerHeight = imgContainerRect.height;
-            var imgContainerWidth = imgContainerRect.width;
-            var styleObj = el.getBoundingClientRect();
-            var imgNaturalWidth = img.naturalWidth;
-            var imgNaturalHeight = img.naturalHeight;
-            var scaleX = imgContainerWidth / imgNaturalWidth;
-            var imgShouldHeight = imgContainerWidth * imgNaturalHeight / imgNaturalWidth;
-            var scaleY = imgShouldHeight / imgNaturalHeight;
-            if (imgContainerHeight < styleObj.height) { // long img fill column direction. width auto fit
-                scaleY = imgContainerHeight / imgNaturalHeight;
-                var imgShouldWeidth = imgContainerHeight * imgNaturalWidth / imgNaturalHeight;
-                scaleX = imgShouldWeidth / imgNaturalWidth;
-                img.style.cssText = "\n                    height: 100%;\n                    width: auto;\n                ";
-            }
-            var top = -(imgNaturalHeight - imgContainerHeight) / 2;
-            var left = -(imgNaturalWidth - imgContainerWidth) / 2;
-            el.dataset.loaded = "true";
-            el.rotateDeg = 0;
-            el.matrix = _this.initalMatrix;
-            el.matrix = _this.matrixMultipy(el.matrix, _this.getScaleMatrix({ x: scaleX, y: scaleY, z: 1 }), _this.getTranslateMatrix({ x: left, y: top, z: 0 }));
-            el.intialMatrix = el.matrix;
-            el.style.cssText = "\n                width: " + img.naturalWidth + "px;\n                height: " + img.naturalHeight + "px;\n                transform:" + _this.matrixTostr(el.matrix) + ";\n            ";
-            el.dataset.initialWidth = (styleObj.width * scaleX).toString();
-            el.dataset.initialHeight = (styleObj.height * scaleY).toString();
-            el.dataset.top = top.toString();
-            el.dataset.initialTop = top.toString();
-            el.dataset.left = left.toString();
-            el.dataset.initialLeft = left.toString();
-            el.dataset.viewTopInitial = styleObj.top.toString();
-            el.dataset.viewLeftInitial = styleObj.left.toString();
-        };
-        this.recordInitialData(els, record);
-    };
-    ImagePreview.prototype.pcRecordInitialData = function (els) {
-        var _this = this;
-        var record = function (el, img) {
-            var imgContainerRect = _this.imgContainer.getBoundingClientRect();
-            var imgContainerHeight = imgContainerRect.height;
-            var imgBoundingRect = img.getBoundingClientRect();
-            var top = 0;
-            var left = 0;
-            var width = imgBoundingRect.width;
-            var height = imgBoundingRect.height;
-            if (imgBoundingRect.width > img.naturalWidth) {
-                width = img.naturalWidth;
-                height = img.naturalHeight;
-            }
-            left = (_this.containerWidth - width) / 2;
-            top = (imgContainerHeight - height) / 2;
-            top < 0 && (top = 0);
-            el.style.width = width + 'px';
-            el.dataset.initialWidth = width.toString();
-            el.dataset.initialHeight = height.toString();
-            el.dataset.top = top.toString();
-            el.dataset.initialTop = top.toString();
-            el.dataset.left = left.toString();
-            el.dataset.initialLeft = left.toString();
-            el.dataset.viewTopInitial = imgBoundingRect.top.toString();
-            el.dataset.viewLeftInitial = imgBoundingRect.left.toString();
-            el.dataset.rotateDeg = '0';
-            el.dataset.loaded = "true";
-            el.style.top = top + "px";
-            el.style.left = left + "px";
-        };
-        this.recordInitialData(els, record);
-    };
-    ImagePreview.prototype.recordInitialData = function (els, record) {
-        var _this = this;
-        /**
-         * 记录并设置初始top，left值
-         */
-        els.forEach(function (el) {
-            var img = el;
-            if (img.complete) {
-                record(el, img);
-            }
-            else {
-                el.dataset.loaded = "false";
-                img.onload = function () {
-                    record(el, img);
-                };
-            }
-            img.onerror = function (e) {
-                var imgContainerRect = _this.imgContainer.getBoundingClientRect();
-                var imgContainerHeight = imgContainerRect.height;
-                var styleObj = el.getBoundingClientRect();
-                var top = (imgContainerHeight - styleObj.height) / 2;
-                el.dataset.initialWidth = styleObj.width.toString();
-                el.dataset.initialHeight = styleObj.height.toString();
-                el.dataset.top = top.toString();
-                el.dataset.initialTop = top.toString();
-                el.dataset.loaded = "false";
-                el.style.top = top + "px";
-                (e.currentTarget).alt = "图片加载错误";
-            };
-        });
-    };
-    ImagePreview.prototype.handlePcClick = function (e) {
-        /**
-         * 这里把操作派发
-         */
-        var type = (e.target).dataset.type;
-        if (this.operateMaps[type]) {
-            this[this.operateMaps[type]](e);
-            return;
-        }
-    };
     ImagePreview.prototype.handleTouchStart = function (e) {
         e.preventDefault();
         switch (e.touches.length) {
@@ -311,8 +163,6 @@ var ImagePreview = /** @class */ (function () {
             x: e.touches[1].clientX,
             y: e.touches[1].clientY
         };
-        this.startX = (e.touches[0].clientX);
-        this.startY = (e.touches[0].clientY);
     };
     ImagePreview.prototype.handleOneStart = function (e) {
         var _this = this;
@@ -671,7 +521,7 @@ var ImagePreview = /** @class */ (function () {
     };
     return ImagePreview;
 }());
-applyMixins(ImagePreview, [Move, Zoom, Rotate, Animation, Matrix]);
+applyMixins(ImagePreview, [Move, Zoom, Rotate]);
 function applyMixins(derivedCtor, baseCtors) {
     baseCtors.forEach(function (baseCtor) {
         Object.getOwnPropertyNames(baseCtor.prototype).forEach(function (name) {

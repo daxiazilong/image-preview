@@ -1,4 +1,13 @@
 import { ImagePreview } from './image-preview';
+var isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
+if (!isMobile) {
+    if (confirm("\n        \u4E3B\u8981\u9002\u914D\u79FB\u52A8\u7AEF\u9879\u76EE\n        Mainly suitable for mobile terminal\n    ")) {
+    }
+    else {
+    }
+    ;
+    throw 1;
+}
 var obj = new ImagePreview({
     curImg: '/testImage/IMG_0512.JPG',
     imgs: [

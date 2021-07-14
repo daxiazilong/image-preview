@@ -5,19 +5,12 @@
  * Released under the MIT License
  */
 import { Move, Zoom, Rotate } from '../action/index';
-import { Animation } from '../animation/index'
-import { Matrix } from '../matrix/index'
 // import { showDebugger } from '../tools/index';
 import { webGl } from '../webgl/index'
-
-
-class ImagePreview implements
-    Move, Zoom, Animation,
-    Matrix {
+class ImagePreview implements Move, Zoom {
     public showTools: boolean = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
     public performerClick: any;// 单击事件执行计时器
-    public threshold: number;//阈值 手指移动超过这个值则切换到下一屏
 
     public startX: number;//手指移动时的x坐标 会随手指坐标变化
     public touchStartX: number;//手指移动时的x起点坐标 不会变化
@@ -29,7 +22,6 @@ class ImagePreview implements
     public curIndex: number = 0;//当前第几个图片
     public imgContainerMoveX: number = 0;//图片容器x轴的移动距离
     public imgContainerMoveY: number = 0;//图片容器y轴的移动距离
-    public containerWidth: number = 0;//屏幕宽度
     public imgsNumber: number;//图片数量
     public slideTime: number = 300; //切换至下一屏幕时需要的时间
     public zoomScale: number = 0.05;//缩放比例
@@ -40,10 +32,6 @@ class ImagePreview implements
 
     public curStartPoint1: { x: number, y: number };//双指缩放时的第一个起点
     public curStartPoint2: { x: number, y: number };//双指缩放的第二个起点
-
-
-    public maxMoveX: number; // 滑动时的最大距离
-    public minMoveX: number; // 滑动时的最小距离
 
     public isAnimating: boolean = false; // 是否在动画中
     public isEnlargeMove: boolean = false;// 大图下得切屏 slide next/before img
@@ -57,7 +45,6 @@ class ImagePreview implements
     public prefix: string = "__"
     public ref: HTMLElement;
     public imgContainer: HTMLElement & { matrix: Array<Array<number>> };
-    public imgItems: NodeListOf<HTMLElement>;
     public defToggleClass: string = 'defToggleClass';
 
     public movePoints: Array<{ x: number, y: number }> = [];//收集移动点，判断滑动方向
@@ -102,62 +89,22 @@ class ImagePreview implements
         })
         this.taskExecuteAfterTEnd = new Map;
         this.envClient = this.testEnv();
-        this.supportTransitionEnd = this.transitionEnd();
         this.genFrame();
         this.handleReausetAnimate();//requestAnimationFrame兼容性
 
         this.imgContainer = this.ref.querySelector(`.${this.prefix}imgContainer`);
         this.imgContainer.matrix = this.initalMatrix
 
-        this.containerWidth = this.imgContainer.getBoundingClientRect().width;
-        this.threshold = this.containerWidth / 4;
-
-        this.imgItems = this.imgContainer.querySelectorAll(`.${this.prefix}item`);
-        this[this.envClient + 'RecordInitialData'](this.imgItems);
-
-        this.maxMoveX = this.containerWidth / 2;
-        this.minMoveX = -this.containerWidth * (this.imgsNumber - 0.5);
-
         this[this.envClient + 'Initial']();
 
     }
-    setToNaturalImgSize(toWidth: number, toHeight: number, scaleX: number, scaleY: number, e: TouchEvent & MouseEvent): void { }
-    setToInitialSize(scaleX: number, scaleY: number, e: TouchEvent & MouseEvent): void { }
     handleZoom(e: TouchEvent & MouseEvent): void { }
     handleMove(e: TouchEvent & MouseEvent): void { }
     handleMoveNormal(e: TouchEvent & MouseEvent): void { }
     handleMoveEnlage(e: TouchEvent & MouseEvent): void { }
-    handleRotate(e: TouchEvent & MouseEvent, changeDeg: number) { }
     handleRotateLeft(e: TouchEvent & MouseEvent): void { }
     handleRotateRight(e: TouchEvent & MouseEvent): void { }
-    setTransitionProperty({el, time, timingFunction,prop}:setTransitionPropertyProps): void { }
-    animate(
-        {
-            el,
-            prop,
-            endStr,
-            timingFunction,
-            callback,
-            duration
-        }: animateProps
-    ) { }
-    animateMultiValue(
-        el: HTMLElement,
-        options: Array<{
-            prop: string,
-            endStr: string
-        }>,
-        timingFunction?: string,
-        callback?: () => void
-    ) { }
-    computeStep(displacement: number, time: number): number { return 0 }
-    transitionEnd() { return '' };
     autoMove(deg: number, startX: number, startY: number, { maxTop, minTop, maxLeft, minLeft }: { maxTop: any; minTop: any; maxLeft: any; minLeft: any; }):Promise<any> { return Promise.resolve(1) }
-    matrixMultipy(a: Array<Array<number>>, b: Array<Array<number>>, ...res) { return [] }
-    matrixTostr(arr: Array<Array<number>>) { return '' }
-    getTranslateMatrix({ x, y, z }) { return [] }
-    getRotateZMatrix(deg: number) { return [] }
-    getScaleMatrix({ x, y, z }) { return [] }
     insertImageAfter( image: string | image , index: number ){
         this.actionExecutor.addImg(image,index)
     }
@@ -195,153 +142,6 @@ class ImagePreview implements
     addTouchEndTask(type:string,task: task){
         if( !this.taskExecuteAfterTEnd.has(type) ){
             this.taskExecuteAfterTEnd.set(type,task)
-        }
-    }
-    mobileRecordInitialData(els: NodeListOf<HTMLElement>) {
-        /**
-         * 记录并设置初始top，left值
-         */
-        const record = (el: interFaceElementMatrix, img: HTMLImageElement) => {
-
-            const imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-            const imgContainerHeight: number = imgContainerRect.height;
-            const imgContainerWidth: number = imgContainerRect.width;
-            const styleObj: ClientRect = el.getBoundingClientRect();
-
-            const imgNaturalWidth = img.naturalWidth;
-            const imgNaturalHeight = img.naturalHeight;
-
-            let scaleX = imgContainerWidth / imgNaturalWidth;
-            const imgShouldHeight = imgContainerWidth * imgNaturalHeight / imgNaturalWidth;
-            let scaleY = imgShouldHeight / imgNaturalHeight;
-
-            if (imgContainerHeight < styleObj.height) {// long img fill column direction. width auto fit
-                scaleY = imgContainerHeight / imgNaturalHeight;
-                const imgShouldWeidth = imgContainerHeight * imgNaturalWidth / imgNaturalHeight;
-                scaleX = imgShouldWeidth / imgNaturalWidth
-                img.style.cssText = `
-                    height: 100%;
-                    width: auto;
-                `;
-            }
-            const top: number = -(imgNaturalHeight - imgContainerHeight) / 2;
-            const left: number = -(imgNaturalWidth - imgContainerWidth) / 2;
-
-            
-            el.dataset.loaded = "true";
-            el.rotateDeg = 0;
-
-            el.matrix = this.initalMatrix;
-            el.matrix = this.matrixMultipy(el.matrix,
-                this.getScaleMatrix({ x: scaleX, y: scaleY, z: 1 }),
-                this.getTranslateMatrix({ x: left, y: top, z: 0 })
-            );
-            el.intialMatrix = el.matrix;
-
-            el.style.cssText = `
-                width: ${img.naturalWidth}px;
-                height: ${img.naturalHeight}px;
-                transform:${this.matrixTostr(el.matrix)};
-            `;
-
-            el.dataset.initialWidth = ( styleObj.width * scaleX ).toString();
-            el.dataset.initialHeight = ( styleObj.height * scaleY ).toString();
-            el.dataset.top = top.toString();
-            el.dataset.initialTop = top.toString();
-            el.dataset.left = left.toString();
-            el.dataset.initialLeft = left.toString();
-            el.dataset.viewTopInitial = styleObj.top.toString();
-            el.dataset.viewLeftInitial = styleObj.left.toString();
-        }
-        this.recordInitialData(els, record)
-
-    }
-    pcRecordInitialData(els: NodeListOf<HTMLElement>) {
-        const record = (el: HTMLElement, img: HTMLImageElement) => {
-            let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-            let imgContainerHeight: number = imgContainerRect.height;
-            let imgBoundingRect: ClientRect = img.getBoundingClientRect();
-
-            let top: number = 0;
-            let left: number = 0;
-            let width: number = imgBoundingRect.width;
-            let height: number = imgBoundingRect.height;
-
-            if (imgBoundingRect.width > img.naturalWidth) {
-                width = img.naturalWidth;
-                height = img.naturalHeight;
-            }
-
-            left = (this.containerWidth - width) / 2;
-            top = (imgContainerHeight - height) / 2;
-            top < 0 && (top = 0)
-            el.style.width = width + 'px';
-
-            el.dataset.initialWidth = width.toString();
-            el.dataset.initialHeight = height.toString();
-            el.dataset.top = top.toString();
-            el.dataset.initialTop = top.toString();
-            el.dataset.left = left.toString();
-            el.dataset.initialLeft = left.toString();
-            el.dataset.viewTopInitial = imgBoundingRect.top.toString();
-            el.dataset.viewLeftInitial = imgBoundingRect.left.toString();
-            el.dataset.rotateDeg = '0';
-            el.dataset.loaded = "true";
-
-            el.style.top = `${top}px`;
-            el.style.left = `${left}px`;
-        }
-
-        this.recordInitialData(els, record)
-
-    }
-    recordInitialData(els: NodeListOf<HTMLElement>, record: Function) {
-        /**
-         * 记录并设置初始top，left值
-         */
-        els.forEach((el) => {
-            const img = el as HTMLImageElement;
-            if (img.complete) {
-                record(el, img);
-            } else {
-                el.dataset.loaded = "false";
-                img.onload = function () {
-                    record(el, img)
-                }
-            }
-            img.onerror = (e: Event) => {
-
-                let imgContainerRect: ClientRect = this.imgContainer.getBoundingClientRect();
-                let imgContainerHeight: number = imgContainerRect.height;
-                const styleObj: ClientRect = el.getBoundingClientRect();
-
-                const top: number = (imgContainerHeight - styleObj.height) / 2;
-
-                el.dataset.initialWidth = styleObj.width.toString();
-                el.dataset.initialHeight = styleObj.height.toString();
-                el.dataset.top = top.toString();
-                el.dataset.initialTop = top.toString();
-
-                el.dataset.loaded = "false";
-
-                el.style.top = `${top}px`;
-
-                (<HTMLImageElement>(e.currentTarget)).alt = "图片加载错误"
-            }
-        })
-
-    }
-
-    handlePcClick(e: MouseEvent): void {
-        /**
-         * 这里把操作派发
-         */
-
-        const type: string = (<HTMLElement>(e.target)).dataset.type;
-
-        if (this.operateMaps[type]) {
-            this[this.operateMaps[type]](e);
-            return
         }
     }
     handleTouchStart(e: TouchEvent & MouseEvent) {
@@ -555,19 +355,12 @@ class ImagePreview implements
         let images: Array<string> = this.options.imgs;
 
         if (!images || !images.length) {
-            console.error("没有图片哦!\n no pictures!");
-            return;
+            // console.error("没有图片哦!\n no pictures!");
+            // return;
         }
 
         this.imgsNumber = images.length;
-        let index: number = images.indexOf(curImg);
-
-        if (index == -1) {
-            index = 0;
-        }
-        this.curIndex = index;
-        this.imgContainerMoveX = -(index * this.containerWidth);
-
+        this.curIndex = 0;
 
         let genStyle = (prop: string) => {
             switch (prop) {
@@ -811,8 +604,7 @@ class ImagePreview implements
     }
 
 }
-applyMixins(ImagePreview, [Move, Zoom, Rotate, Animation, Matrix]);
-
+applyMixins(ImagePreview, [Move, Zoom, Rotate]);
 function applyMixins(derivedCtor: any, baseCtors: any[]) {
     baseCtors.forEach(baseCtor => {
         Object.getOwnPropertyNames(baseCtor.prototype).forEach(name => {
