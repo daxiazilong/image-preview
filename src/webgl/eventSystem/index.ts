@@ -6,11 +6,26 @@ export class events {
     viewInstance: webGl;
     curBehaviorCanBreak: boolean = false;
     throldDeg: number = Math.PI * 0.12;
+    resizeTimer
     constructor(viewInstance: webGl) {
         this.viewInstance = viewInstance;
     }
-    handleSingleStart(e: TouchEvent & MouseEvent) {
-        throw new Error('Method not implemented.');
+    handleResize(){
+        const {viewInstance,resizeTimer} = this
+        clearTimeout(resizeTimer);
+        const run = () => {
+            const canvas = viewInstance.ref;
+            canvas.style.width = `${window.innerWidth}px`;
+            canvas.style.height = `${window.innerHeight}px`;
+            canvas.width = window.innerWidth * viewInstance.dpr;
+            canvas.height = window.innerHeight * viewInstance.dpr;
+
+            viewInstance.viewWidth = canvas.width;
+            viewInstance.viewHeight = canvas.height;
+            viewInstance.gl.viewport(0,0,viewInstance.viewWidth,viewInstance.viewHeight)
+            viewInstance.draw(viewInstance.curIndex)
+        }
+        this.resizeTimer = setTimeout(run,300)
     }
     handleDoubleClick(e: TouchEvent & MouseEvent){
 

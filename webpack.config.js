@@ -8,14 +8,12 @@ const dev =  mode == "development";
 let  compilePath = {
   test: './src/core/test.ts'
 }
-const output = dev ? 'debug' : 'release';
+const output = dev ? 'debug' : 'example/image-preview';
 var plugins = [new HtmlWebpackPlugin({
   title: 'this is dev mode!',
   template: './debug/template.html'
 })];
-if (dev) {
-  plugins.push(new webpack.HotModuleReplacementPlugin({}))
-}
+plugins.push(new webpack.HotModuleReplacementPlugin({}))
 module.exports = {
   mode,
   entry: compilePath,

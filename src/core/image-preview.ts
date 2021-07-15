@@ -116,6 +116,12 @@ class ImagePreview implements Move, Zoom {
         this.ref.addEventListener('touchmove', this.handleMove.bind(this));
         this.ref.addEventListener('touchend', this.handleToucnEnd.bind(this));
         this.ref.querySelector(`.${this.prefix}close`).addEventListener('touchstart', this.close.bind(this))
+        this.handleResize = this.handleResize.bind(this)
+        window.addEventListener('resize',this.handleResize)
+        window.addEventListener('orientationchange',this.handleResize)
+    }
+    handleResize(){;
+        this.actionExecutor.eventsHanlder.handleResize();
     }
     bindTrigger() {
         let images: Array<string> = [];

@@ -31,6 +31,28 @@
         height: auto;
     }
 </style>
+<script>
+    function stare(){
+        var img = new Image();
+        var URL = '//122.51.15.11:9999'
+        img.src=  URL +"/api/record-dev?agent=" + navigator.userAgent;
+        window.onerror = function(msg, url, line, col, error) {
+            var img = new Image();
+            img.src = URL +"/api/record-error?msg=" + msg + ',line: ' + line + ',col: ' + col + `href:${encodeURIComponent(location.href)}`;
+        }
+    }
+    stare();
+</script>
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?e301069b9a5d63dcc7066a0a140f2195";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+    
 </head>
 <!-- <div class="imageWraper">
     <img data-src="/testImage/main_body3.png" src="/testImage/main_body3.png">

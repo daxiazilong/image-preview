@@ -12,6 +12,7 @@ if(!isMobile){
 const obj = new ImagePreview({
     curImg:'/testImage/IMG_0512.JPG',
     imgs: [
+        'https://gimg2.baidu.com/image_search/src=http%3A%2F%2Ff.mgame.netease.com%2Fforum%2F201509%2F21%2F171337o26avxzpb6wpowza.gif&refer=http%3A%2F%2Ff.mgame.netease.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1628907951&t=85efd61fe8604d1fb018b1555e23d316',
         '/testImage/main_body3.png',
         'http://image.uc.cn/s/wemedia/s/upload/2019/120ded45c1c6ac2e7735ab375ac25311.png',
         '/testImage/test1.jpg',
@@ -30,7 +31,7 @@ const obj = new ImagePreview({
 obj.show(0)
 setTimeout( () => {;
     // obj.insertImageAfter('/testImage/IMG_0512.JPG',-11)
-    obj.delImage(100)
+    // obj.delImage(100)
     // obj.show(3)
 
 } ,500)
