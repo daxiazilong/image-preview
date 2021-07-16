@@ -41,8 +41,24 @@ var events = /** @class */ (function () {
         this.throldDeg = Math.PI * 0.12;
         this.viewInstance = viewInstance;
     }
-    events.prototype.handleSingleStart = function (e) {
-        throw new Error('Method not implemented.');
+    events.prototype.handleResize = function () {
+        var _a = this, viewInstance = _a.viewInstance, resizeTimer = _a.resizeTimer;
+        clearTimeout(resizeTimer);
+        var run = function () {
+            ;
+            var canvas = viewInstance.ref;
+            canvas.style.width = window.innerWidth + "px";
+            canvas.style.height = window.innerHeight + "px";
+            canvas.width = window.innerWidth * viewInstance.dpr;
+            canvas.height = window.innerHeight * viewInstance.dpr;
+            viewInstance.viewWidth = canvas.width;
+            viewInstance.viewHeight = canvas.height;
+            viewInstance.gl.viewport(0, 0, viewInstance.viewWidth, viewInstance.viewHeight);
+            var projectionMatrix = viewInstance.createPerspectiveMatrix();
+            viewInstance.gl.uniformMatrix4fv(viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uProjectionMatrix'), false, projectionMatrix);
+            viewInstance.draw(viewInstance.curIndex);
+        };
+        this.resizeTimer = setTimeout(run, 300);
     };
     events.prototype.handleDoubleClick = function (e) {
         var _a = e.touches[0], clientX = _a.clientX, clientY = _a.clientY;
@@ -143,7 +159,6 @@ var events = /** @class */ (function () {
                         x *= viewInstance.dpr;
                         y *= -viewInstance.dpr;
                         z *= viewInstance.dpr;
-                        console.log('handleTEndEnlarge', x, y, z);
                         this.curBehaviorCanBreak = true;
                         return [4 /*yield*/, viewInstance.moveCurPlane(x, y, 0)];
                     case 1:

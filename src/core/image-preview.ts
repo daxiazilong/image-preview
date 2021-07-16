@@ -75,7 +75,6 @@ class ImagePreview implements Move, Zoom {
     screenWidth: number;
     constructor(
         public options: {
-            curImg?: string,
             imgs?: Array<string>,
             selector?: string
         }
@@ -133,7 +132,6 @@ class ImagePreview implements Move, Zoom {
             images.push(element.dataset.src || element.src /** bug fix 2020.07.26 by luffy */);
         })
 
-        this.options.curImg = images[0];
         this.options.imgs = images;
 
         let imgPreviewer = this;
@@ -357,14 +355,11 @@ class ImagePreview implements Move, Zoom {
         this.isAnimating = false;
     }
     genFrame() {
-        let curImg: string = this.options.curImg;
         let images: Array<string> = this.options.imgs;
-
         if (!images || !images.length) {
             // console.error("没有图片哦!\n no pictures!");
             // return;
         }
-
         this.imgsNumber = images.length;
         this.curIndex = 0;
 
@@ -600,6 +595,8 @@ class ImagePreview implements Move, Zoom {
     }
     destroy(): void {
         this.ref.parentNode.removeChild(this.ref);
+        window.removeEventListener('resize',this.handleResize)
+        window.removeEventListener('orientationchange',this.handleResize)
     }
     testEnv(): string {
         if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {

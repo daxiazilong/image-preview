@@ -28,8 +28,7 @@
             var viewRect = this.actionExecutor.viewRect;
             var curItemViewLeft = viewRect.left;
             var curItemViewRight = viewRect.right;
-            var imgContainerRect = this.imgContainer.getBoundingClientRect();
-            var conWidth = imgContainerRect.width;
+            var conWidth = this.actionExecutor.viewWidth / this.actionExecutor.dpr;
             /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
              * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
              **/
@@ -688,8 +687,23 @@
             this.throldDeg = Math.PI * 0.12;
             this.viewInstance = viewInstance;
         }
-        events.prototype.handleSingleStart = function (e) {
-            throw new Error('Method not implemented.');
+        events.prototype.handleResize = function () {
+            var _a = this, viewInstance = _a.viewInstance, resizeTimer = _a.resizeTimer;
+            clearTimeout(resizeTimer);
+            var run = function () {
+                var canvas = viewInstance.ref;
+                canvas.style.width = window.innerWidth + "px";
+                canvas.style.height = window.innerHeight + "px";
+                canvas.width = window.innerWidth * viewInstance.dpr;
+                canvas.height = window.innerHeight * viewInstance.dpr;
+                viewInstance.viewWidth = canvas.width;
+                viewInstance.viewHeight = canvas.height;
+                viewInstance.gl.viewport(0, 0, viewInstance.viewWidth, viewInstance.viewHeight);
+                var projectionMatrix = viewInstance.createPerspectiveMatrix();
+                viewInstance.gl.uniformMatrix4fv(viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uProjectionMatrix'), false, projectionMatrix);
+                viewInstance.draw(viewInstance.curIndex);
+            };
+            this.resizeTimer = setTimeout(run, 300);
         };
         events.prototype.handleDoubleClick = function (e) {
             var _a = e.touches[0], clientX = _a.clientX, clientY = _a.clientY;
@@ -787,7 +801,6 @@
                             x *= viewInstance.dpr;
                             y *= -viewInstance.dpr;
                             z *= viewInstance.dpr;
-                            console.log('handleTEndEnlarge', x, y, z);
                             this.curBehaviorCanBreak = true;
                             return [4 /*yield*/, viewInstance.moveCurPlane(x, y, 0)];
                         case 1:
@@ -946,22 +959,45 @@
             this.initOtherTexture();
         };
         webGl.prototype.addImg = function (image, index) {
+            var beforL = this.imgUrls.length;
+            var indexShouldInImgs = index + 1;
+            if (index <= -1) {
+                index = -1;
+                indexShouldInImgs = 0;
+            }
+            else if (index > beforL) {
+                index = beforL;
+                indexShouldInImgs = beforL;
+            }
             this.imgUrls.splice(index + 1, 0, image);
-            this.imgs.splice(index + 1, 0, null);
+            // use splice will make  different  order between imgs and imgUrls
+            this.imgs[indexShouldInImgs] = null;
             if (image instanceof Image) {
                 if (typeof image._id == 'undefined') {
                     image._id = this.imgId++;
                 }
             }
             index -= this.curIndex;
+            // the inserted index is -1 0 1 , is in current view so need draw again
             if (~[-2, -1, 0].indexOf(index)) {
+                console.log(this.imgUrls);
+                console.log(this.imgs);
                 this.draw(this.curIndex);
             }
         };
         webGl.prototype.delImg = function (index) {
+            var beforL = this.imgUrls.length;
+            if (index <= -1) {
+                index = 0;
+            }
+            else if (index >= beforL) {
+                index = beforL - 1;
+            }
             this.imgUrls.splice(index, 1);
+            if (this.imgs[index]) {
+                this.textures.delete(this.imgs[index]._id);
+            }
             this.imgs.splice(index, 1);
-            this.textures.delete(this.imgs[index]._id);
             index -= this.curIndex;
             if (~[-1, 0, 1].indexOf(index)) {
                 this.draw(this.curIndex);
@@ -1071,7 +1107,6 @@
             ];
             var key = index - this.curIndex; // -1 , 0 , 1;
             key += 1; // -1,0,1 -> 0,1,2
-            // 可以优化为插入
             (_a = this.positions).push.apply(_a, positionsMap[key]);
         };
         /**
@@ -1370,6 +1405,7 @@
             }
             var indexBuffer = this.gl.createBuffer();
             this.indinces[index] = indexBuffer;
+            this.indinces.set(index, indexBuffer);
             gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             // console.log(indices)
             this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
@@ -1829,7 +1865,6 @@
             this.curIndex = 0; //当前第几个图片
             this.imgContainerMoveX = 0; //图片容器x轴的移动距离
             this.imgContainerMoveY = 0; //图片容器y轴的移动距离
-            this.containerWidth = 0; //屏幕宽度
             this.slideTime = 300; //切换至下一屏幕时需要的时间
             this.zoomScale = 0.05; //缩放比例
             this.isZooming = false; //是否在进行双指缩放
@@ -1868,10 +1903,6 @@
             this.handleReausetAnimate(); //requestAnimationFrame兼容性
             this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
             this.imgContainer.matrix = this.initalMatrix;
-            this.containerWidth = this.imgContainer.getBoundingClientRect().width;
-            this.threshold = this.containerWidth / 4;
-            this.maxMoveX = this.containerWidth / 2;
-            this.minMoveX = -this.containerWidth * (this.imgsNumber - 0.5);
             this[this.envClient + 'Initial']();
         }
         ImagePreview.prototype.handleZoom = function (e) { };
@@ -1895,6 +1926,12 @@
             this.ref.addEventListener('touchmove', this.handleMove.bind(this));
             this.ref.addEventListener('touchend', this.handleToucnEnd.bind(this));
             this.ref.querySelector("." + this.prefix + "close").addEventListener('touchstart', this.close.bind(this));
+            this.handleResize = this.handleResize.bind(this);
+            window.addEventListener('resize', this.handleResize);
+            window.addEventListener('orientationchange', this.handleResize);
+        };
+        ImagePreview.prototype.handleResize = function () {
+            this.actionExecutor.eventsHanlder.handleResize();
         };
         ImagePreview.prototype.bindTrigger = function () {
             var images = [];
@@ -2123,19 +2160,11 @@
         };
         ImagePreview.prototype.genFrame = function () {
             var _this = this;
-            var curImg = this.options.curImg;
+            this.options.curImg;
             var images = this.options.imgs;
-            if (!images || !images.length) {
-                console.error("没有图片哦!\n no pictures!");
-                return;
-            }
+            if (!images || !images.length) ;
             this.imgsNumber = images.length;
-            var index = images.indexOf(curImg);
-            if (index == -1) {
-                index = 0;
-            }
-            this.curIndex = index;
-            this.imgContainerMoveX = -(index * this.containerWidth);
+            this.curIndex = 0;
             var genStyle = function (prop) {
                 switch (prop) {
                     case 'conBackground':
@@ -2278,6 +2307,8 @@
         };
         ImagePreview.prototype.destroy = function () {
             this.ref.parentNode.removeChild(this.ref);
+            window.removeEventListener('resize', this.handleResize);
+            window.removeEventListener('orientationchange', this.handleResize);
         };
         ImagePreview.prototype.testEnv = function () {
             if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {

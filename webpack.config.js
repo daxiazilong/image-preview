@@ -13,7 +13,9 @@ var plugins = [new HtmlWebpackPlugin({
   title: 'this is dev mode!',
   template: './debug/template.html'
 })];
-plugins.push(new webpack.HotModuleReplacementPlugin({}))
+if(dev){
+  plugins.push(new webpack.HotModuleReplacementPlugin({}))
+}
 module.exports = {
   mode,
   entry: compilePath,

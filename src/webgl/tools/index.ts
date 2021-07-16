@@ -70,7 +70,8 @@
         stat.style.cssText = `
             position: fixed;
             top: 0;
-            right: 0;
+            right: 50%;
+            transform: translateX(50%);
             z-index:100;
             padding: 10px;
             font-size:12px;

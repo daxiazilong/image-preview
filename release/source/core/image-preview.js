@@ -51,7 +51,6 @@ var ImagePreview = /** @class */ (function () {
         this.curIndex = 0; //当前第几个图片
         this.imgContainerMoveX = 0; //图片容器x轴的移动距离
         this.imgContainerMoveY = 0; //图片容器y轴的移动距离
-        this.containerWidth = 0; //屏幕宽度
         this.slideTime = 300; //切换至下一屏幕时需要的时间
         this.zoomScale = 0.05; //缩放比例
         this.isZooming = false; //是否在进行双指缩放
@@ -90,10 +89,6 @@ var ImagePreview = /** @class */ (function () {
         this.handleReausetAnimate(); //requestAnimationFrame兼容性
         this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
         this.imgContainer.matrix = this.initalMatrix;
-        this.containerWidth = this.imgContainer.getBoundingClientRect().width;
-        this.threshold = this.containerWidth / 4;
-        this.maxMoveX = this.containerWidth / 2;
-        this.minMoveX = -this.containerWidth * (this.imgsNumber - 0.5);
         this[this.envClient + 'Initial']();
     }
     ImagePreview.prototype.handleZoom = function (e) { };
@@ -117,6 +112,13 @@ var ImagePreview = /** @class */ (function () {
         this.ref.addEventListener('touchmove', this.handleMove.bind(this));
         this.ref.addEventListener('touchend', this.handleToucnEnd.bind(this));
         this.ref.querySelector("." + this.prefix + "close").addEventListener('touchstart', this.close.bind(this));
+        this.handleResize = this.handleResize.bind(this);
+        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('orientationchange', this.handleResize);
+    };
+    ImagePreview.prototype.handleResize = function () {
+        ;
+        this.actionExecutor.eventsHanlder.handleResize();
     };
     ImagePreview.prototype.bindTrigger = function () {
         var images = [];
@@ -354,16 +356,11 @@ var ImagePreview = /** @class */ (function () {
         var curImg = this.options.curImg;
         var images = this.options.imgs;
         if (!images || !images.length) {
-            console.error("没有图片哦!\n no pictures!");
-            return;
+            // console.error("没有图片哦!\n no pictures!");
+            // return;
         }
         this.imgsNumber = images.length;
-        var index = images.indexOf(curImg);
-        if (index == -1) {
-            index = 0;
-        }
-        this.curIndex = index;
-        this.imgContainerMoveX = -(index * this.containerWidth);
+        this.curIndex = 0;
         var genStyle = function (prop) {
             switch (prop) {
                 case 'conBackground':
@@ -510,6 +507,8 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.destroy = function () {
         this.ref.parentNode.removeChild(this.ref);
+        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('orientationchange', this.handleResize);
     };
     ImagePreview.prototype.testEnv = function () {
         if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {

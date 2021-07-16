@@ -22,8 +22,7 @@ var Move = /** @class */ (function () {
         var viewRect = this.actionExecutor.viewRect;
         var curItemViewLeft = viewRect.left;
         var curItemViewRight = viewRect.right;
-        var imgContainerRect = this.imgContainer.getBoundingClientRect();
-        var conWidth = imgContainerRect.width;
+        var conWidth = this.actionExecutor.viewWidth / this.actionExecutor.dpr;
         /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
          * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
          **/

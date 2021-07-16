@@ -13,7 +13,7 @@ export class events {
     handleResize(){
         const {viewInstance,resizeTimer} = this
         clearTimeout(resizeTimer);
-        const run = () => {
+        const run = () => {;
             const canvas = viewInstance.ref;
             canvas.style.width = `${window.innerWidth}px`;
             canvas.style.height = `${window.innerHeight}px`;
@@ -23,6 +23,14 @@ export class events {
             viewInstance.viewWidth = canvas.width;
             viewInstance.viewHeight = canvas.height;
             viewInstance.gl.viewport(0,0,viewInstance.viewWidth,viewInstance.viewHeight)
+
+            const projectionMatrix = viewInstance.createPerspectiveMatrix();
+            viewInstance.gl.uniformMatrix4fv(
+                viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uProjectionMatrix'),
+                false,
+                projectionMatrix
+            );
+
             viewInstance.draw(viewInstance.curIndex)
         }
         this.resizeTimer = setTimeout(run,300)
@@ -128,7 +136,7 @@ export class events {
         x *= viewInstance.dpr;
         y *= -viewInstance.dpr;
         z *= viewInstance.dpr;
-        console.log('handleTEndEnlarge',x,y,z)
+        
         this.curBehaviorCanBreak = true;
         await viewInstance.moveCurPlane(x,y,0)
         this.curBehaviorCanBreak = false;

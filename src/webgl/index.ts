@@ -6,8 +6,6 @@ import { matrix } from './matrix'
 import { cubicBezier,linear,easeOut ,easeIn,easeInOut} from '../animation/animateJs'
 import { events } from './eventSystem/index'
 import {errImgBase64} from './static/index'
-import {fps} from './tools/index'
-import { showDebugger } from '../tools/index';
 
 const easeOut1 = new cubicBezier(0.18, 0.96, 0.18, 0.96)
 
@@ -36,7 +34,6 @@ class webGl {
 
     curIndex = 0;
     defaultAnimateTime = 300;
-    indinces: Map<number,WebGLTexture> = new Map;
     initialModel: Array<number> = [
         1.0, 0, 0, 0,
         0, 1.0, 0, 0,
@@ -57,6 +54,7 @@ class webGl {
     ];
 
     initialVertextes;
+    indinces: Map<number,WebGLBuffer> = new Map;
     positions: Array<number> = [];
     imgs: Array<image> = [];
     imgUrls: Array<string|image> = [];
@@ -64,7 +62,7 @@ class webGl {
     imgShapeInitinal: Array<number> = [];//快速定位旋转之后图片的尺寸
     textures: Map<number,WebGLTexture> = new Map;//贴图 保存图片贴图
     texturesOther: Map<number,WebGLTexture> = new Map // 保存背景色及其他贴图
-
+    positionBuffer: WebGLBuffer = null
     curPlane: Array<number> = []; // 动画执行前的当前面的位置信息
 
     eventsHanlder: events;
@@ -75,8 +73,6 @@ class webGl {
     imgId = 0;
 
     constructor({images,}:webGlConstructorProps) {
-
-        fps()();
 
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -144,24 +140,36 @@ class webGl {
             index = -1;
             indexShouldInImgs = 0
         }else if(index > beforL){
-            index = beforL;
+            index = beforL - 1;
             indexShouldInImgs = beforL;
         }
         this.imgUrls.splice(index + 1,0,image);
         
         // use splice will make  different  order between imgs and imgUrls
-        this.imgs[indexShouldInImgs] = null;
+        if( index + 1 > this.imgs.length ){
+            this.imgs[indexShouldInImgs] = null;
+        }else{
+            this.imgs.splice(index + 1, 0 , null)
+        }
+
         if( image instanceof Image ){
             if( typeof image._id == 'undefined' ){
                 image._id = this.imgId++;
+            }
+            if(!image.complete){
+                image.onload = () => {;
+                    this.handleImgLoaded(image,index + 1,true);
+                }
+                image.onerror = () => {
+                    image.loadError = true;
+                    this.handleImgLoaded(image,index + 1);
+                }
             }
         }
         
         index -= this.curIndex;
         // the inserted index is -1 0 1 , is in current view so need draw again
         if( ~[-2,-1,0].indexOf(index) ){
-            console.log(this.imgUrls)
-            console.log(this.imgs)
             this.draw(this.curIndex)
         }
     }
@@ -232,7 +240,6 @@ class webGl {
                     this.clear();
                     play(curPos);
                 }
-
             })()
         })
 
@@ -293,14 +300,13 @@ class webGl {
         ]
         let key = index - this.curIndex; // -1 , 0 , 1;
         key  += 1; // -1,0,1 -> 0,1,2
-        // 可以优化为插入
         this.positions.push( ...positionsMap[key] )
     }
     /**
      * 图片异步加载之后更新顶点坐标位置。
      * @param index 相对于 curIndex 的位置 -1,0,1
      */
-    updatePosition(img:image,index){
+    updatePosition(img:image,index,isAdd?:boolean){
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         const viewWidth = this.viewWidth;
         
@@ -343,14 +349,26 @@ class webGl {
         key  += 1; // -1,0,1 -> 0,1,2;
 
         let curPlane = positionsMap[key];
-        for( let i = indexInPosition ; i < indexInPosition + 16; i++ ){
-            this.positions[i] = curPlane[i-indexInPosition]
+        if( isAdd ){;
+            // curPlan -> nextPlane , insert new Plane
+            this.positions.splice(indexInPosition,0,...curPlane)
+            //  remove last Plane
+            // this.positions.splice(-16,16)
+        }else{
+            for( let i = indexInPosition ; i < indexInPosition + 16; i++ ){
+                this.positions[i] = curPlane[i-indexInPosition]
+            }
         }
     }
     bindPostion(){
         const gl = this.gl;
         const positions = this.positions;
+        if( this.positionBuffer ){
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
+            return;
+        }   
         const positionBuffer = this.gl.createBuffer();
+        this.positionBuffer = positionBuffer;
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
         {
@@ -359,7 +377,6 @@ class webGl {
             const normalize = false;
             const stride = 0;
             const offset = 0;
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
             const aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
             gl.vertexAttribPointer(
                 aVerLocate,
@@ -367,7 +384,8 @@ class webGl {
                 type,
                 normalize,
                 stride,
-                offset);
+                offset
+            );
             gl.enableVertexAttribArray(aVerLocate);
         }
     }
@@ -631,9 +649,8 @@ class webGl {
 
         const indexBuffer = this.gl.createBuffer();
         this.indinces[index] = indexBuffer;
-
+        this.indinces.set(index,indexBuffer);
         gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
         
         // console.log(indices)
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
@@ -944,9 +961,9 @@ class webGl {
         ;(img.src = src);
         return img;
     }
-    handleImgLoaded(img:image,index:number){
+    handleImgLoaded(img:image,index:number,isAdd?:boolean){
         if( ~[-1,0,1].indexOf(index - this.curIndex) ){
-            this.updatePosition(img,index - this.curIndex)
+            this.updatePosition(img,index - this.curIndex,isAdd)
             this.bindPostion();
             this.drawPosition();
         }
@@ -1006,7 +1023,6 @@ class webGl {
             user-select:none;
             font-size:0;
         `;
-        document.body.style.overflow="hidden"
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
         this.ref = canvas;
