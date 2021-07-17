@@ -983,7 +983,7 @@ class webGl {
         gl.attachShader(shaderProgram, fragmentShader);
         gl.linkProgram(shaderProgram);
         if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+            console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
             return null;
         }
 
@@ -997,7 +997,7 @@ class webGl {
         gl.compileShader(shader);
         // See if it compiled successfully
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+            console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
             return null;
         }
@@ -1026,7 +1026,7 @@ class webGl {
         this.ref = canvas;
         const gl = canvas.getContext('webgl',{ antialias:true })
         if (!gl) {
-            alert('webgl is not supported. please use before version.')
+            console.error('webgl is not supported. please use before version.')
         }
 
         this.viewWidth = canvas.width;

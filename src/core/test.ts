@@ -5,8 +5,8 @@ fps()()
 let isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
 if(!isMobile){
     if(confirm(`
-        主要适配移动端项目
-        Mainly suitable for mobile terminal
+        仅适配移动端项目
+        only suitable for mobile terminal
     `)){
     }else{
     };
