@@ -12,7 +12,7 @@ type coordinate = {
 export class cubicBezier{
     p1: coordinate
     p2: coordinate
-    precision = 1e-7;
+    precision = 1e-5;
     constructor(x1,y1,x2,y2){
         this.p1 = {
             x:x1,
@@ -39,7 +39,7 @@ export class cubicBezier{
 
         var p1x = this.p1.x, p2x = this.p2.x;
 
-        var ax =  3 * p1x - 3 * p2x + 1;
+        var ax = 3 * p1x - 3 * p2x + 1;
         var bx = 3 * p2x - 6 * p1x;;
         var cx = 3 * p1x;;
 
@@ -61,6 +61,7 @@ export class cubicBezier{
             if (Math.abs(derivative) < this.precision) {
                 break;
             }
+            // xn = x(n-1) - f(xn)/ f'(xn)
             t2 -= x2 / derivative;
         }
 
@@ -68,12 +69,9 @@ export class cubicBezier{
         // bisection
         // http://en.wikipedia.org/wiki/Bisection_method
         var t1 = 1;
-        /* istanbul ignore next */
         var t0 = 0;
 
-        /* istanbul ignore next */
         t2 = x;
-        /* istanbul ignore next */
         while (t1 > t0) {
             x2 = this.getX(t2) - x;
             if (Math.abs(x2) < this.precision) {
@@ -99,6 +97,3 @@ export var ease = new cubicBezier(.25, .1, .25, 1);
 export var easeIn = new cubicBezier(.42, 0, 1, 1);
 export var easeOut = new cubicBezier(0, 0, .58, 1);
 export var easeInOut = new cubicBezier(.42, 0, .58, 1);
-
-import {run} from './animateTest'
-// run()

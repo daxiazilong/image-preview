@@ -8,7 +8,6 @@ var component = {
         var childNodes = this.$refs.imgs.childNodes;
         childNodes = Array.prototype.filter.call(childNodes, (function (item) { return item.nodeType === 1; }));
         var imgPreview = new ImagePreview({
-            curImg: "",
             imgs: this.images
         });
         this.imgPreview = imgPreview;

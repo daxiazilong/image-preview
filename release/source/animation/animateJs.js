@@ -5,7 +5,7 @@
  */
 var cubicBezier = /** @class */ (function () {
     function cubicBezier(x1, y1, x2, y2) {
-        this.precision = 1e-7;
+        this.precision = 1e-5;
         this.p1 = {
             x: x1,
             y: y1
@@ -52,17 +52,15 @@ var cubicBezier = /** @class */ (function () {
             if (Math.abs(derivative) < this.precision) {
                 break;
             }
+            // xn = x(n-1) - f(xn)/ f'(xn)
             t2 -= x2 / derivative;
         }
         // Fall back to the bisection method for reliability.
         // bisection
         // http://en.wikipedia.org/wiki/Bisection_method
         var t1 = 1;
-        /* istanbul ignore next */
         var t0 = 0;
-        /* istanbul ignore next */
         t2 = x;
-        /* istanbul ignore next */
         while (t1 > t0) {
             x2 = this.getX(t2) - x;
             if (Math.abs(x2) < this.precision) {
@@ -90,4 +88,3 @@ export var ease = new cubicBezier(.25, .1, .25, 1);
 export var easeIn = new cubicBezier(.42, 0, 1, 1);
 export var easeOut = new cubicBezier(0, 0, .58, 1);
 export var easeInOut = new cubicBezier(.42, 0, .58, 1);
-// run()

@@ -127,9 +127,8 @@ var ImagePreview = /** @class */ (function () {
             // some operate
         }
         triggerItems.forEach(function (element, index) {
-            images.push(element.dataset.src || element.src /** bug fix 2020.07.26 by luffy */);
+            images.push(element.dataset.src || element.src);
         });
-        this.options.curImg = images[0];
         this.options.imgs = images;
         var imgPreviewer = this;
         triggerItems.forEach(function (element, index) {
@@ -353,7 +352,6 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.genFrame = function () {
         var _this = this;
-        var curImg = this.options.curImg;
         var images = this.options.imgs;
         if (!images || !images.length) {
             // console.error("没有图片哦!\n no pictures!");

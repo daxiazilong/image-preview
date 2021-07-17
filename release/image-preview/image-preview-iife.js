@@ -444,10 +444,12 @@ var imagePreviewModule = (function (exports) {
         return Rotate;
     }());
 
-    var __spreadArray$1 = (undefined && undefined.__spreadArray) || function (to, from) {
-        for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-            to[j] = from[i];
-        return to;
+    var __spreadArrays$1 = (undefined && undefined.__spreadArrays) || function () {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+        for (var r = Array(s), k = 0, i = 0; i < il; i++)
+            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+                r[k] = a[j];
+        return r;
     };
     var matrix = {
         multiplyPoint: function (point, rowMatrix) {
@@ -464,7 +466,7 @@ var imagePreviewModule = (function (exports) {
             if (!rest.length) {
                 return result;
             }
-            return matrix.multiplyPoint.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
+            return matrix.multiplyPoint.apply(matrix, __spreadArrays$1([result, rest.splice(0, 1)[0]], rest));
         },
         multiplyMatrices: function (a, b) {
             var rest = [];
@@ -482,7 +484,7 @@ var imagePreviewModule = (function (exports) {
             if (!rest.length) {
                 return result;
             }
-            return matrix.multiplyMatrices.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
+            return matrix.multiplyMatrices.apply(matrix, __spreadArrays$1([result, rest.splice(0, 1)[0]], rest));
         },
         // https://www.songho.ca/opengl/gl_rotate.html
         rotateByArbitrayAxis: function (x, y, z, deg) {
@@ -558,7 +560,7 @@ var imagePreviewModule = (function (exports) {
      */
     var cubicBezier = /** @class */ (function () {
         function cubicBezier(x1, y1, x2, y2) {
-            this.precision = 1e-7;
+            this.precision = 1e-5;
             this.p1 = {
                 x: x1,
                 y: y1
@@ -603,17 +605,15 @@ var imagePreviewModule = (function (exports) {
                 if (Math.abs(derivative) < this.precision) {
                     break;
                 }
+                // xn = x(n-1) - f(xn)/ f'(xn)
                 t2 -= x2 / derivative;
             }
             // Fall back to the bisection method for reliability.
             // bisection
             // http://en.wikipedia.org/wiki/Bisection_method
             var t1 = 1;
-            /* istanbul ignore next */
             var t0 = 0;
-            /* istanbul ignore next */
             t2 = x;
-            /* istanbul ignore next */
             while (t1 > t0) {
                 x2 = this.getX(t2) - x;
                 if (Math.abs(x2) < this.precision) {
@@ -640,7 +640,6 @@ var imagePreviewModule = (function (exports) {
     new cubicBezier(.42, 0, 1, 1);
     new cubicBezier(0, 0, .58, 1);
     new cubicBezier(.42, 0, .58, 1);
-    // run()
 
     var __awaiter$1 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
         function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -700,7 +699,7 @@ var imagePreviewModule = (function (exports) {
                 viewInstance.gl.uniformMatrix4fv(viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uProjectionMatrix'), false, projectionMatrix);
                 viewInstance.draw(viewInstance.curIndex);
             };
-            this.resizeTimer = setTimeout(run, 300);
+            this.resizeTimer = setTimeout(run, 100);
         };
         events.prototype.handleDoubleClick = function (e) {
             var _a = e.touches[0], clientX = _a.clientX, clientY = _a.clientY;
@@ -836,34 +835,12 @@ var imagePreviewModule = (function (exports) {
 
     var errImgBase64 = 'data:image/svg+xml;base64,PHN2ZyB0PSIxNjI1ODExNDgwNTgyIiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEzNDIgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjYwNjkiIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cGF0aCBkPSJNMTIxNi4zNTcgMTM5LjAzYy0xMC4xNTctMTEuNDI3LTI0Ljc1OS0xNy43NzUtMzkuOTk1LTE4LjQxTDc0My40IDEwMy40OGwtMzIuMzc3IDczLjAwNiA0NS4wNzQgMTM1Ljg1Ni04MS4yNiAxNTQuMjY3IDMzLjAxMiAxMjQuNDI5IDgyLjUzIDEwNi42NTMgMTE5LjM1LTEwOS44MjdjMTEuNDI3LTEwLjc5MyAyOS44MzctMTAuMTU4IDM5Ljk5NCAxLjkwNGwxNTIuOTk3IDE2NS42OTRjMTAuNzkzIDExLjQyNyAxMC4xNTggMjkuODM3LTEuMjcgNDAuNjMtNS43MTMgNS4wNzgtMTIuNjk2IDguMjUzLTIwLjMxNCA3LjYxOGwtNDE5LjYzLTE2LjUwNi0yMC45NSA2MC4zMSAyMi44NTQgNTMuOTYyIDQ4Mi40OCAxOC40MWMzMS43NDIgMS4yNyA1OC40MDUtMjMuNDkgNTkuMDQtNTUuMjMxbDI2LjY2My02ODQuMzZjMC42MzUtMTUuMjM2LTQuNDQ0LTMwLjQ3Mi0xNS4yMzYtNDEuMjY1ek05MDYuNTU0IDQ1My4yNzdjLTQ3LjYxMy0xLjkwNC04NC40MzQtNDEuOS04Mi41My04OC44NzggMS45MDUtNDcuNjEzIDQxLjktODQuNDM0IDg4Ljg3OS04Mi41MyA0Ni45NzggMS45MDUgODQuNDM0IDQxLjkgODIuNTMgODguODc5LTEuOTA1IDQ2Ljk3OC00MS45IDg0LjQzNC04OC44NzkgODIuNTN6TTU5NS40ODIgODQ4LjE1bDE0LjYwMS02My40ODQtMzQwLjkxIDIzLjQ4OWMtMTUuODcxIDEuMjctMjkuMjAzLTEwLjE1OC0zMC40NzItMjYuMDI5YTI4LjEyIDI4LjEyIDAgMCAxIDYuOTgzLTIwLjk1TDQ5OC4zNSA0NzEuMDUzYzUuMDc5LTYuMzQ5IDEyLjY5Ny05LjUyMyAyMC45NS05LjUyMyA3LjYxOCAwIDE1LjIzNiAzLjE3NCAyMC45NSA4Ljg4OGw4NC40MzMgODguMjQzLTM2LjE4Ni05My45NTcgNjQuNzU0LTE2Mi41Mi01OS4wNC0xMzAuMTQyIDI0LjEyNC03NC45MTEtNDY0LjcwNCAzMi4zNzdjLTMxLjc0MiAxLjkwNC01NS4yMzIgMjkuMjAyLTUzLjMyNyA2MC45NDVsNDYuOTc4IDY4NC4zNmMwLjYzNSAxNS4yMzUgNy42MTggMjkuMjAyIDE5LjY4IDM4LjcyNSAxMS40MjggMTAuMTU3IDI2LjAyOSAxNS4yMzYgNDEuMjY1IDEzLjk2Nmw0MTUuMTg3LTI4LjU2OC0yNy45MzMtNTAuNzg3eiIgcC1pZD0iNjA3MCIgZmlsbD0iI2JmYmZiZiIvPjwvc3ZnPg==';
 
-    // export default{
-    function fps() {
-        var allCount = 0;
-        var start;
-        var stat = document.createElement('pre');
-        stat.style.cssText = "\n            position: fixed;\n            top: 0;\n            right: 0;\n            z-index:100;\n            padding: 10px;\n            font-size:12px;\n            background: rgba(255,255,255,0.5);\n            color:#000;\n        ";
-        document.body.append(stat);
-        function run() {
-            if (!start) {
-                start = Date.now();
-            }
-            allCount++;
-            // console.log(allCount)
-            if (Date.now() - start >= 1000) {
-                stat.innerHTML = allCount.toString();
-                allCount = 0;
-                start = Date.now();
-            }
-            requestAnimationFrame(run);
-        }
-        return run;
-    }
-    // }
-
-    var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from) {
-        for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-            to[j] = from[i];
-        return to;
+    var __spreadArrays = (undefined && undefined.__spreadArrays) || function () {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+        for (var r = Array(s), k = 0, i = 0; i < il; i++)
+            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+                r[k] = a[j];
+        return r;
     };
     var sourceFrag = "precision mediump float;\n\nvarying vec2 vTextureCoord;\nuniform sampler2D uSampler0;\nuniform vec2 iResolution;\nvoid main() {\n\n    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);\n    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;\n    gl_FragColor = color0;\n}";
     var sourceVer = "attribute vec4 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying mediump vec2 vTextureCoord;\n\nvoid main(void) {\n    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n    vTextureCoord = aTextureCoord;\n}";
@@ -881,7 +858,6 @@ var imagePreviewModule = (function (exports) {
             this.zFar = 10000.0;
             this.curIndex = 0;
             this.defaultAnimateTime = 300;
-            this.indinces = new Map;
             this.initialModel = [
                 1.0, 0, 0, 0,
                 0, 1.0, 0, 0,
@@ -900,6 +876,7 @@ var imagePreviewModule = (function (exports) {
                 0, 0, 1.0, 0,
                 0, 0, 0, 1.0
             ];
+            this.indinces = new Map;
             this.positions = [];
             this.imgs = [];
             this.imgUrls = [];
@@ -907,11 +884,11 @@ var imagePreviewModule = (function (exports) {
             this.imgShapeInitinal = []; //快速定位旋转之后图片的尺寸
             this.textures = new Map; //贴图 保存图片贴图
             this.texturesOther = new Map; // 保存背景色及其他贴图
+            this.positionBuffer = null;
             this.curPlane = []; // 动画执行前的当前面的位置信息
             this.isBoudriedSide = false; //放大移动时 是否曾到达过边界 在移动放大得图片至超过边界后 恢复到最大边界位置后为true
             this.curAimateBreaked = false; // 当前动画是否被打断
             this.imgId = 0;
-            fps()();
             this.gl = this.intialView();
             this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
             this.imgUrls = images;
@@ -956,6 +933,7 @@ var imagePreviewModule = (function (exports) {
             this.initOtherTexture();
         };
         webGl.prototype.addImg = function (image, index) {
+            var _this = this;
             var beforL = this.imgUrls.length;
             var indexShouldInImgs = index + 1;
             if (index <= -1) {
@@ -963,22 +941,38 @@ var imagePreviewModule = (function (exports) {
                 indexShouldInImgs = 0;
             }
             else if (index > beforL) {
-                index = beforL;
+                index = beforL - 1;
                 indexShouldInImgs = beforL;
             }
             this.imgUrls.splice(index + 1, 0, image);
             // use splice will make  different  order between imgs and imgUrls
-            this.imgs[indexShouldInImgs] = null;
+            if (index + 1 > this.imgs.length) {
+                this.imgs[indexShouldInImgs] = null;
+            }
+            else {
+                this.imgs.splice(index + 1, 0, null);
+            }
             if (image instanceof Image) {
                 if (typeof image._id == 'undefined') {
                     image._id = this.imgId++;
+                }
+                if (!image.complete) {
+                    image.onload = function () {
+                        if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
+                            _this.draw(_this.curIndex);
+                        }
+                    };
+                    image.onerror = function () {
+                        image.loadError = true;
+                        if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
+                            _this.draw(_this.curIndex);
+                        }
+                    };
                 }
             }
             index -= this.curIndex;
             // the inserted index is -1 0 1 , is in current view so need draw again
             if (~[-2, -1, 0].indexOf(index)) {
-                console.log(this.imgUrls);
-                console.log(this.imgs);
                 this.draw(this.curIndex);
             }
         };
@@ -1155,7 +1149,12 @@ var imagePreviewModule = (function (exports) {
         webGl.prototype.bindPostion = function () {
             var gl = this.gl;
             var positions = this.positions;
+            if (this.positionBuffer) {
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
+                return;
+            }
             var positionBuffer = this.gl.createBuffer();
+            this.positionBuffer = positionBuffer;
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
             this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
             {
@@ -1164,7 +1163,6 @@ var imagePreviewModule = (function (exports) {
                 var normalize = false;
                 var stride = 0;
                 var offset = 0;
-                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
                 var aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
                 gl.vertexAttribPointer(aVerLocate, numComponents, type, normalize, stride, offset);
                 gl.enableVertexAttribArray(aVerLocate);
@@ -1259,7 +1257,7 @@ var imagePreviewModule = (function (exports) {
             for (var i = this.curPointAt; i < this.curPointAt + 16; i += 4) {
                 var planeIndex = i - this.curPointAt;
                 var x = curPlane[planeIndex], y = curPlane[planeIndex + 1], z = curPlane[planeIndex + 2], w = curPlane[planeIndex + 3];
-                var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArray([[x, y, z, w],
+                var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArrays([[x, y, z, w],
                     a], matrixes));
                 for (var j = i; j < 4 + i; j++) {
                     positions[j] = newPoint[j - i];
@@ -1440,7 +1438,7 @@ var imagePreviewModule = (function (exports) {
                 width / 2, height / 2, z - width, 1.0,
                 width / 2, height / 2, z, 1.0,
             ];
-            (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
+            (_a = this.positions).splice.apply(_a, __spreadArrays([0, 0], positionCube));
         };
         /**
          * @param clientX 缩放点得x坐标
@@ -1763,7 +1761,6 @@ var imagePreviewModule = (function (exports) {
         webGl.prototype.intialView = function () {
             var canvas = document.createElement('canvas');
             canvas.style.cssText = "\n            position: absolute;\n            top: 0;\n            left:0;\n            z-index: 9;\n            width:" + window.innerWidth + "px;\n            height:" + window.innerHeight + "px;\n            user-select:none;\n            font-size:0;\n        ";
-            document.body.style.overflow = "hidden";
             canvas.width = window.innerWidth * this.dpr;
             canvas.height = window.innerHeight * this.dpr;
             this.ref = canvas;
@@ -1935,9 +1932,8 @@ var imagePreviewModule = (function (exports) {
             var triggerItems = document.querySelectorAll(this.options.selector);
             if (!triggerItems.length) ;
             triggerItems.forEach(function (element, index) {
-                images.push(element.dataset.src || element.src /** bug fix 2020.07.26 by luffy */);
+                images.push(element.dataset.src || element.src);
             });
-            this.options.curImg = images[0];
             this.options.imgs = images;
             var imgPreviewer = this;
             triggerItems.forEach(function (element, index) {
@@ -2157,7 +2153,6 @@ var imagePreviewModule = (function (exports) {
         };
         ImagePreview.prototype.genFrame = function () {
             var _this = this;
-            this.options.curImg;
             var images = this.options.imgs;
             if (!images || !images.length) ;
             this.imgsNumber = images.length;

@@ -58,7 +58,7 @@ var events = /** @class */ (function () {
             viewInstance.gl.uniformMatrix4fv(viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uProjectionMatrix'), false, projectionMatrix);
             viewInstance.draw(viewInstance.curIndex);
         };
-        this.resizeTimer = setTimeout(run, 300);
+        this.resizeTimer = setTimeout(run, 100);
     };
     events.prototype.handleDoubleClick = function (e) {
         var _a = e.touches[0], clientX = _a.clientX, clientY = _a.clientY;

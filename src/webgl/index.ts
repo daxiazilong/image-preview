@@ -158,11 +158,15 @@ class webGl {
             }
             if(!image.complete){
                 image.onload = () => {;
-                    this.handleImgLoaded(image,index + 1,true);
+                    if(  ~[-2,-1,0].indexOf(index - this.curIndex) ){
+                        this.draw(this.curIndex)
+                    }
                 }
                 image.onerror = () => {
                     image.loadError = true;
-                    this.handleImgLoaded(image,index + 1);
+                    if(  ~[-2,-1,0].indexOf(index - this.curIndex) ){
+                        this.draw(this.curIndex)
+                    }
                 }
             }
         }
@@ -306,7 +310,7 @@ class webGl {
      * 图片异步加载之后更新顶点坐标位置。
      * @param index 相对于 curIndex 的位置 -1,0,1
      */
-    updatePosition(img:image,index,isAdd?:boolean){
+    updatePosition(img:image,index){
         const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         const viewWidth = this.viewWidth;
         
@@ -349,15 +353,9 @@ class webGl {
         key  += 1; // -1,0,1 -> 0,1,2;
 
         let curPlane = positionsMap[key];
-        if( isAdd ){;
-            // curPlan -> nextPlane , insert new Plane
-            this.positions.splice(indexInPosition,0,...curPlane)
-            //  remove last Plane
-            // this.positions.splice(-16,16)
-        }else{
-            for( let i = indexInPosition ; i < indexInPosition + 16; i++ ){
-                this.positions[i] = curPlane[i-indexInPosition]
-            }
+       
+        for( let i = indexInPosition ; i < indexInPosition + 16; i++ ){
+            this.positions[i] = curPlane[i-indexInPosition]
         }
     }
     bindPostion(){
@@ -961,9 +959,9 @@ class webGl {
         ;(img.src = src);
         return img;
     }
-    handleImgLoaded(img:image,index:number,isAdd?:boolean){
+    handleImgLoaded(img:image,index:number){
         if( ~[-1,0,1].indexOf(index - this.curIndex) ){
-            this.updatePosition(img,index - this.curIndex,isAdd)
+            this.updatePosition(img,index - this.curIndex)
             this.bindPostion();
             this.drawPosition();
         }

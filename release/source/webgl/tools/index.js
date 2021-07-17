@@ -50,7 +50,7 @@ export function fps() {
     var allCount = 0;
     var start;
     var stat = document.createElement('pre');
-    stat.style.cssText = "\n            position: fixed;\n            top: 0;\n            right: 0;\n            z-index:100;\n            padding: 10px;\n            font-size:12px;\n            background: rgba(255,255,255,0.5);\n            color:#000;\n        ";
+    stat.style.cssText = "\n            position: fixed;\n            top: 0;\n            right: 50%;\n            transform: translateX(50%);\n            z-index:100;\n            padding: 10px;\n            font-size:12px;\n            background: rgba(255,255,255,0.5);\n            color:#000;\n        ";
     document.body.append(stat);
     function run() {
         if (!start) {

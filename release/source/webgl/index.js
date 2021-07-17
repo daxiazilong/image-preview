@@ -1,7 +1,9 @@
-var __spreadArray = (this && this.__spreadArray) || function (to, from) {
-    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-        to[j] = from[i];
-    return to;
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
 };
 var sourceFrag = "precision mediump float;\n\nvarying vec2 vTextureCoord;\nuniform sampler2D uSampler0;\nuniform vec2 iResolution;\nvoid main() {\n\n    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);\n    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;\n    gl_FragColor = color0;\n}";
 var sourceVer = "attribute vec4 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying mediump vec2 vTextureCoord;\n\nvoid main(void) {\n    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n    vTextureCoord = aTextureCoord;\n}";
@@ -9,7 +11,6 @@ import { matrix } from './matrix';
 import { cubicBezier, linear } from '../animation/animateJs';
 import { events } from './eventSystem/index';
 import { errImgBase64 } from './static/index';
-import { fps } from './tools/index';
 var easeOut1 = new cubicBezier(0.18, 0.96, 0.18, 0.96);
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
@@ -24,7 +25,6 @@ var webGl = /** @class */ (function () {
         this.zFar = 10000.0;
         this.curIndex = 0;
         this.defaultAnimateTime = 300;
-        this.indinces = new Map;
         this.initialModel = [
             1.0, 0, 0, 0,
             0, 1.0, 0, 0,
@@ -43,6 +43,7 @@ var webGl = /** @class */ (function () {
             0, 0, 1.0, 0,
             0, 0, 0, 1.0
         ];
+        this.indinces = new Map;
         this.positions = [];
         this.imgs = [];
         this.imgUrls = [];
@@ -50,11 +51,11 @@ var webGl = /** @class */ (function () {
         this.imgShapeInitinal = []; //快速定位旋转之后图片的尺寸
         this.textures = new Map; //贴图 保存图片贴图
         this.texturesOther = new Map; // 保存背景色及其他贴图
+        this.positionBuffer = null;
         this.curPlane = []; // 动画执行前的当前面的位置信息
         this.isBoudriedSide = false; //放大移动时 是否曾到达过边界 在移动放大得图片至超过边界后 恢复到最大边界位置后为true
         this.curAimateBreaked = false; // 当前动画是否被打断
         this.imgId = 0;
-        fps()();
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
         this.imgUrls = images;
@@ -99,6 +100,7 @@ var webGl = /** @class */ (function () {
         this.initOtherTexture();
     };
     webGl.prototype.addImg = function (image, index) {
+        var _this = this;
         var beforL = this.imgUrls.length;
         var indexShouldInImgs = index + 1;
         if (index <= -1) {
@@ -106,22 +108,39 @@ var webGl = /** @class */ (function () {
             indexShouldInImgs = 0;
         }
         else if (index > beforL) {
-            index = beforL;
+            index = beforL - 1;
             indexShouldInImgs = beforL;
         }
         this.imgUrls.splice(index + 1, 0, image);
         // use splice will make  different  order between imgs and imgUrls
-        this.imgs[indexShouldInImgs] = null;
+        if (index + 1 > this.imgs.length) {
+            this.imgs[indexShouldInImgs] = null;
+        }
+        else {
+            this.imgs.splice(index + 1, 0, null);
+        }
         if (image instanceof Image) {
             if (typeof image._id == 'undefined') {
                 image._id = this.imgId++;
+            }
+            if (!image.complete) {
+                image.onload = function () {
+                    ;
+                    if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
+                        _this.draw(_this.curIndex);
+                    }
+                };
+                image.onerror = function () {
+                    image.loadError = true;
+                    if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
+                        _this.draw(_this.curIndex);
+                    }
+                };
             }
         }
         index -= this.curIndex;
         // the inserted index is -1 0 1 , is in current view so need draw again
         if (~[-2, -1, 0].indexOf(index)) {
-            console.log(this.imgUrls);
-            console.log(this.imgs);
             this.draw(this.curIndex);
         }
     };
@@ -298,7 +317,12 @@ var webGl = /** @class */ (function () {
     webGl.prototype.bindPostion = function () {
         var gl = this.gl;
         var positions = this.positions;
+        if (this.positionBuffer) {
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
+            return;
+        }
         var positionBuffer = this.gl.createBuffer();
+        this.positionBuffer = positionBuffer;
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.DYNAMIC_DRAW);
         {
@@ -307,7 +331,6 @@ var webGl = /** @class */ (function () {
             var normalize = false;
             var stride = 0;
             var offset = 0;
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
             var aVerLocate = gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
             gl.vertexAttribPointer(aVerLocate, numComponents, type, normalize, stride, offset);
             gl.enableVertexAttribArray(aVerLocate);
@@ -404,7 +427,7 @@ var webGl = /** @class */ (function () {
         for (var i = this.curPointAt; i < this.curPointAt + 16; i += 4) {
             var planeIndex = i - this.curPointAt;
             var x = curPlane[planeIndex], y = curPlane[planeIndex + 1], z = curPlane[planeIndex + 2], w = curPlane[planeIndex + 3];
-            var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArray([[x, y, z, w],
+            var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArrays([[x, y, z, w],
                 a], matrixes));
             for (var j = i; j < 4 + i; j++) {
                 positions[j] = newPoint[j - i];
@@ -587,7 +610,7 @@ var webGl = /** @class */ (function () {
             width / 2, height / 2, z - width, 1.0,
             width / 2, height / 2, z, 1.0,
         ];
-        (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
+        (_a = this.positions).splice.apply(_a, __spreadArrays([0, 0], positionCube));
     };
     /**
      * @param clientX 缩放点得x坐标
@@ -913,7 +936,6 @@ var webGl = /** @class */ (function () {
     webGl.prototype.intialView = function () {
         var canvas = document.createElement('canvas');
         canvas.style.cssText = "\n            position: absolute;\n            top: 0;\n            left:0;\n            z-index: 9;\n            width:" + window.innerWidth + "px;\n            height:" + window.innerHeight + "px;\n            user-select:none;\n            font-size:0;\n        ";
-        document.body.style.overflow = "hidden";
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
         this.ref = canvas;

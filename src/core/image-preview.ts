@@ -129,19 +129,16 @@ class ImagePreview implements Move, Zoom {
             // some operate
         }
         triggerItems.forEach((element, index) => {
-            images.push(element.dataset.src || element.src /** bug fix 2020.07.26 by luffy */);
+            images.push( element.dataset.src || element.src );
         })
 
         this.options.imgs = images;
-
         let imgPreviewer = this;
         triggerItems.forEach((element, index) => {
-
             element.addEventListener('click', function (e) {
                 imgPreviewer.show(index)
             })
         })
-
     }
     addTouchEndTask(type:string,task: task){
         if( !this.taskExecuteAfterTEnd.has(type) ){

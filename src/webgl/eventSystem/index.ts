@@ -1,4 +1,3 @@
-import { showDebugger } from "../../tools/index";
 import { webGl } from "../index";
 import { matrix } from "../matrix";
 
@@ -33,7 +32,7 @@ export class events {
 
             viewInstance.draw(viewInstance.curIndex)
         }
-        this.resizeTimer = setTimeout(run,300)
+        this.resizeTimer = setTimeout(run,100)
     }
     handleDoubleClick(e: TouchEvent & MouseEvent){
 
