@@ -28,7 +28,7 @@ class webGl {
     ref: HTMLCanvasElement;
     shaderProgram: WebGLProgram;
 
-    fieldOfViewInRadians = 0.1 * Math.PI
+    fieldOfViewInRadians = 0.25 * Math.PI
     zNear = 100.0;
     zFar = 10000.0;
 
