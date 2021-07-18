@@ -6,7 +6,7 @@ import { matrix } from './matrix'
 import { cubicBezier,linear,easeOut ,easeIn,easeInOut} from '../animation/animateJs'
 import { events } from './eventSystem/index'
 import {errImgBase64} from './static/index'
-
+import {tailor} from './tools/canvas-tools'
 const easeOut1 = new cubicBezier(0.18, 0.96, 0.18, 0.96)
 
 function isPowerOf2(value) {
@@ -152,12 +152,13 @@ class webGl {
             this.imgs.splice(index + 1, 0 , null)
         }
 
-        if( image instanceof Image ){
+        if( image instanceof Image ){;
             if( typeof image._id == 'undefined' ){
                 image._id = this.imgId++;
             }
             if(!image.complete){
-                image.onload = () => {;
+                image.onload = () => {;;
+                    this.imgUrls[index+1] = this.validateImg(image)
                     if(  ~[-2,-1,0].indexOf(index - this.curIndex) ){
                         this.draw(this.curIndex)
                     }
@@ -168,6 +169,8 @@ class webGl {
                         this.draw(this.curIndex)
                     }
                 }
+            }else{;
+                this.imgUrls[index+1] = this.validateImg(image)
             }
         }
         
@@ -848,9 +851,9 @@ class webGl {
         const rect = this.viewRect;
         return Math.round(rect.right * this.dpr) <= Math.round(((this.viewWidth / 1))) && this.isBoudriedSide;
     }
-    curIsLongImg(){
-        const [naturalWidth,naturalHeight] = this.imgShape;
-        return Math.abs(naturalWidth) * 2.5 < Math.abs(naturalHeight);
+    curIsLongImg(){;
+        const [width,height] = this.imgShape;
+        return Math.abs(width) * 2 <= Math.abs(height);
     }
     get curCenterCoordinate(){
         const curPlaneIndex = this.curPointAt;
@@ -960,10 +963,43 @@ class webGl {
         return img;
     }
     handleImgLoaded(img:image,index:number){
+        img = this.validateImg(img)
+        ;
+        this.imgs[index] = img;
+        console.log(this.imgs,this.imgUrls)
         if( ~[-1,0,1].indexOf(index - this.curIndex) ){
             this.updatePosition(img,index - this.curIndex)
             this.bindPostion();
             this.drawPosition();
+        }
+    }
+    validateImg(img:image):image{
+
+        const gl = this.gl;
+        const maxTextureSize = gl.MAX_TEXTURE_SIZE;
+        const { naturalWidth,naturalHeight } = img
+        const max = Math.max(naturalHeight,naturalWidth)
+
+        if( max >= maxTextureSize ){
+            const shrinkFactor = 2;
+            let width = maxTextureSize / shrinkFactor;
+            let height = naturalHeight / naturalWidth * width;
+            if( height >= maxTextureSize ){
+                height = maxTextureSize / shrinkFactor;
+                width = naturalWidth / naturalHeight * height;
+            }
+            const canvas = tailor(img,width,height) as unknown as image;
+            console.log(width,height,maxTextureSize)
+            canvas._id = this.imgId++;
+            // @ts-ignore
+            canvas.naturalHeight = height;
+            // @ts-ignore
+            canvas.naturalWidth = width;
+            // @ts-ignore
+            canvas.complete = true;
+            return canvas
+        }else{
+            return img
         }
     }
     clear() {
