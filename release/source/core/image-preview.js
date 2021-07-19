@@ -213,7 +213,6 @@ var ImagePreview = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        console.log(this.isAnimating, 'handleDoubleClick');
                         if (this.isAnimating) {
                             return [2 /*return*/];
                         }

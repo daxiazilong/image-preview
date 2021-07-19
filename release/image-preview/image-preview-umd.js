@@ -681,7 +681,7 @@
     var events = /** @class */ (function () {
         function events(viewInstance) {
             this.curBehaviorCanBreak = false;
-            this.throldDeg = Math.PI * 0.12;
+            this.throldDeg = Math.PI * 0.10;
             this.viewInstance = viewInstance;
         }
         events.prototype.handleResize = function () {
@@ -837,12 +837,14 @@
     var errImgBase64 = 'data:image/svg+xml;base64,PHN2ZyB0PSIxNjI1ODExNDgwNTgyIiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEzNDIgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjYwNjkiIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cGF0aCBkPSJNMTIxNi4zNTcgMTM5LjAzYy0xMC4xNTctMTEuNDI3LTI0Ljc1OS0xNy43NzUtMzkuOTk1LTE4LjQxTDc0My40IDEwMy40OGwtMzIuMzc3IDczLjAwNiA0NS4wNzQgMTM1Ljg1Ni04MS4yNiAxNTQuMjY3IDMzLjAxMiAxMjQuNDI5IDgyLjUzIDEwNi42NTMgMTE5LjM1LTEwOS44MjdjMTEuNDI3LTEwLjc5MyAyOS44MzctMTAuMTU4IDM5Ljk5NCAxLjkwNGwxNTIuOTk3IDE2NS42OTRjMTAuNzkzIDExLjQyNyAxMC4xNTggMjkuODM3LTEuMjcgNDAuNjMtNS43MTMgNS4wNzgtMTIuNjk2IDguMjUzLTIwLjMxNCA3LjYxOGwtNDE5LjYzLTE2LjUwNi0yMC45NSA2MC4zMSAyMi44NTQgNTMuOTYyIDQ4Mi40OCAxOC40MWMzMS43NDIgMS4yNyA1OC40MDUtMjMuNDkgNTkuMDQtNTUuMjMxbDI2LjY2My02ODQuMzZjMC42MzUtMTUuMjM2LTQuNDQ0LTMwLjQ3Mi0xNS4yMzYtNDEuMjY1ek05MDYuNTU0IDQ1My4yNzdjLTQ3LjYxMy0xLjkwNC04NC40MzQtNDEuOS04Mi41My04OC44NzggMS45MDUtNDcuNjEzIDQxLjktODQuNDM0IDg4Ljg3OS04Mi41MyA0Ni45NzggMS45MDUgODQuNDM0IDQxLjkgODIuNTMgODguODc5LTEuOTA1IDQ2Ljk3OC00MS45IDg0LjQzNC04OC44NzkgODIuNTN6TTU5NS40ODIgODQ4LjE1bDE0LjYwMS02My40ODQtMzQwLjkxIDIzLjQ4OWMtMTUuODcxIDEuMjctMjkuMjAzLTEwLjE1OC0zMC40NzItMjYuMDI5YTI4LjEyIDI4LjEyIDAgMCAxIDYuOTgzLTIwLjk1TDQ5OC4zNSA0NzEuMDUzYzUuMDc5LTYuMzQ5IDEyLjY5Ny05LjUyMyAyMC45NS05LjUyMyA3LjYxOCAwIDE1LjIzNiAzLjE3NCAyMC45NSA4Ljg4OGw4NC40MzMgODguMjQzLTM2LjE4Ni05My45NTcgNjQuNzU0LTE2Mi41Mi01OS4wNC0xMzAuMTQyIDI0LjEyNC03NC45MTEtNDY0LjcwNCAzMi4zNzdjLTMxLjc0MiAxLjkwNC01NS4yMzIgMjkuMjAyLTUzLjMyNyA2MC45NDVsNDYuOTc4IDY4NC4zNmMwLjYzNSAxNS4yMzUgNy42MTggMjkuMjAyIDE5LjY4IDM4LjcyNSAxMS40MjggMTAuMTU3IDI2LjAyOSAxNS4yMzYgNDEuMjY1IDEzLjk2Nmw0MTUuMTg3LTI4LjU2OC0yNy45MzMtNTAuNzg3eiIgcC1pZD0iNjA3MCIgZmlsbD0iI2JmYmZiZiIvPjwvc3ZnPg==';
 
     function initialCanvas(img, width, height) {
+        var naturalWidth = img.naturalWidth, naturalHeight = img.naturalHeight;
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d');
         var dpr = window.devicePixelRatio || 1;
         canvas.width = width * dpr;
         canvas.height = height * dpr;
-        ctx.drawImage(img, 0, 0, width * dpr, height * dpr);
+        ctx.drawImage(img, 0, 0, naturalWidth, naturalHeight, 0, 0, width * dpr, height * dpr);
+        // console.log('花费了：', Date.now() - start )
         // document.body.innerHTML = ''
         document.body.append(canvas);
         return canvas;
@@ -1752,6 +1754,7 @@
             var maxTextureSize = gl.MAX_TEXTURE_SIZE;
             var naturalWidth = img.naturalWidth, naturalHeight = img.naturalHeight;
             var max = Math.max(naturalHeight, naturalWidth);
+            console.log(maxTextureSize);
             if (max >= maxTextureSize) {
                 var shrinkFactor = this.dpr;
                 var width = maxTextureSize / shrinkFactor;
@@ -2067,7 +2070,6 @@
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            console.log(this.isAnimating, 'handleDoubleClick');
                             if (this.isAnimating) {
                                 return [2 /*return*/];
                             }

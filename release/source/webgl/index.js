@@ -918,6 +918,7 @@ var webGl = /** @class */ (function () {
         var maxTextureSize = gl.MAX_TEXTURE_SIZE;
         var naturalWidth = img.naturalWidth, naturalHeight = img.naturalHeight;
         var max = Math.max(naturalHeight, naturalWidth);
+        console.log(maxTextureSize);
         if (max >= maxTextureSize) {
             var shrinkFactor = this.dpr;
             var width = maxTextureSize / shrinkFactor;
