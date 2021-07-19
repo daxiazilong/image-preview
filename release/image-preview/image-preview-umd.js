@@ -447,12 +447,10 @@
         return Rotate;
     }());
 
-    var __spreadArrays$1 = (undefined && undefined.__spreadArrays) || function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
+    var __spreadArray$1 = (undefined && undefined.__spreadArray) || function (to, from) {
+        for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+            to[j] = from[i];
+        return to;
     };
     var matrix = {
         multiplyPoint: function (point, rowMatrix) {
@@ -469,7 +467,7 @@
             if (!rest.length) {
                 return result;
             }
-            return matrix.multiplyPoint.apply(matrix, __spreadArrays$1([result, rest.splice(0, 1)[0]], rest));
+            return matrix.multiplyPoint.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
         },
         multiplyMatrices: function (a, b) {
             var rest = [];
@@ -487,7 +485,7 @@
             if (!rest.length) {
                 return result;
             }
-            return matrix.multiplyMatrices.apply(matrix, __spreadArrays$1([result, rest.splice(0, 1)[0]], rest));
+            return matrix.multiplyMatrices.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
         },
         // https://www.songho.ca/opengl/gl_rotate.html
         rotateByArbitrayAxis: function (x, y, z, deg) {
@@ -838,12 +836,23 @@
 
     var errImgBase64 = 'data:image/svg+xml;base64,PHN2ZyB0PSIxNjI1ODExNDgwNTgyIiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEzNDIgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjYwNjkiIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cGF0aCBkPSJNMTIxNi4zNTcgMTM5LjAzYy0xMC4xNTctMTEuNDI3LTI0Ljc1OS0xNy43NzUtMzkuOTk1LTE4LjQxTDc0My40IDEwMy40OGwtMzIuMzc3IDczLjAwNiA0NS4wNzQgMTM1Ljg1Ni04MS4yNiAxNTQuMjY3IDMzLjAxMiAxMjQuNDI5IDgyLjUzIDEwNi42NTMgMTE5LjM1LTEwOS44MjdjMTEuNDI3LTEwLjc5MyAyOS44MzctMTAuMTU4IDM5Ljk5NCAxLjkwNGwxNTIuOTk3IDE2NS42OTRjMTAuNzkzIDExLjQyNyAxMC4xNTggMjkuODM3LTEuMjcgNDAuNjMtNS43MTMgNS4wNzgtMTIuNjk2IDguMjUzLTIwLjMxNCA3LjYxOGwtNDE5LjYzLTE2LjUwNi0yMC45NSA2MC4zMSAyMi44NTQgNTMuOTYyIDQ4Mi40OCAxOC40MWMzMS43NDIgMS4yNyA1OC40MDUtMjMuNDkgNTkuMDQtNTUuMjMxbDI2LjY2My02ODQuMzZjMC42MzUtMTUuMjM2LTQuNDQ0LTMwLjQ3Mi0xNS4yMzYtNDEuMjY1ek05MDYuNTU0IDQ1My4yNzdjLTQ3LjYxMy0xLjkwNC04NC40MzQtNDEuOS04Mi41My04OC44NzggMS45MDUtNDcuNjEzIDQxLjktODQuNDM0IDg4Ljg3OS04Mi41MyA0Ni45NzggMS45MDUgODQuNDM0IDQxLjkgODIuNTMgODguODc5LTEuOTA1IDQ2Ljk3OC00MS45IDg0LjQzNC04OC44NzkgODIuNTN6TTU5NS40ODIgODQ4LjE1bDE0LjYwMS02My40ODQtMzQwLjkxIDIzLjQ4OWMtMTUuODcxIDEuMjctMjkuMjAzLTEwLjE1OC0zMC40NzItMjYuMDI5YTI4LjEyIDI4LjEyIDAgMCAxIDYuOTgzLTIwLjk1TDQ5OC4zNSA0NzEuMDUzYzUuMDc5LTYuMzQ5IDEyLjY5Ny05LjUyMyAyMC45NS05LjUyMyA3LjYxOCAwIDE1LjIzNiAzLjE3NCAyMC45NSA4Ljg4OGw4NC40MzMgODguMjQzLTM2LjE4Ni05My45NTcgNjQuNzU0LTE2Mi41Mi01OS4wNC0xMzAuMTQyIDI0LjEyNC03NC45MTEtNDY0LjcwNCAzMi4zNzdjLTMxLjc0MiAxLjkwNC01NS4yMzIgMjkuMjAyLTUzLjMyNyA2MC45NDVsNDYuOTc4IDY4NC4zNmMwLjYzNSAxNS4yMzUgNy42MTggMjkuMjAyIDE5LjY4IDM4LjcyNSAxMS40MjggMTAuMTU3IDI2LjAyOSAxNS4yMzYgNDEuMjY1IDEzLjk2Nmw0MTUuMTg3LTI4LjU2OC0yNy45MzMtNTAuNzg3eiIgcC1pZD0iNjA3MCIgZmlsbD0iI2JmYmZiZiIvPjwvc3ZnPg==';
 
-    var __spreadArrays = (undefined && undefined.__spreadArrays) || function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
+    function initialCanvas(img, width, height) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.drawImage(img, 0, 0, width * dpr, height * dpr);
+        // document.body.innerHTML = ''
+        document.body.append(canvas);
+        return canvas;
+    }
+    var tailor = initialCanvas;
+
+    var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from) {
+        for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+            to[j] = from[i];
+        return to;
     };
     var sourceFrag = "precision mediump float;\n\nvarying vec2 vTextureCoord;\nuniform sampler2D uSampler0;\nuniform vec2 iResolution;\nvoid main() {\n\n    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);\n    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;\n    gl_FragColor = color0;\n}";
     var sourceVer = "attribute vec4 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying mediump vec2 vTextureCoord;\n\nvoid main(void) {\n    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n    vTextureCoord = aTextureCoord;\n}";
@@ -856,7 +865,7 @@
         function webGl(_a) {
             var images = _a.images;
             this.dpr = window.devicePixelRatio || 1;
-            this.fieldOfViewInRadians = 0.1 * Math.PI;
+            this.fieldOfViewInRadians = 0.25 * Math.PI;
             this.zNear = 100.0;
             this.zFar = 10000.0;
             this.curIndex = 0;
@@ -960,22 +969,31 @@
                     image._id = this.imgId++;
                 }
                 if (!image.complete) {
-                    image.onload = function () {
+                    var load = function () {
+                        // imgs change index change
+                        var index = _this.imgUrls.indexOf(image);
+                        _this.imgUrls[index] = _this.validateImg(image);
                         if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
                             _this.draw(_this.curIndex);
                         }
                     };
-                    image.onerror = function () {
+                    var error = function () {
+                        var index = _this.imgUrls.indexOf(image);
                         image.loadError = true;
                         if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
                             _this.draw(_this.curIndex);
                         }
                     };
+                    image.addEventListener('load', load);
+                    image.addEventListener('error', error);
+                    image.addEventListener('abort', error);
+                }
+                else {
+                    this.imgUrls[index + 1] = this.validateImg(image);
                 }
             }
-            index -= this.curIndex;
             // the inserted index is -1 0 1 , is in current view so need draw again
-            if (~[-2, -1, 0].indexOf(index)) {
+            if (~[-2, -1, 0].indexOf(index - this.curIndex)) {
                 this.draw(this.curIndex);
             }
         };
@@ -1260,7 +1278,7 @@
             for (var i = this.curPointAt; i < this.curPointAt + 16; i += 4) {
                 var planeIndex = i - this.curPointAt;
                 var x = curPlane[planeIndex], y = curPlane[planeIndex + 1], z = curPlane[planeIndex + 2], w = curPlane[planeIndex + 3];
-                var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArrays([[x, y, z, w],
+                var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArray([[x, y, z, w],
                     a], matrixes));
                 for (var j = i; j < 4 + i; j++) {
                     positions[j] = newPoint[j - i];
@@ -1441,7 +1459,7 @@
                 width / 2, height / 2, z - width, 1.0,
                 width / 2, height / 2, z, 1.0,
             ];
-            (_a = this.positions).splice.apply(_a, __spreadArrays([0, 0], positionCube));
+            (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
         };
         /**
          * @param clientX 缩放点得x坐标
@@ -1538,6 +1556,10 @@
                     }
                     else {
                         image = this.imgUrls[i];
+                        if (typeof image._id == 'undefined') { // not intinial
+                            this.imgUrls[i] = this.validateImg(image);
+                            image = this.imgUrls[i];
+                        }
                     }
                     this.imgs[i] = image;
                     var naturalWidth = image.naturalWidth, naturalHeight = image.naturalHeight;
@@ -1600,8 +1622,8 @@
             configurable: true
         });
         webGl.prototype.curIsLongImg = function () {
-            var _a = this.imgShape, naturalWidth = _a[0], naturalHeight = _a[1];
-            return Math.abs(naturalWidth) * 2.5 < Math.abs(naturalHeight);
+            var _a = this.imgShape, width = _a[0], height = _a[1];
+            return Math.abs(width) * 2 <= Math.abs(height);
         };
         Object.defineProperty(webGl.prototype, "curCenterCoordinate", {
             get: function () {
@@ -1697,19 +1719,14 @@
             var img = new Image();
             img._id = this.imgId++;
             this.imgs[index] = img;
-            var isHandled = false;
             img.onload = function () {
-                if (isHandled) {
-                    return;
-                }
-                isHandled = true;
                 _this.handleImgLoaded(img, index);
             };
             img.onerror = function () {
-                if (isHandled) {
-                    return;
-                }
-                isHandled = true;
+                img.loadError = true;
+                _this.handleImgLoaded(img, index);
+            };
+            img.onabort = function () {
                 img.loadError = true;
                 _this.handleImgLoaded(img, index);
             };
@@ -1718,10 +1735,43 @@
             return img;
         };
         webGl.prototype.handleImgLoaded = function (img, index) {
+            // imgs change , index change
+            index = this.imgs.indexOf(img);
+            if (!img.loadError) {
+                img = this.validateImg(img);
+                this.imgs[index] = img;
+            }
             if (~[-1, 0, 1].indexOf(index - this.curIndex)) {
                 this.updatePosition(img, index - this.curIndex);
                 this.bindPostion();
                 this.drawPosition();
+            }
+        };
+        webGl.prototype.validateImg = function (img) {
+            var gl = this.gl;
+            var maxTextureSize = gl.MAX_TEXTURE_SIZE;
+            var naturalWidth = img.naturalWidth, naturalHeight = img.naturalHeight;
+            var max = Math.max(naturalHeight, naturalWidth);
+            if (max >= maxTextureSize) {
+                var shrinkFactor = this.dpr;
+                var width = maxTextureSize / shrinkFactor;
+                var height = naturalHeight / naturalWidth * width;
+                if (height >= maxTextureSize) {
+                    height = maxTextureSize / shrinkFactor;
+                    width = naturalWidth / naturalHeight * height;
+                }
+                var canvas = tailor(img, width, height);
+                canvas._id = this.imgId++;
+                // @ts-ignore
+                canvas.naturalHeight = height;
+                // @ts-ignore
+                canvas.naturalWidth = width;
+                // @ts-ignore
+                canvas.complete = true;
+                return canvas;
+            }
+            else {
+                return img;
             }
         };
         webGl.prototype.clear = function () {
@@ -1738,7 +1788,7 @@
             gl.attachShader(shaderProgram, fragmentShader);
             gl.linkProgram(shaderProgram);
             if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-                alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+                console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
                 return null;
             }
             return shaderProgram;
@@ -1751,7 +1801,7 @@
             gl.compileShader(shader);
             // See if it compiled successfully
             if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+                console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
                 gl.deleteShader(shader);
                 return null;
             }
@@ -1769,7 +1819,7 @@
             this.ref = canvas;
             var gl = canvas.getContext('webgl', { antialias: true });
             if (!gl) {
-                alert('webgl is not supported. please use before version.');
+                console.error('webgl is not supported. please use before version.');
             }
             this.viewWidth = canvas.width;
             this.viewHeight = canvas.height;

@@ -1,9 +1,7 @@
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
 };
 var sourceFrag = "precision mediump float;\n\nvarying vec2 vTextureCoord;\nuniform sampler2D uSampler0;\nuniform vec2 iResolution;\nvoid main() {\n\n    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);\n    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;\n    gl_FragColor = color0;\n}";
 var sourceVer = "attribute vec4 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying mediump vec2 vTextureCoord;\n\nvoid main(void) {\n    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n    vTextureCoord = aTextureCoord;\n}";
@@ -11,6 +9,7 @@ import { matrix } from './matrix';
 import { cubicBezier, linear } from '../animation/animateJs';
 import { events } from './eventSystem/index';
 import { errImgBase64 } from './static/index';
+import { tailor } from './tools/canvas-tools';
 var easeOut1 = new cubicBezier(0.18, 0.96, 0.18, 0.96);
 function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
@@ -20,7 +19,7 @@ var webGl = /** @class */ (function () {
     function webGl(_a) {
         var images = _a.images;
         this.dpr = window.devicePixelRatio || 1;
-        this.fieldOfViewInRadians = 0.1 * Math.PI;
+        this.fieldOfViewInRadians = 0.25 * Math.PI;
         this.zNear = 100.0;
         this.zFar = 10000.0;
         this.curIndex = 0;
@@ -120,27 +119,38 @@ var webGl = /** @class */ (function () {
             this.imgs.splice(index + 1, 0, null);
         }
         if (image instanceof Image) {
+            ;
             if (typeof image._id == 'undefined') {
                 image._id = this.imgId++;
             }
             if (!image.complete) {
-                image.onload = function () {
+                var load = function () {
                     ;
+                    // imgs change index change
+                    var index = _this.imgUrls.indexOf(image);
+                    _this.imgUrls[index] = _this.validateImg(image);
                     if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
                         _this.draw(_this.curIndex);
                     }
                 };
-                image.onerror = function () {
+                var error = function () {
+                    var index = _this.imgUrls.indexOf(image);
                     image.loadError = true;
                     if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
                         _this.draw(_this.curIndex);
                     }
                 };
+                image.addEventListener('load', load);
+                image.addEventListener('error', error);
+                image.addEventListener('abort', error);
+            }
+            else {
+                ;
+                this.imgUrls[index + 1] = this.validateImg(image);
             }
         }
-        index -= this.curIndex;
         // the inserted index is -1 0 1 , is in current view so need draw again
-        if (~[-2, -1, 0].indexOf(index)) {
+        if (~[-2, -1, 0].indexOf(index - this.curIndex)) {
             this.draw(this.curIndex);
         }
     };
@@ -427,7 +437,7 @@ var webGl = /** @class */ (function () {
         for (var i = this.curPointAt; i < this.curPointAt + 16; i += 4) {
             var planeIndex = i - this.curPointAt;
             var x = curPlane[planeIndex], y = curPlane[planeIndex + 1], z = curPlane[planeIndex + 2], w = curPlane[planeIndex + 3];
-            var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArrays([[x, y, z, w],
+            var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArray([[x, y, z, w],
                 a], matrixes));
             for (var j = i; j < 4 + i; j++) {
                 positions[j] = newPoint[j - i];
@@ -610,7 +620,7 @@ var webGl = /** @class */ (function () {
             width / 2, height / 2, z - width, 1.0,
             width / 2, height / 2, z, 1.0,
         ];
-        (_a = this.positions).splice.apply(_a, __spreadArrays([0, 0], positionCube));
+        (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
     };
     /**
      * @param clientX 缩放点得x坐标
@@ -707,6 +717,10 @@ var webGl = /** @class */ (function () {
                 }
                 else {
                     image = this.imgUrls[i];
+                    if (typeof image._id == 'undefined') { // not intinial
+                        this.imgUrls[i] = this.validateImg(image);
+                        image = this.imgUrls[i];
+                    }
                 }
                 this.imgs[i] = image;
                 var naturalWidth = image.naturalWidth, naturalHeight = image.naturalHeight;
@@ -769,8 +783,9 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     webGl.prototype.curIsLongImg = function () {
-        var _a = this.imgShape, naturalWidth = _a[0], naturalHeight = _a[1];
-        return Math.abs(naturalWidth) * 2.5 < Math.abs(naturalHeight);
+        ;
+        var _a = this.imgShape, width = _a[0], height = _a[1];
+        return Math.abs(width) * 2 <= Math.abs(height);
     };
     Object.defineProperty(webGl.prototype, "curCenterCoordinate", {
         get: function () {
@@ -870,17 +885,13 @@ var webGl = /** @class */ (function () {
         this.imgs[index] = img;
         var isHandled = false;
         img.onload = function () {
-            if (isHandled) {
-                return;
-            }
-            isHandled = true;
             _this.handleImgLoaded(img, index);
         };
         img.onerror = function () {
-            if (isHandled) {
-                return;
-            }
-            isHandled = true;
+            img.loadError = true;
+            _this.handleImgLoaded(img, index);
+        };
+        img.onabort = function () {
             img.loadError = true;
             _this.handleImgLoaded(img, index);
         };
@@ -890,10 +901,43 @@ var webGl = /** @class */ (function () {
         return img;
     };
     webGl.prototype.handleImgLoaded = function (img, index) {
+        // imgs change , index change
+        index = this.imgs.indexOf(img);
+        if (!img.loadError) {
+            img = this.validateImg(img);
+            this.imgs[index] = img;
+        }
         if (~[-1, 0, 1].indexOf(index - this.curIndex)) {
             this.updatePosition(img, index - this.curIndex);
             this.bindPostion();
             this.drawPosition();
+        }
+    };
+    webGl.prototype.validateImg = function (img) {
+        var gl = this.gl;
+        var maxTextureSize = gl.MAX_TEXTURE_SIZE;
+        var naturalWidth = img.naturalWidth, naturalHeight = img.naturalHeight;
+        var max = Math.max(naturalHeight, naturalWidth);
+        if (max >= maxTextureSize) {
+            var shrinkFactor = this.dpr;
+            var width = maxTextureSize / shrinkFactor;
+            var height = naturalHeight / naturalWidth * width;
+            if (height >= maxTextureSize) {
+                height = maxTextureSize / shrinkFactor;
+                width = naturalWidth / naturalHeight * height;
+            }
+            var canvas = tailor(img, width, height);
+            canvas._id = this.imgId++;
+            // @ts-ignore
+            canvas.naturalHeight = height;
+            // @ts-ignore
+            canvas.naturalWidth = width;
+            // @ts-ignore
+            canvas.complete = true;
+            return canvas;
+        }
+        else {
+            return img;
         }
     };
     webGl.prototype.clear = function () {
@@ -910,7 +954,7 @@ var webGl = /** @class */ (function () {
         gl.attachShader(shaderProgram, fragmentShader);
         gl.linkProgram(shaderProgram);
         if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+            console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
             return null;
         }
         return shaderProgram;
@@ -923,7 +967,7 @@ var webGl = /** @class */ (function () {
         gl.compileShader(shader);
         // See if it compiled successfully
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+            console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
             return null;
         }
@@ -941,7 +985,7 @@ var webGl = /** @class */ (function () {
         this.ref = canvas;
         var gl = canvas.getContext('webgl', { antialias: true });
         if (!gl) {
-            alert('webgl is not supported. please use before version.');
+            console.error('webgl is not supported. please use before version.');
         }
         this.viewWidth = canvas.width;
         this.viewHeight = canvas.height;
