@@ -75,7 +75,7 @@ class ImagePreview implements Move, Zoom {
     screenWidth: number;
     constructor(
         public options: {
-            imgs?: Array<string>,
+            imgs?: Array<string|HTMLImageElement>,
             selector?: string
         }
     ) {
@@ -352,7 +352,7 @@ class ImagePreview implements Move, Zoom {
         this.isAnimating = false;
     }
     genFrame() {
-        let images: Array<string> = this.options.imgs;
+        let images = this.options.imgs;
         if (!images || !images.length) {
             // console.error("没有图片哦!\n no pictures!");
             // return;

@@ -39,7 +39,7 @@ setTimeout( () => {;
     const image = new Image();
     image.crossOrigin='anonymous'
     image.src = '/testImage/BBC82C020430AED149F8D18A0849D241.png'
-    // obj.insertImageAfter(image as image,3)
+    // obj.insertImageAfter('error',-100)
     // obj.delImage(0)
     // obj.show(3)
 } ,500)

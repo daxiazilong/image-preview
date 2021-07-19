@@ -157,7 +157,7 @@ class webGl {
                 image._id = this.imgId++;
             }
             if(!image.complete){
-                image.onload = () => {;
+                const load = () => {;
                     // imgs change index change
                     let index = this.imgUrls.indexOf(image);
                     this.imgUrls[index] = this.validateImg(image)
@@ -165,12 +165,17 @@ class webGl {
                         this.draw(this.curIndex)
                     }
                 }
-                image.onerror = () => {
+
+                const error = () => {
+                    let index = this.imgUrls.indexOf(image);
                     image.loadError = true;
                     if(  ~[-2,-1,0].indexOf(index - this.curIndex) ){
                         this.draw(this.curIndex)
                     }
                 }
+                image.addEventListener('load',load)
+                image.addEventListener('error',error)
+                image.addEventListener('abort',error)
             }else{;
                 this.imgUrls[index+1] = this.validateImg(image)
             }
@@ -799,6 +804,10 @@ class webGl {
                     image = this.loadImage(this.imgUrls[i] as string,i);
                 }else{
                     image = this.imgUrls[i] as image;
+                    if( typeof image._id == 'undefined'){// not intinial
+                        this.imgUrls[i] = this.validateImg(image)
+                        image = this.imgUrls[i] as image;
+                    }
                 }
                 this.imgs[i] = image;
                 let { naturalWidth, naturalHeight } = image;
