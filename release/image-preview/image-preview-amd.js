@@ -842,7 +842,7 @@ define(['exports'], function (exports) { 'use strict';
         ctx.drawImage(img, 0, 0, naturalWidth, naturalHeight, 0, 0, width * dpr, height * dpr);
         // console.log('花费了：', Date.now() - start )
         // document.body.innerHTML = ''
-        document.body.append(canvas);
+        // document.body.append(canvas)
         return canvas;
     }
     var tailor = initialCanvas;

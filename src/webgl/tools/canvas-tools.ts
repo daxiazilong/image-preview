@@ -16,7 +16,7 @@ function initialCanvas(img: HTMLImageElement,width:number,height:number){
     );
     // console.log('花费了：', Date.now() - start )
     // document.body.innerHTML = ''
-    document.body.append(canvas)
+    // document.body.append(canvas)
     return canvas
 }
 
