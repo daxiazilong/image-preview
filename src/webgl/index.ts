@@ -988,7 +988,7 @@ class webGl {
         const maxTextureSize = gl.MAX_TEXTURE_SIZE;
         const { naturalWidth,naturalHeight } = img
         const max = Math.max(naturalHeight,naturalWidth)
-
+        console.log(maxTextureSize)
         if( max >= maxTextureSize ){
             const shrinkFactor = this.dpr;
             let width = maxTextureSize / shrinkFactor;

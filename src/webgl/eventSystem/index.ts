@@ -4,7 +4,7 @@ import { matrix } from "../matrix";
 export class events {
     viewInstance: webGl;
     curBehaviorCanBreak: boolean = false;
-    throldDeg: number = Math.PI * 0.12;
+    throldDeg: number = Math.PI * 0.10;
     resizeTimer
     constructor(viewInstance: webGl) {
         this.viewInstance = viewInstance;
@@ -135,7 +135,7 @@ export class events {
         x *= viewInstance.dpr;
         y *= -viewInstance.dpr;
         z *= viewInstance.dpr;
-        
+
         this.curBehaviorCanBreak = true;
         await viewInstance.moveCurPlane(x,y,0)
         this.curBehaviorCanBreak = false;

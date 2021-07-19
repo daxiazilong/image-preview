@@ -216,7 +216,6 @@ class ImagePreview implements Move, Zoom {
         }
     }
     async handleDoubleClick(e: TouchEvent & MouseEvent) {
-        console.log(this.isAnimating,'handleDoubleClick')
         if( this.isAnimating ){
             return;
         }
