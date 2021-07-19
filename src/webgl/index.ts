@@ -157,8 +157,10 @@ class webGl {
                 image._id = this.imgId++;
             }
             if(!image.complete){
-                image.onload = () => {;;
-                    this.imgUrls[index+1] = this.validateImg(image)
+                image.onload = () => {;
+                    // imgs change index change
+                    let index = this.imgUrls.indexOf(image);
+                    this.imgUrls[index] = this.validateImg(image)
                     if(  ~[-2,-1,0].indexOf(index - this.curIndex) ){
                         this.draw(this.curIndex)
                     }
@@ -174,9 +176,8 @@ class webGl {
             }
         }
         
-        index -= this.curIndex;
         // the inserted index is -1 0 1 , is in current view so need draw again
-        if( ~[-2,-1,0].indexOf(index) ){
+        if( ~[-2,-1,0].indexOf(index - this.curIndex) ){
             this.draw(this.curIndex)
         }
     }
@@ -944,17 +945,13 @@ class webGl {
         this.imgs[index] = img;
         let isHandled = false;
         img.onload = () => {
-            if( isHandled ){
-                return;
-            }
-            isHandled = true;
             this.handleImgLoaded(img,index);
         }
         img.onerror = () => {
-            if( isHandled ){
-                return;
-            }
-            isHandled = true;
+            img.loadError = true;
+            this.handleImgLoaded(img,index);
+        }
+        img.onabort = () => {
             img.loadError = true;
             this.handleImgLoaded(img,index);
         }
@@ -963,10 +960,13 @@ class webGl {
         return img;
     }
     handleImgLoaded(img:image,index:number){
-        img = this.validateImg(img)
-        ;
-        this.imgs[index] = img;
-        console.log(this.imgs,this.imgUrls)
+        // imgs change , index change
+        index = this.imgs.indexOf(img);
+        if(!img.loadError){
+            img = this.validateImg(img);
+            this.imgs[index] = img;
+        }
+
         if( ~[-1,0,1].indexOf(index - this.curIndex) ){
             this.updatePosition(img,index - this.curIndex)
             this.bindPostion();
@@ -981,7 +981,7 @@ class webGl {
         const max = Math.max(naturalHeight,naturalWidth)
 
         if( max >= maxTextureSize ){
-            const shrinkFactor = 2;
+            const shrinkFactor = this.dpr;
             let width = maxTextureSize / shrinkFactor;
             let height = naturalHeight / naturalWidth * width;
             if( height >= maxTextureSize ){
@@ -989,7 +989,6 @@ class webGl {
                 width = naturalWidth / naturalHeight * height;
             }
             const canvas = tailor(img,width,height) as unknown as image;
-            console.log(width,height,maxTextureSize)
             canvas._id = this.imgId++;
             // @ts-ignore
             canvas.naturalHeight = height;
