@@ -1,3 +1,8 @@
+type ImagePreviewConstrucor = {
+    imgs?: Array<string|HTMLImageElement>,
+} & {
+    selector?: string
+}
 type interFaceElementMatrix =
     HTMLElement & {
         matrix: Array<Array<number>>,

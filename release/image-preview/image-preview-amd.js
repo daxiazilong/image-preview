@@ -1750,7 +1750,6 @@ define(['exports'], function (exports) { 'use strict';
             var maxTextureSize = gl.MAX_TEXTURE_SIZE;
             var naturalWidth = img.naturalWidth, naturalHeight = img.naturalHeight;
             var max = Math.max(naturalHeight, naturalWidth);
-            console.log(maxTextureSize);
             if (max >= maxTextureSize) {
                 var shrinkFactor = this.dpr;
                 var width = maxTextureSize / shrinkFactor;
@@ -1939,6 +1938,9 @@ define(['exports'], function (exports) { 'use strict';
             if (options.selector) {
                 // options里拿到图片
                 this.bindTrigger();
+            }
+            if (!this.options.imgs) {
+                this.options.imgs = [];
             }
             this.actionExecutor = new webGl({
                 images: this.options.imgs

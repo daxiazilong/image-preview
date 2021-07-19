@@ -74,14 +74,14 @@ class ImagePreview implements Move, Zoom {
     ];
     screenWidth: number;
     constructor(
-        public options: {
-            imgs?: Array<string|HTMLImageElement>,
-            selector?: string
-        }
+        public options: ImagePreviewConstrucor
     ) {
         if (options.selector) {
             // options里拿到图片
             this.bindTrigger();
+        }
+        if(!this.options.imgs){
+            this.options.imgs = [];
         }
         this.actionExecutor = new webGl({
             images: this.options.imgs

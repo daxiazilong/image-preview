@@ -80,6 +80,9 @@ var ImagePreview = /** @class */ (function () {
             // options里拿到图片
             this.bindTrigger();
         }
+        if (!this.options.imgs) {
+            this.options.imgs = [];
+        }
         this.actionExecutor = new webGl({
             images: this.options.imgs
         });

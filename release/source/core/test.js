@@ -33,11 +33,15 @@ new ImagePreview({
     selector: '.imageWraper img'
 });
 obj.show(0);
+// const obj2 = new ImagePreview({});
 setTimeout(function () {
     ;
     var image = new Image();
     image.crossOrigin = 'anonymous';
     image.src = '/testImage/BBC82C020430AED149F8D18A0849D241.png';
+    // obj2.insertImageAfter(image,-100)
+    // obj2.insertImageAfter('/testImage/main_body3.png', -100)
+    // obj2.show(0)
     // obj.insertImageAfter('error',-100)
     // obj.delImage(0)
     // obj.show(3)
