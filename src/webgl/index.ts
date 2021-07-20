@@ -942,7 +942,9 @@ class webGl {
     get isEnlargementForScale(){;
         const [iw,ih] = this.imgShapeInitinal;
         const rect = this.viewRect;
-        return rect.width * this.dpr > Math.abs(iw) || rect.height * this.dpr > Math.abs(ih);
+        return Math.round(rect.width * this.dpr) > Math.round(Math.abs(iw)) 
+                    || 
+                Math.round(rect.height * this.dpr) > Math.round(Math.abs(ih));
     }
     isLoadingError(index?:number ){
         ;arguments.length == 0 && ( index = this.curIndex );
