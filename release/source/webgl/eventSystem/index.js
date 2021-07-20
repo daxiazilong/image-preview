@@ -35,7 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import { matrix } from "../matrix";
-var events = /** @class */ (function () {
+var events = (function () {
     function events(viewInstance) {
         this.curBehaviorCanBreak = false;
         this.throldDeg = Math.PI * 0.10;
@@ -92,7 +92,6 @@ var events = /** @class */ (function () {
         iH = Math.abs(iH);
         var curItemRect = viewInstance.viewRect;
         var curItemWidth = curItemRect.width * viewInstance.dpr;
-        // biggest width for zoom in
         var maxWidth = nw * 4;
         if (curItemWidth * sx > maxWidth) {
             return;
@@ -116,34 +115,33 @@ var events = /** @class */ (function () {
                         degX = -offset / (viewInstance.viewWidth / viewInstance.dpr) * maxDeg;
                         plusOrMinus = degX / Math.abs(degX);
                         viewInstance.baseModel = viewInstance.modelMatrix;
-                        if (!(Math.abs(degX) >= this.throldDeg)) return [3 /*break*/, 6];
+                        if (!(Math.abs(degX) >= this.throldDeg)) return [3, 6];
                         beforeIndex = viewInstance.curIndex;
                         nextIndex = viewInstance.curIndex + (plusOrMinus * 1);
-                        if (!(nextIndex == -1 || nextIndex == viewInstance.imgUrls.length)) return [3 /*break*/, 2];
+                        if (!(nextIndex == -1 || nextIndex == viewInstance.imgUrls.length)) return [3, 2];
                         viewInstance.curIndex = beforeIndex;
-                        return [4 /*yield*/, viewInstance.rotate(-degX)];
+                        return [4, viewInstance.rotate(-degX)];
                     case 1:
                         _a.sent();
-                        return [3 /*break*/, 5];
-                    case 2: return [4 /*yield*/, viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX)];
+                        return [3, 5];
+                    case 2: return [4, viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX)];
                     case 3:
                         _a.sent();
                         viewInstance.curIndex = nextIndex;
                         viewInstance.modelMatrix = viewInstance.baseModel = viewInstance.initialModel;
                         viewInstance.gl.uniformMatrix4fv(viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uModelViewMatrix'), false, viewInstance.modelMatrix);
-                        return [4 /*yield*/, viewInstance.draw(nextIndex)];
+                        return [4, viewInstance.draw(nextIndex)];
                     case 4:
                         _a.sent();
                         _a.label = 5;
-                    case 5: return [3 /*break*/, 8];
-                    case 6: // 复原
-                    return [4 /*yield*/, viewInstance.rotate(-degX)];
+                    case 5: return [3, 8];
+                    case 6: return [4, viewInstance.rotate(-degX)];
                     case 7:
                         _a.sent();
                         _a.label = 8;
                     case 8:
                         viewInstance.modelMatrix = viewInstance.baseModel = viewInstance.initialModel;
-                        return [2 /*return*/, 'handled'];
+                        return [2, 'handled'];
                 }
             });
         });
@@ -160,14 +158,14 @@ var events = /** @class */ (function () {
                         y *= -viewInstance.dpr;
                         z *= viewInstance.dpr;
                         this.curBehaviorCanBreak = true;
-                        return [4 /*yield*/, viewInstance.moveCurPlane(x, y, 0)];
+                        return [4, viewInstance.moveCurPlane(x, y, 0)];
                     case 1:
                         _a.sent();
                         this.curBehaviorCanBreak = false;
                         if (x !== 0) {
                             viewInstance.isBoudriedSide = true;
                         }
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -183,11 +181,11 @@ var events = /** @class */ (function () {
                         y *= -viewInstance.dpr;
                         z *= viewInstance.dpr;
                         this.curBehaviorCanBreak = true;
-                        return [4 /*yield*/, viewInstance.moveCurPlane(x, y, 0)];
+                        return [4, viewInstance.moveCurPlane(x, y, 0)];
                     case 1:
                         _a.sent();
                         this.curBehaviorCanBreak = false;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });

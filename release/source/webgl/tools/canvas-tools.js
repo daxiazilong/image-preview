@@ -7,9 +7,6 @@ function initialCanvas(img, width, height) {
     canvas.height = height * dpr;
     var start = Date.now();
     ctx.drawImage(img, 0, 0, naturalWidth, naturalHeight, 0, 0, width * dpr, height * dpr);
-    // console.log('花费了：', Date.now() - start )
-    // document.body.innerHTML = ''
-    // document.body.append(canvas)
     return canvas;
 }
 export var tailor = initialCanvas;

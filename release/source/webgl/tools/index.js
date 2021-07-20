@@ -1,5 +1,3 @@
-// export default{
-// 组合多张图片成一张图片
 export function canvasForTextures(images) {
     var canvasWidth = 128;
     var canvasHeight = 128;
@@ -24,7 +22,6 @@ export function canvasForTextures(images) {
         curImgWidth = item.naturalWidth / allWidth;
         curImgHeight = item.naturalHeight / item.naturalWidth * curImgWidth;
         if (curImgHeight > canvasHeight) {
-            // 按排排成一行图片，对于高度超过canvasHeight的 将图片进行缩放 
             reSizeItem(item);
             curImgHeight *= canvasWidth;
             curImgWidth = item.naturalHeight / item.naturalWidth * curImgHeight;
@@ -37,7 +34,6 @@ export function canvasForTextures(images) {
         ctx.drawImage(item, 0, 0, item.naturalWidth, item.naturalHeight, startX, strtY, curImgWidth, curImgHeight);
         startX += curImgWidth;
     });
-    // resize img by canvasHeight
     function reSizeItem(item) {
         curImgHeight = 1;
         var curImgAfterResizeWidth = item.naturalWidth / item.naturalHeight * curImgHeight;
@@ -57,7 +53,6 @@ export function fps() {
             start = Date.now();
         }
         allCount++;
-        // console.log(allCount)
         if (Date.now() - start >= 1000) {
             stat.innerHTML = allCount.toString();
             allCount = 0;
@@ -67,4 +62,3 @@ export function fps() {
     }
     return run;
 }
-// }

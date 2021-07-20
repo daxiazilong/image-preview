@@ -4,9 +4,9 @@
           "noImplicitAny": false,
           "target": "es5",
           "suppressImplicitAnyIndexErrors":true,
-          "removeComments":false,
+          "removeComments":true,
           "outDir":"../release/source",
           "module": "ES6",
-          "listFiles":true
+          "listFiles":true,
       }
   }

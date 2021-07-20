@@ -2,24 +2,21 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-// import { showDebugger } from '../tools/index';
-var Move = /** @class */ (function () {
+var Move = (function () {
     function Move() {
     }
     Move.prototype.handleMove = function (e) {
         var _this = this;
         e.preventDefault();
-        // 双指缩放时的。
         if (e.touches.length == 2) {
             clearTimeout(this.performerClick);
             this.handleZoom(e);
-            // this.handleMoveEnlage(e); 
             return;
         }
         var isBoundaryLeft = this.actionExecutor.IsBoundaryLeft;
         var isBoundaryRight = this.actionExecutor.isBoundaryRight;
         var isBoundary = isBoundaryLeft || isBoundaryRight;
-        if (e.touches[0].clientX - this.startXForDirection === 0) { //还没移动
+        if (e.touches[0].clientX - this.startXForDirection === 0) {
             return;
         }
         var direction = e.touches[0].clientX - this.startXForDirection > 0 ? 'right' : 'left';
@@ -27,12 +24,8 @@ var Move = /** @class */ (function () {
         var curItemViewLeft = viewRect.left;
         var curItemViewRight = viewRect.right;
         var conWidth = this.actionExecutor.viewWidth / this.actionExecutor.dpr;
-        /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
-         * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
-         **/
         if (this.fingerDirection) {
             if (this.actionExecutor.isEnlargement) {
-                // 放大了但是没有超出边界
                 if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
                     if (((direction == 'right') ||
                         (direction == 'left') ||
@@ -71,28 +64,25 @@ var Move = /** @class */ (function () {
                 }
             }
             else {
-                //正常情况下的移动是图片左右切换
                 this.handleMoveNormal(e);
             }
         }
         else {
-            // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
             if ((this.actionExecutor.isEnlargement &&
                 (curItemViewLeft < 0 || curItemViewRight > conWidth))
                 ||
                     (!this.actionExecutor.isEnlargement)) {
-                // enlarge but not reach bonudry
                 if (this.actionExecutor.isEnlargement && !isBoundary && !this.normalMoved) {
                     this.handleMoveEnlage(e);
                 }
-                else if (!this.actionExecutor.isEnlargement) { // not enlage
+                else if (!this.actionExecutor.isEnlargement) {
                     this.handleMoveNormal(e);
                 }
-                else if (isBoundary || this.normalMoved) { // 放大了到边界了
-                    if (this.normalMoved) { // 已经有normal move 继续normalmove
+                else if (isBoundary || this.normalMoved) {
+                    if (this.normalMoved) {
                         this.handleMoveNormal(e);
                     }
-                    else { // 否则手指移动方向与到达的边界同向 才normalmove 反向就enlarge
+                    else {
                         if (direction == 'right') {
                             if (isBoundaryLeft) {
                                 this.handleMoveNormal(e);
@@ -116,9 +106,7 @@ var Move = /** @class */ (function () {
                 }
                 return;
             }
-            // 长图收集手指方向
             this.getMovePoints(e);
-            // 收集够一定数量的点才会执行下边的逻辑
             if (this.movePoints.length < this.maxMovePointCounts) {
                 return;
             }
@@ -127,12 +115,6 @@ var Move = /** @class */ (function () {
     };
     Move.prototype.handleMoveNormal = function (e) {
         var _this = this;
-        // showDebugger(`
-        // moveNormal:${Date.now()}
-        // this.isAnimating :${this.isAnimating }
-        // this.touchStartX:${this.touchStartX}
-        // e.touches.length:${e.touches.length}
-        // `)
         if (this.isAnimating) {
             return;
         }
@@ -159,7 +141,6 @@ var Move = /** @class */ (function () {
             var type_1 = 'normalMoved';
             var task = function (e) {
                 (_this.normalMoved = false);
-                // other finger change the offset 
                 var curX = (e.changedTouches[0].clientX);
                 var offset = curX - _this.touchStartX;
                 eventsHanlder.handleMoveNormal(e, offset);
@@ -173,13 +154,7 @@ var Move = /** @class */ (function () {
         eventsHanlder.handleMoveNormal(e, offset);
     };
     Move.prototype.handleMoveEnlage = function (e) {
-        // showDebugger(`
-        //     handlemoveEnlarge:this.isZooming ${this.isZooming}
-        //     this.isAnimating:${this.isAnimating}
-        //      ${Date.now()}
-        // `)
         if (this.actionExecutor.isLoadingError()) {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
         if (this.isZooming) {
@@ -192,16 +167,15 @@ var Move = /** @class */ (function () {
         }
         var actionExecutor = this.actionExecutor;
         var eventsHanlder = actionExecutor.eventsHanlder;
-        // 放大的时候自由滑动的时候是可以被中断的
         if (eventsHanlder.curBehaviorCanBreak) {
-            actionExecutor.curAimateBreaked = true; //直接中断当前动画
+            actionExecutor.curAimateBreaked = true;
             if (this.isAnimating) {
                 this.touchStartX = (e.touches[0].clientX);
                 this.touchStartY = (e.touches[0].clientY);
                 return;
             }
         }
-        else { // 不可中断动画进行时
+        else {
             if (this.isAnimating) {
                 return;
             }
@@ -223,7 +197,6 @@ var Move = /** @class */ (function () {
         var offsetY = curY - this.startY;
         var curTop;
         var curLeft;
-        // 如果容器内能完整展示图片就不需要移动
         if (Math.round(viewLeft) < 0 || Math.round(viewRight) > conWidth) {
             curLeft = (offsetX);
         }
@@ -250,7 +223,6 @@ var Move = /** @class */ (function () {
         var imgContainerRect = this.imgContainer.getBoundingClientRect();
         var conWidth = imgContainerRect.width;
         var conHeight = imgContainerRect.height;
-        // debugger;
         var _b = this.actionExecutor, viewRect = _b.viewRect, eventsHanlder = _b.eventsHanlder;
         var curItemRect = viewRect;
         var curItemViewTop = curItemRect.top;
@@ -269,15 +241,12 @@ var Move = /** @class */ (function () {
         else if (endX < minLeft) {
             endX = (minLeft);
         }
-        // debugger;
         if (endY > maxTop) {
             endY = (maxTop);
         }
         else if (endY < minTop) {
             endY = (minTop);
         }
-        // 容器宽度能容纳图片宽度，则水平方向不需要移动，
-        // 容器高度能容纳图片高度，则垂直方向不需要移动。
         var x = 0;
         var y = 0;
         if (!(curItemViewLeft >= 0 && curItemViewRight <= conWidth)) {
@@ -291,8 +260,7 @@ var Move = /** @class */ (function () {
     return Move;
 }());
 
-// import { showDebugger } from '../tools/index';
-var Zoom = /** @class */ (function () {
+var Zoom = (function () {
     function Zoom() {
     }
     Zoom.prototype.handleZoom = function (e) {
@@ -303,7 +271,6 @@ var Zoom = /** @class */ (function () {
             return;
         }
         if (this.actionExecutor.isLoadingError()) {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
         if (!this.isZooming) {
@@ -330,16 +297,13 @@ var Zoom = /** @class */ (function () {
         this.curPoint2.x = e.touches[1].clientX;
         this.curPoint2.y = e.touches[1].clientY;
         var x = 0, y = 0, sx = 1.0, sy = 1.0;
-        if (distaceBefore > distanceNow) { //缩小 retu
+        if (distaceBefore > distanceNow) {
             y = (centerFingerY - centerImgCenterY) * this.zoomScale;
             x = (centerFingerX - centerImgCenterX) * this.zoomScale;
             sx = 1 - this.zoomScale;
             sy = 1 - this.zoomScale;
         }
-        else if (distaceBefore < distanceNow) { //放大
-            // scaleX = 1 + scaleRatio
-            // x*scaleX - x
-            // x(scaleX-1) = x * scaleRatio
+        else if (distaceBefore < distanceNow) {
             y = -((centerFingerY - centerImgCenterY)) * this.zoomScale;
             x = -((centerFingerX - centerImgCenterX)) * this.zoomScale;
             sx = 1 + this.zoomScale;
@@ -393,7 +357,7 @@ var __generator$2 = (undefined && undefined.__generator) || function (thisArg, b
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var Rotate = /** @class */ (function () {
+var Rotate = (function () {
     function Rotate() {
     }
     Rotate.prototype.handleRotateLeft = function (e) {
@@ -403,18 +367,17 @@ var Rotate = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (this.isAnimating)
-                            return [2 /*return*/];
+                            return [2];
                         if (this.actionExecutor.isLoadingError()) {
-                            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-                            return [2 /*return*/];
+                            return [2];
                         }
                         changeDeg = -1 * Math.PI / 2;
                         this.isAnimating = true;
-                        return [4 /*yield*/, this.actionExecutor.rotateZ(changeDeg)];
+                        return [4, this.actionExecutor.rotateZ(changeDeg)];
                     case 1:
                         _a.sent();
                         this.isAnimating = false;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -426,18 +389,17 @@ var Rotate = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (this.isAnimating)
-                            return [2 /*return*/];
+                            return [2];
                         if (this.actionExecutor.isLoadingError()) {
-                            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-                            return [2 /*return*/];
+                            return [2];
                         }
                         changeDeg = 1 * Math.PI / 2;
                         this.isAnimating = true;
-                        return [4 /*yield*/, this.actionExecutor.rotateZ(changeDeg)];
+                        return [4, this.actionExecutor.rotateZ(changeDeg)];
                     case 1:
                         _a.sent();
                         this.isAnimating = false;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -485,7 +447,6 @@ var matrix = {
         }
         return matrix.multiplyMatrices.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
     },
-    // https://www.songho.ca/opengl/gl_rotate.html
     rotateByArbitrayAxis: function (x, y, z, deg) {
         var cos = Math.cos, sin = Math.sin, pow = Math.pow;
         var aNumber = (1 - cos(deg));
@@ -552,12 +513,7 @@ var matrix = {
     }
 };
 
-/**
- * B(t) = p0(1-t)^3 + 3p1*t*(1-t)^2+3*p2*t^2(1-t) + p3*t^3;
- * let p0 = (0,0) p3 = (1,1)
- * B(t) = 3p1*t*(1-t)^2 + 3*p2*t^2(1-t) + t^3
- */
-var cubicBezier = /** @class */ (function () {
+var cubicBezier = (function () {
     function cubicBezier(x1, y1, x2, y2) {
         this.precision = 1e-5;
         this.p1 = {
@@ -577,7 +533,6 @@ var cubicBezier = /** @class */ (function () {
         var y1 = this.p1.y, y2 = this.p2.y;
         return 3 * y1 * t * Math.pow(1 - t, 2) + 3 * y2 * Math.pow(t, 2) * (1 - t) + Math.pow(t, 3);
     };
-    // https://github.com/amfe/amfe-cubicbezier/blob/master/src/index.js
     cubicBezier.prototype.solveCurveX = function (x) {
         var t2 = x;
         var derivative;
@@ -587,29 +542,19 @@ var cubicBezier = /** @class */ (function () {
         var bx = 3 * p2x - 6 * p1x;
         var cx = 3 * p1x;
         function sampleCurveDerivativeX(t) {
-            // `ax t^3 + bx t^2 + cx t' expanded using Horner 's rule.
             return (3 * ax * t + 2 * bx) * t + cx;
         }
-        // https://trac.webkit.org/browser/trunk/Source/WebCore/platform/animation
-        // First try a few iterations of Newton's method -- normally very fast.
-        // http://en.wikipedia.org/wiki/Newton's_method
         for (var i = 0; i < 8; i++) {
-            // f(t)-x=0
             x2 = this.getX(t2) - x;
             if (Math.abs(x2) < this.precision) {
                 return t2;
             }
             derivative = sampleCurveDerivativeX(t2);
-            // == 0, failure
             if (Math.abs(derivative) < this.precision) {
                 break;
             }
-            // xn = x(n-1) - f(xn)/ f'(xn)
             t2 -= x2 / derivative;
         }
-        // Fall back to the bisection method for reliability.
-        // bisection
-        // http://en.wikipedia.org/wiki/Bisection_method
         var t1 = 1;
         var t0 = 0;
         t2 = x;
@@ -626,7 +571,6 @@ var cubicBezier = /** @class */ (function () {
             }
             t2 = (t1 + t0) / 2;
         }
-        // Failure
         return t2;
     };
     cubicBezier.prototype.solve = function (x) {
@@ -676,7 +620,7 @@ var __generator$1 = (undefined && undefined.__generator) || function (thisArg, b
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var events = /** @class */ (function () {
+var events = (function () {
     function events(viewInstance) {
         this.curBehaviorCanBreak = false;
         this.throldDeg = Math.PI * 0.10;
@@ -730,7 +674,6 @@ var events = /** @class */ (function () {
         iW = Math.abs(iW);
         var curItemRect = viewInstance.viewRect;
         var curItemWidth = curItemRect.width * viewInstance.dpr;
-        // biggest width for zoom in
         var maxWidth = nw * 4;
         if (curItemWidth * sx > maxWidth) {
             return;
@@ -754,34 +697,33 @@ var events = /** @class */ (function () {
                         degX = -offset / (viewInstance.viewWidth / viewInstance.dpr) * maxDeg;
                         plusOrMinus = degX / Math.abs(degX);
                         viewInstance.baseModel = viewInstance.modelMatrix;
-                        if (!(Math.abs(degX) >= this.throldDeg)) return [3 /*break*/, 6];
+                        if (!(Math.abs(degX) >= this.throldDeg)) return [3, 6];
                         beforeIndex = viewInstance.curIndex;
                         nextIndex = viewInstance.curIndex + (plusOrMinus * 1);
-                        if (!(nextIndex == -1 || nextIndex == viewInstance.imgUrls.length)) return [3 /*break*/, 2];
+                        if (!(nextIndex == -1 || nextIndex == viewInstance.imgUrls.length)) return [3, 2];
                         viewInstance.curIndex = beforeIndex;
-                        return [4 /*yield*/, viewInstance.rotate(-degX)];
+                        return [4, viewInstance.rotate(-degX)];
                     case 1:
                         _a.sent();
-                        return [3 /*break*/, 5];
-                    case 2: return [4 /*yield*/, viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX)];
+                        return [3, 5];
+                    case 2: return [4, viewInstance.rotate(plusOrMinus * Math.PI / 2 - degX)];
                     case 3:
                         _a.sent();
                         viewInstance.curIndex = nextIndex;
                         viewInstance.modelMatrix = viewInstance.baseModel = viewInstance.initialModel;
                         viewInstance.gl.uniformMatrix4fv(viewInstance.gl.getUniformLocation(viewInstance.shaderProgram, 'uModelViewMatrix'), false, viewInstance.modelMatrix);
-                        return [4 /*yield*/, viewInstance.draw(nextIndex)];
+                        return [4, viewInstance.draw(nextIndex)];
                     case 4:
                         _a.sent();
                         _a.label = 5;
-                    case 5: return [3 /*break*/, 8];
-                    case 6: // 复原
-                    return [4 /*yield*/, viewInstance.rotate(-degX)];
+                    case 5: return [3, 8];
+                    case 6: return [4, viewInstance.rotate(-degX)];
                     case 7:
                         _a.sent();
                         _a.label = 8;
                     case 8:
                         viewInstance.modelMatrix = viewInstance.baseModel = viewInstance.initialModel;
-                        return [2 /*return*/, 'handled'];
+                        return [2, 'handled'];
                 }
             });
         });
@@ -797,14 +739,14 @@ var events = /** @class */ (function () {
                         y *= -viewInstance.dpr;
                         z *= viewInstance.dpr;
                         this.curBehaviorCanBreak = true;
-                        return [4 /*yield*/, viewInstance.moveCurPlane(x, y, 0)];
+                        return [4, viewInstance.moveCurPlane(x, y, 0)];
                     case 1:
                         _a.sent();
                         this.curBehaviorCanBreak = false;
                         if (x !== 0) {
                             viewInstance.isBoudriedSide = true;
                         }
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -820,11 +762,11 @@ var events = /** @class */ (function () {
                         y *= -viewInstance.dpr;
                         z *= viewInstance.dpr;
                         this.curBehaviorCanBreak = true;
-                        return [4 /*yield*/, viewInstance.moveCurPlane(x, y, 0)];
+                        return [4, viewInstance.moveCurPlane(x, y, 0)];
                     case 1:
                         _a.sent();
                         this.curBehaviorCanBreak = false;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -842,9 +784,6 @@ function initialCanvas(img, width, height) {
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.drawImage(img, 0, 0, naturalWidth, naturalHeight, 0, 0, width * dpr, height * dpr);
-    // console.log('花费了：', Date.now() - start )
-    // document.body.innerHTML = ''
-    // document.body.append(canvas)
     return canvas;
 }
 var tailor = initialCanvas;
@@ -861,7 +800,7 @@ function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
 var forDev = 0;
-var webGl = /** @class */ (function () {
+var webGl = (function () {
     function webGl(_a) {
         var images = _a.images;
         this.dpr = window.devicePixelRatio || 1;
@@ -892,23 +831,21 @@ var webGl = /** @class */ (function () {
         this.positions = [];
         this.imgs = [];
         this.imgUrls = [];
-        this.imgShape = []; //快速定位旋转之后图片的尺寸
-        this.imgShapeInitinal = []; //快速定位旋转之后图片的尺寸
-        this.textures = new Map; //贴图 保存图片贴图
-        this.texturesOther = new Map; // 保存背景色及其他贴图
+        this.imgShape = [];
+        this.imgShapeInitinal = [];
+        this.textures = new Map;
+        this.texturesOther = new Map;
         this.positionBuffer = null;
-        this.curPlane = []; // 动画执行前的当前面的位置信息
-        this.isBoudriedSide = false; //放大移动时 是否曾到达过边界 在移动放大得图片至超过边界后 恢复到最大边界位置后为true
-        this.curAimateBreaked = false; // 当前动画是否被打断
+        this.curPlane = [];
+        this.isBoudriedSide = false;
+        this.curAimateBreaked = false;
         this.imgId = 0;
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
         this.imgUrls = images;
         var gl = this.gl;
-        gl.enable(gl.DEPTH_TEST); // Enable depth testing
-        gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-        // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
-        // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
         this.readyWebgl();
         this.initData();
         this.contextHandle();
@@ -926,10 +863,8 @@ var webGl = /** @class */ (function () {
             _this.gl = _this.intialView();
             _this.gl.pixelStorei(_this.gl.UNPACK_FLIP_Y_WEBGL, 1);
             var gl = _this.gl;
-            gl.enable(gl.DEPTH_TEST); // Enable depth testing
-            gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-            // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
-            // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LEQUAL);
             _this.readyWebgl();
             _this.initData();
             _this.contextHandle();
@@ -957,7 +892,6 @@ var webGl = /** @class */ (function () {
             indexShouldInImgs = beforL;
         }
         this.imgUrls.splice(index + 1, 0, image);
-        // use splice will make  different  order between imgs and imgUrls
         if (index + 1 > this.imgs.length) {
             this.imgs[indexShouldInImgs] = null;
         }
@@ -970,7 +904,6 @@ var webGl = /** @class */ (function () {
             }
             if (!image.complete) {
                 var load = function () {
-                    // imgs change index change
                     var index = _this.imgUrls.indexOf(image);
                     _this.imgUrls[index] = _this.validateImg(image);
                     if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
@@ -992,7 +925,6 @@ var webGl = /** @class */ (function () {
                 this.imgUrls[index + 1] = this.validateImg(image);
             }
         }
-        // the inserted index is -1 0 1 , is in current view so need draw again
         if (~[-2, -1, 0].indexOf(index - this.curIndex)) {
             this.draw(this.curIndex);
         }
@@ -1019,19 +951,15 @@ var webGl = /** @class */ (function () {
         var _this = this;
         var gl = this.gl;
         var texture = gl.createTexture();
-        // bgd of cubic
         this.texturesOther.set(0, texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        //@ts-ignore
         texture.cubicBgd = true;
-        var r = 0; //Math.round( Math.random() * 255 )
-        var g = 0; //Math.round( Math.random() * 255 )
-        var b = 0; //Math.round( Math.random() * 255 )
+        var r = 0;
+        var g = 0;
+        var b = 0;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([r, g, b, 255]));
-        // err img
         var img = new Image();
         img.onload = function () {
-            // 200 200
             var textureErrImg = gl.createTexture();
             _this.texturesOther.set(1, textureErrImg);
             gl.bindTexture(gl.TEXTURE_2D, textureErrImg);
@@ -1039,7 +967,6 @@ var webGl = /** @class */ (function () {
             _this.setTexParameteri(img.width, img.height);
         };
         img.src = errImgBase64;
-        // document.body.append(img)
     };
     webGl.prototype.initData = function () {
         this.draw(this.curIndex);
@@ -1047,7 +974,6 @@ var webGl = /** @class */ (function () {
     webGl.prototype.slideNext = function () {
         this.rotate(0.5 * Math.PI);
     };
-    // rotate around y axis
     webGl.prototype.rotate = function (end) {
         var _this = this;
         return this.animate({
@@ -1063,16 +989,13 @@ var webGl = /** @class */ (function () {
             })()
         });
     };
-    // rotate around z axis
     webGl.prototype.rotateZ = function (deg) {
         var _this = this;
         this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16);
         var curImgShape = this.imgShape;
         var curImgShapeInitinal = this.imgShapeInitinal;
-        // 储存旋转位置变化信息
         this.imgShape = matrix.multiplyPoint(curImgShape, matrix.rotateZMatrix(deg));
         this.imgShapeInitinal = matrix.multiplyPoint(curImgShapeInitinal, matrix.rotateZMatrix(deg));
-        // todo . every rotate should reCenter the img center
         var _a = this.curCenterCoordinate, curCenterX = _a[0], curCenterY = _a[1];
         var dx = -curCenterX, dy = -curCenterY;
         var playGame = function () {
@@ -1096,7 +1019,6 @@ var webGl = /** @class */ (function () {
         var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         var viewWidth = this.viewWidth;
         var sideZAxis = z - (viewWidth - width) / 2;
-        // console.log(z)
         var positionsMap = [
             [
                 -viewWidth / 2, -height / 2, sideZAxis - width, 1.0,
@@ -1117,14 +1039,10 @@ var webGl = /** @class */ (function () {
                 viewWidth / 2, height / 2, sideZAxis, 1.0,
             ]
         ];
-        var key = index - this.curIndex; // -1 , 0 , 1;
-        key += 1; // -1,0,1 -> 0,1,2
+        var key = index - this.curIndex;
+        key += 1;
         (_a = this.positions).push.apply(_a, positionsMap[key]);
     };
-    /**
-     * 图片异步加载之后更新顶点坐标位置。
-     * @param index 相对于 curIndex 的位置 -1,0,1
-     */
     webGl.prototype.updatePosition = function (img, index) {
         var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         var viewWidth = this.viewWidth;
@@ -1138,7 +1056,6 @@ var webGl = /** @class */ (function () {
             this.imgShapeInitinal = [width, height, 0, 1];
         }
         var sideZAxis = z - (viewWidth - width) / 2;
-        // console.log(z)
         var positionsMap = [
             [
                 -viewWidth / 2, -height / 2, sideZAxis - width, 1.0,
@@ -1161,7 +1078,7 @@ var webGl = /** @class */ (function () {
         ];
         var key = index;
         var indexInPosition = this.curPointAt + key * 16;
-        key += 1; // -1,0,1 -> 0,1,2;
+        key += 1;
         var curPlane = positionsMap[key];
         for (var i = indexInPosition; i < indexInPosition + 16; i++) {
             this.positions[i] = curPlane[i - indexInPosition];
@@ -1190,14 +1107,12 @@ var webGl = /** @class */ (function () {
         }
     };
     webGl.prototype.drawPosition = function () {
-        // 生成黑色立方体作为背景
         this.clear();
         var gl = this.gl;
         gl.bindTexture(gl.TEXTURE_2D, this.texturesOther.get(0));
         for (var i = 0, L = 12; i < L; i += 4) {
             this.bindIndex(i);
         }
-        // 生成 真真的 图片
         var faces = (this.positions.length / 4 - 12) / 4;
         var textureIndex = (this.curIndex - 1);
         (textureIndex < 0) && (textureIndex = 0);
@@ -1207,21 +1122,15 @@ var webGl = /** @class */ (function () {
                 this.bindTexture(img, img._id);
             }
             else {
-                // loading
                 console.log("shouldn't have");
             }
             this.bindIndex(12 + i * 4);
         }
-        // console.log('\n')
-        // console.log( this.positions )
     };
     webGl.prototype.rotatePosition = function (deg) {
         var zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         var centerX = this.viewWidth / 2;
-        this.modelMatrix = matrix.multiplyMatrices(this.baseModel, matrix.translateMatrix(0, 0, centerX - zInitial), // 挪到坐标原点
-        matrix.rotateYMatrix(deg), //开始旋转
-        matrix.translateMatrix(0, 0, zInitial - (centerX)) // 挪到原位置
-        );
+        this.modelMatrix = matrix.multiplyMatrices(this.baseModel, matrix.translateMatrix(0, 0, centerX - zInitial), matrix.rotateYMatrix(deg), matrix.translateMatrix(0, 0, zInitial - (centerX)));
         this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'), false, this.modelMatrix);
         this.drawPosition();
     };
@@ -1296,32 +1205,26 @@ var webGl = /** @class */ (function () {
         var textureCoordBuffer = this.gl.createBuffer();
         gl.bindBuffer(this.gl.ARRAY_BUFFER, textureCoordBuffer);
         var textureCoordinates = [
-            // Front
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            //  right
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            // left
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            // Front
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            //  right
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            // left
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
@@ -1339,9 +1242,7 @@ var webGl = /** @class */ (function () {
             gl.vertexAttribPointer(textureLocate, numComponents, type, normalize, stride, offset);
             gl.enableVertexAttribArray(textureLocate);
         }
-        // Bind the texture to texture unit 0
         gl.activeTexture(gl['TEXTURE0']);
-        // Tell the shader we bound the texture to texture unit 0
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler0'), 0);
     };
     webGl.prototype.bindTexture = function (image, id) {
@@ -1349,11 +1250,11 @@ var webGl = /** @class */ (function () {
             this.updateOtherTexture(1);
             return;
         }
-        if (!image.complete) { //loading ing
+        if (!image.complete) {
             this.updateOtherTexture(0);
             return;
         }
-        if (this.textures.get(id)) { // 该图片已经创建过贴图 直接拿来复用
+        if (this.textures.get(id)) {
             this.updateTexture(id, image);
             return;
         }
@@ -1372,7 +1273,7 @@ var webGl = /** @class */ (function () {
     webGl.prototype.updateOtherTexture = function (id) {
         var gl = this.gl;
         gl.bindTexture(gl.TEXTURE_2D, this.texturesOther.get(id));
-        this.setTexParameteri(0, 3); // default
+        this.setTexParameteri(0, 3);
     };
     webGl.prototype.texImage = function (image) {
         var gl = this.gl;
@@ -1384,20 +1285,14 @@ var webGl = /** @class */ (function () {
     };
     webGl.prototype.setTexParameteri = function (width, height) {
         var gl = this.gl;
-        // WebGL1 has different requirements for power of 2 images
-        // vs non power of 2 images so check if the image is a
-        // power of 2 in both dimensions.
         if (isPowerOf2(width) && isPowerOf2(height)) {
-            // Yes, it's a power of 2. Generate mips.
             gl.generateMipmap(gl.TEXTURE_2D);
         }
         else {
-            // No, it's not a power of 2. Turn of mips and set
-            // wrapping to clamp to edge
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); //gl.LINEAR_MIPMAP_LINE
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         }
     };
     webGl.prototype.bindIndex = function (index) {
@@ -1415,7 +1310,6 @@ var webGl = /** @class */ (function () {
                 var type = gl.UNSIGNED_SHORT;
                 var offset = 0;
                 gl.drawElements(drawType, vertexCount, type, offset);
-                // gl.drawArrays(gl.TRIANGLES,index,vertexCount)
             }
             return;
         }
@@ -1423,7 +1317,6 @@ var webGl = /** @class */ (function () {
         this.indinces[index] = indexBuffer;
         this.indinces.set(index, indexBuffer);
         gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        // console.log(indices)
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
         {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -1431,7 +1324,6 @@ var webGl = /** @class */ (function () {
             var type = gl.UNSIGNED_SHORT;
             var offset = 0;
             gl.drawElements(drawType, vertexCount, type, offset);
-            // gl.drawArrays(gl.TRIANGLES,index,vertexCount)
         }
     };
     webGl.prototype.generateCube = function (width, height) {
@@ -1443,17 +1335,14 @@ var webGl = /** @class */ (function () {
         width -= cubeMove;
         height -= cubeMove;
         var positionCube = [
-            // left
             -width / 2, -height / 2, z - width, 1.0,
             -width / 2, -height / 2, z, 1.0,
             -width / 2, height / 2, z, 1.0,
             -width / 2, height / 2, z - width, 1.0,
-            //front
             -width / 2, -height / 2, z, 1.0,
             width / 2, -height / 2, z, 1.0,
             width / 2, height / 2, z, 1.0,
             -width / 2, height / 2, z, 1.0,
-            // right
             width / 2, -height / 2, z, 1.0,
             width / 2, -height / 2, z - width, 1.0,
             width / 2, height / 2, z - width, 1.0,
@@ -1461,11 +1350,6 @@ var webGl = /** @class */ (function () {
         ];
         (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
     };
-    /**
-     * @param clientX 缩放点得x坐标
-     * @param clientY 缩放点得y坐标
-     * @returns [缩放x比率,缩放y比率,x轴偏移 y轴偏移]
-     */
     webGl.prototype.decideScaleRatio = function (clientX, clientY) {
         var width = 0, height = 0;
         var centerX = this.viewWidth / (2);
@@ -1480,20 +1364,17 @@ var webGl = /** @class */ (function () {
         var scaleX, scaleY, dx = 0, dy = 0;
         clientX *= this.dpr;
         clientY *= this.dpr;
-        if (this.isEnlargementForScale) { // 放大双击得时候就缩小
+        if (this.isEnlargementForScale) {
             var _a = this.imgShapeInitinal, initialWidth = _a[0], initinalHeight = _a[1];
             width = Math.abs(initialWidth);
             height = Math.abs(initinalHeight);
-            // eg. if ratio is 0.2 then result is -0.8 ,during animate  it becomes 1 0.9 .0.8 
             scaleX = width / curWidth - 1;
             scaleY = height / curHeight - 1;
-            //  it's should be the offset of the img's center Point
-            //  this coordinate center is 0 , 0  on the center of screen
             var _b = this.curCenterCoordinate, curCenterX = _b[0], curCenterY = _b[1];
             dx = -(curCenterX * (1 + scaleX));
             dy = -(curCenterY * (1 + scaleY));
         }
-        else { //缩小得时候双击就放大
+        else {
             if (this.curIsLongImg()) {
                 width = this.viewWidth;
                 height = nh / nw * width;
@@ -1506,7 +1387,7 @@ var webGl = /** @class */ (function () {
             scaleY = height / curHeight - 1;
             dx = -((clientX - centerX) * (scaleX));
             dy = ((clientY - centerY) * (scaleY));
-            if (this.curIsLongImg()) { // a long img dont need a horisontal offset
+            if (this.curIsLongImg()) {
                 dx = 0;
             }
         }
@@ -1517,12 +1398,6 @@ var webGl = /** @class */ (function () {
             dy
         ];
     };
-    /**
-     *
-     * @param imgWidth 图片宽度
-     * @param imgHeight 图片高度
-     * @returns  返回适配当前视口得图片宽高
-     */
     webGl.prototype.decideImgViewSize = function (imgWidth, imgHeight) {
         var width = 0, height = 0;
         if (this.viewWidth >= imgWidth) {
@@ -1542,7 +1417,7 @@ var webGl = /** @class */ (function () {
         ];
     };
     webGl.prototype.draw = function (index) {
-        this.positions = []; // 期望positions只保留一个底层的立方体，三个展示图片的面 共计六个面
+        this.positions = [];
         var imgLength = this.imgUrls.length;
         var maxWidth = 0, maxHeight = 0;
         for (var i = index - 1; i <= index + 1; i++) {
@@ -1556,15 +1431,15 @@ var webGl = /** @class */ (function () {
                 }
                 else {
                     image = this.imgUrls[i];
-                    if (typeof image._id == 'undefined') { // not intinial
+                    if (typeof image._id == 'undefined') {
                         this.imgUrls[i] = this.validateImg(image);
                         image = this.imgUrls[i];
                     }
                 }
                 this.imgs[i] = image;
                 var naturalWidth = image.naturalWidth, naturalHeight = image.naturalHeight;
-                if (image.loadError) { // a load wrong img
-                    naturalWidth = naturalHeight = 200; // default size. here maybe 
+                if (image.loadError) {
+                    naturalWidth = naturalHeight = 200;
                 }
                 var _a = this.decideImgViewSize(naturalWidth * this.dpr, naturalHeight * this.dpr), width = _a[0], height = _a[1];
                 if (i == this.curIndex) {
@@ -1639,17 +1514,11 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(webGl.prototype, "viewRect", {
-        /**
-         * a position ,return this rect's coordinate like htmlElement.getBoundingClientRect()
-         */
         get: function () {
             var topOriginX = -this.viewWidth / 2;
             var topOriginY = this.viewHeight / 2;
             var curPlaneIndex = this.curPointAt;
             var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            // 点的位置会旋转的,旋转之后 再去用固定的坐标计算的时候你就把握不住
-            //  so dynamic find the correct coordinate
-            //  
             for (var i = curPlaneIndex; i < curPlaneIndex + 16; i += 4) {
                 var x = this.positions[i];
                 var y = this.positions[i + 1];
@@ -1673,10 +1542,6 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(webGl.prototype, "curPlanePosition", {
-        /**
-         *    top      right
-         *    bottom   bottomright
-         */
         get: function () {
             this.curPointAt;
             return [];
@@ -1685,9 +1550,6 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(webGl.prototype, "isEnlargement", {
-        /**
-         * should return a value that indicate whether the curViewRect over the viewPort's boundry
-         */
         get: function () {
             var _a = this.imgShapeInitinal; _a[0]; _a[1];
             var viewRect = this.viewRect;
@@ -1699,9 +1561,6 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(webGl.prototype, "isEnlargementForScale", {
-        /**
-         * should return curViewRect is enlarge or shrink compare with initialSize;
-         */
         get: function () {
             var _a = this.imgShapeInitinal, iw = _a[0], ih = _a[1];
             var rect = this.viewRect;
@@ -1712,7 +1571,7 @@ var webGl = /** @class */ (function () {
     });
     webGl.prototype.isLoadingError = function (index) {
         arguments.length == 0 && (index = this.curIndex);
-        return this.imgs[index]['loadError']; // to do 定义错误图片样式
+        return this.imgs[index]['loadError'];
     };
     webGl.prototype.loadImage = function (src, index) {
         var _this = this;
@@ -1735,7 +1594,6 @@ var webGl = /** @class */ (function () {
         return img;
     };
     webGl.prototype.handleImgLoaded = function (img, index) {
-        // imgs change , index change
         index = this.imgs.indexOf(img);
         if (!img.loadError) {
             img = this.validateImg(img);
@@ -1762,11 +1620,8 @@ var webGl = /** @class */ (function () {
             }
             var canvas = tailor(img, width, height);
             canvas._id = this.imgId++;
-            // @ts-ignore
             canvas.naturalHeight = height;
-            // @ts-ignore
             canvas.naturalWidth = width;
-            // @ts-ignore
             canvas.complete = true;
             return canvas;
         }
@@ -1795,11 +1650,8 @@ var webGl = /** @class */ (function () {
     };
     webGl.prototype.loadShader = function (gl, type, source) {
         var shader = gl.createShader(type);
-        // Send the source to the shader object
         gl.shaderSource(shader, source);
-        // Compile the shader program
         gl.compileShader(shader);
-        // See if it compiled successfully
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
             console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
@@ -1823,7 +1675,6 @@ var webGl = /** @class */ (function () {
         }
         this.viewWidth = canvas.width;
         this.viewHeight = canvas.height;
-        // gl.viewport(0,0,this.viewWidth,this.viewHeight)
         return gl;
     };
     webGl.prototype.animate = function (_a) {
@@ -1904,27 +1755,27 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var ImagePreview = /** @class */ (function () {
+var ImagePreview = (function () {
     function ImagePreview(options) {
         this.options = options;
         this.showTools = true;
-        this.lastClick = -Infinity; // 上次点击时间和执行单击事件的计时器
-        this.curIndex = 0; //当前第几个图片
-        this.imgContainerMoveX = 0; //图片容器x轴的移动距离
-        this.imgContainerMoveY = 0; //图片容器y轴的移动距离
-        this.slideTime = 300; //切换至下一屏幕时需要的时间
-        this.zoomScale = 0.05; //缩放比例
-        this.isZooming = false; //是否在进行双指缩放
-        this.isAnimating = false; // 是否在动画中
-        this.isEnlargeMove = false; // 大图下得切屏 slide next/before img
-        this.isNormalMove = false; // is moveNormal
-        this.normalMoved = false; // 手指移动上下一张切换的时候有没有产生位移 双指缩放时若此值为true则不进行缩放
-        this.maxMovePointCounts = 3; // max point count while collect moving point.
+        this.lastClick = -Infinity;
+        this.curIndex = 0;
+        this.imgContainerMoveX = 0;
+        this.imgContainerMoveY = 0;
+        this.slideTime = 300;
+        this.zoomScale = 0.05;
+        this.isZooming = false;
+        this.isAnimating = false;
+        this.isEnlargeMove = false;
+        this.isNormalMove = false;
+        this.normalMoved = false;
+        this.maxMovePointCounts = 3;
         this.touchIdentifier = 0;
         this.prefix = "__";
         this.defToggleClass = 'defToggleClass';
-        this.movePoints = []; //收集移动点，判断滑动方向
-        this.fingerDirection = ''; //当前手指得移动方向
+        this.movePoints = [];
+        this.fingerDirection = '';
         this.moveStartTime = 0;
         this.moveEndTime = 0;
         this.operateMaps = {
@@ -1938,7 +1789,6 @@ var ImagePreview = /** @class */ (function () {
             [0, 0, 1, 1],
         ];
         if (options.selector) {
-            // options里拿到图片
             this.bindTrigger();
         }
         if (!this.options.imgs) {
@@ -1950,7 +1800,7 @@ var ImagePreview = /** @class */ (function () {
         this.taskExecuteAfterTEnd = new Map;
         this.envClient = this.testEnv();
         this.genFrame();
-        this.handleReausetAnimate(); //requestAnimationFrame兼容性
+        this.handleReausetAnimate();
         this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
         this.imgContainer.matrix = this.initalMatrix;
         this[this.envClient + 'Initial']();
@@ -2026,19 +1876,12 @@ var ImagePreview = /** @class */ (function () {
     };
     ImagePreview.prototype.handleOneStart = function (e) {
         var _this = this;
-        /**
-         * 这里把操作派发
-         */
         var type = (e.target).dataset.type;
         if (this.operateMaps[type]) {
             this[this.operateMaps[type]](e);
             return;
         }
         if (Date.now() - this.lastClick < 300) {
-            /*
-                启动一个定时器，如果双击事件发生后就
-                取消单击事件的执行
-             */
             clearTimeout(this.performerClick);
             this.handleDoubleClick(e);
         }
@@ -2071,16 +1914,14 @@ var ImagePreview = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (this.isAnimating) {
-                            return [2 /*return*/];
+                            return [2];
                         }
                         this.isAnimating = true;
-                        // showDebugger(this.isAnimating.toString())
-                        return [4 /*yield*/, this.actionExecutor.eventsHanlder.handleDoubleClick(e)];
+                        return [4, this.actionExecutor.eventsHanlder.handleDoubleClick(e)];
                     case 1:
-                        // showDebugger(this.isAnimating.toString())
                         _a.sent();
                         this.isAnimating = false;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -2136,7 +1977,6 @@ var ImagePreview = /** @class */ (function () {
                             endY = minTop - curItemTop;
                             recoverY = true;
                         }
-                        // 如果容器内能完整展示图片就不需要移动至边界
                         if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
                             recoverX = false;
                             endX = 0;
@@ -2145,13 +1985,13 @@ var ImagePreview = /** @class */ (function () {
                             recoverY = false;
                             endY = 0;
                         }
-                        if (!(recoverX || recoverY)) return [3 /*break*/, 2];
+                        if (!(recoverX || recoverY)) return [3, 2];
                         this.isAnimating = true;
-                        return [4 /*yield*/, actionExecutor.eventsHanlder.handleTEndEnlarge(e, endX, endY, 0)];
+                        return [4, actionExecutor.eventsHanlder.handleTEndEnlarge(e, endX, endY, 0)];
                     case 1:
                         _a.sent();
                         this.isAnimating = false;
-                        return [3 /*break*/, 4];
+                        return [3, 4];
                     case 2:
                         this.moveEndTime = Date.now();
                         endPoint = {
@@ -2166,17 +2006,17 @@ var ImagePreview = /** @class */ (function () {
                         dy = endPoint.y - startPoint.y;
                         degree = Math.atan2(dy, dx) * 180 / Math.PI;
                         touchTime = this.moveEndTime - this.moveStartTime;
-                        if (!(touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5))) return [3 /*break*/, 4];
+                        if (!(touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5))) return [3, 4];
                         boundryObj = { maxTop: maxTop, minTop: minTop, maxLeft: maxLeft, minLeft: conWidth - curItemWidth };
                         this.isAnimating = true;
-                        return [4 /*yield*/, this.autoMove(degree, curItemViewLeft, curItemViewTop, boundryObj)];
+                        return [4, this.autoMove(degree, curItemViewLeft, curItemViewTop, boundryObj)];
                     case 3:
                         _a.sent();
                         this.isAnimating = false;
                         _a.label = 4;
                     case 4:
                         this.moveStartTime = 0;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -2188,20 +2028,20 @@ var ImagePreview = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (this.isAnimating) {
-                            return [2 /*return*/];
+                            return [2];
                         }
                         endX = (e.changedTouches[0].clientX);
                         eventsHanlder = this.actionExecutor.eventsHanlder;
                         offset = endX - this.touchStartX;
                         if (offset === 0) {
-                            return [2 /*return*/];
+                            return [2];
                         }
                         this.isAnimating = true;
-                        return [4 /*yield*/, eventsHanlder.handleTEndEnNormal(e, offset)];
+                        return [4, eventsHanlder.handleTEndEnNormal(e, offset)];
                     case 1:
                         _a.sent();
                         this.isAnimating = false;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -2254,9 +2094,7 @@ var ImagePreview = /** @class */ (function () {
         };
         var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\"></div>\n                <div class=\"" + this.prefix + "bottom\">\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\"  t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
         var isIPhoneX = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 375 && window.screen.height === 812;
-        // iPhone XS Max
         var isIPhoneXSMax = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 414 && window.screen.height === 896;
-        // iPhone XR
         var isIPhoneXR = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 2 && window.screen.width === 414 && window.screen.height === 896;
         var needHigher = isIPhoneX || isIPhoneXSMax || isIPhoneXR;
         var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: " + genStyle('conBackground') + ";\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            \n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 10;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            \n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: " + (needHigher ? 20 : 0) + "px;\n                left: 20px;\n                right: 20px;\n                z-index: 10;\n                padding: 0 10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 42px;\n                height: 42px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                box-sizing: border-box;\n                width: 100%;\n                height: 100%;\n                padding:10px;\n            }\n        ";
@@ -2328,7 +2166,7 @@ var ImagePreview = /** @class */ (function () {
         this.addTouchEndTask(type, {
             priority: 1,
             callback: function () { return (_this.movePoints = []); }
-        }); //重置收集手指移动时要收集得点))
+        });
     };
     ImagePreview.prototype.decideMoveDirection = function () {
         var _this = this;

@@ -12,7 +12,6 @@ export function run() {
     for (var i = 0; i <= width; i += 10) {
         var curT = i / width;
         var curTop = height * (1 - easeOut1.solve(curT));
-        // console.log('run',curT,easeOut1.solve(curT))
         ctx.lineTo(i, curTop);
     }
     ctx.strokeStyle = "red";
