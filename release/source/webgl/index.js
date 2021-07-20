@@ -15,7 +15,7 @@ function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
 var forDev = 0;
-var webGl = /** @class */ (function () {
+var webGl = (function () {
     function webGl(_a) {
         var images = _a.images;
         this.dpr = window.devicePixelRatio || 1;
@@ -46,23 +46,21 @@ var webGl = /** @class */ (function () {
         this.positions = [];
         this.imgs = [];
         this.imgUrls = [];
-        this.imgShape = []; //快速定位旋转之后图片的尺寸
-        this.imgShapeInitinal = []; //快速定位旋转之后图片的尺寸
-        this.textures = new Map; //贴图 保存图片贴图
-        this.texturesOther = new Map; // 保存背景色及其他贴图
+        this.imgShape = [];
+        this.imgShapeInitinal = [];
+        this.textures = new Map;
+        this.texturesOther = new Map;
         this.positionBuffer = null;
-        this.curPlane = []; // 动画执行前的当前面的位置信息
-        this.isBoudriedSide = false; //放大移动时 是否曾到达过边界 在移动放大得图片至超过边界后 恢复到最大边界位置后为true
-        this.curAimateBreaked = false; // 当前动画是否被打断
+        this.curPlane = [];
+        this.isBoudriedSide = false;
+        this.curAimateBreaked = false;
         this.imgId = 0;
         this.gl = this.intialView();
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
         this.imgUrls = images;
         var gl = this.gl;
-        gl.enable(gl.DEPTH_TEST); // Enable depth testing
-        gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-        // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
-        // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
         this.readyWebgl();
         this.initData();
         this.contextHandle();
@@ -80,10 +78,8 @@ var webGl = /** @class */ (function () {
             _this.gl = _this.intialView();
             _this.gl.pixelStorei(_this.gl.UNPACK_FLIP_Y_WEBGL, 1);
             var gl = _this.gl;
-            gl.enable(gl.DEPTH_TEST); // Enable depth testing
-            gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-            // gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE) // anti-aliasing
-            // gl.enable(gl.SAMPLE_COVERAGE) // anti-aliasing
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LEQUAL);
             _this.readyWebgl();
             _this.initData();
             _this.contextHandle();
@@ -111,7 +107,6 @@ var webGl = /** @class */ (function () {
             indexShouldInImgs = beforL;
         }
         this.imgUrls.splice(index + 1, 0, image);
-        // use splice will make  different  order between imgs and imgUrls
         if (index + 1 > this.imgs.length) {
             this.imgs[indexShouldInImgs] = null;
         }
@@ -126,7 +121,6 @@ var webGl = /** @class */ (function () {
             if (!image.complete) {
                 var load = function () {
                     ;
-                    // imgs change index change
                     var index = _this.imgUrls.indexOf(image);
                     _this.imgUrls[index] = _this.validateImg(image);
                     if (~[-2, -1, 0].indexOf(index - _this.curIndex)) {
@@ -149,7 +143,6 @@ var webGl = /** @class */ (function () {
                 this.imgUrls[index + 1] = this.validateImg(image);
             }
         }
-        // the inserted index is -1 0 1 , is in current view so need draw again
         if (~[-2, -1, 0].indexOf(index - this.curIndex)) {
             this.draw(this.curIndex);
         }
@@ -176,19 +169,15 @@ var webGl = /** @class */ (function () {
         var _this = this;
         var gl = this.gl;
         var texture = gl.createTexture();
-        // bgd of cubic
         this.texturesOther.set(0, texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        //@ts-ignore
         texture.cubicBgd = true;
-        var r = 0; //Math.round( Math.random() * 255 )
-        var g = 0; //Math.round( Math.random() * 255 )
-        var b = 0; //Math.round( Math.random() * 255 )
+        var r = 0;
+        var g = 0;
+        var b = 0;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([r, g, b, 255]));
-        // err img
         var img = new Image();
         img.onload = function () {
-            // 200 200
             var textureErrImg = gl.createTexture();
             _this.texturesOther.set(1, textureErrImg);
             gl.bindTexture(gl.TEXTURE_2D, textureErrImg);
@@ -196,7 +185,6 @@ var webGl = /** @class */ (function () {
             _this.setTexParameteri(img.width, img.height);
         };
         img.src = errImgBase64;
-        // document.body.append(img)
     };
     webGl.prototype.initData = function () {
         this.draw(this.curIndex);
@@ -204,7 +192,6 @@ var webGl = /** @class */ (function () {
     webGl.prototype.slideNext = function () {
         this.rotate(0.5 * Math.PI);
     };
-    // rotate around y axis
     webGl.prototype.rotate = function (end) {
         var _this = this;
         return this.animate({
@@ -220,16 +207,13 @@ var webGl = /** @class */ (function () {
             })()
         });
     };
-    // rotate around z axis
     webGl.prototype.rotateZ = function (deg) {
         var _this = this;
         this.curPlane = this.positions.slice(this.curPointAt, this.curPointAt + 16);
         var curImgShape = this.imgShape;
         var curImgShapeInitinal = this.imgShapeInitinal;
-        // 储存旋转位置变化信息
         this.imgShape = matrix.multiplyPoint(curImgShape, matrix.rotateZMatrix(deg));
         this.imgShapeInitinal = matrix.multiplyPoint(curImgShapeInitinal, matrix.rotateZMatrix(deg));
-        // todo . every rotate should reCenter the img center
         var _a = this.curCenterCoordinate, curCenterX = _a[0], curCenterY = _a[1];
         var dx = -curCenterX, dy = -curCenterY;
         var playGame = function () {
@@ -253,7 +237,6 @@ var webGl = /** @class */ (function () {
         var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         var viewWidth = this.viewWidth;
         var sideZAxis = z - (viewWidth - width) / 2;
-        // console.log(z)
         var positionsMap = [
             [
                 -viewWidth / 2, -height / 2, sideZAxis - width, 1.0,
@@ -274,14 +257,10 @@ var webGl = /** @class */ (function () {
                 viewWidth / 2, height / 2, sideZAxis, 1.0,
             ]
         ];
-        var key = index - this.curIndex; // -1 , 0 , 1;
-        key += 1; // -1,0,1 -> 0,1,2
+        var key = index - this.curIndex;
+        key += 1;
         (_a = this.positions).push.apply(_a, positionsMap[key]);
     };
-    /**
-     * 图片异步加载之后更新顶点坐标位置。
-     * @param index 相对于 curIndex 的位置 -1,0,1
-     */
     webGl.prototype.updatePosition = function (img, index) {
         var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         var viewWidth = this.viewWidth;
@@ -295,7 +274,6 @@ var webGl = /** @class */ (function () {
             this.imgShapeInitinal = [width, height, 0, 1];
         }
         var sideZAxis = z - (viewWidth - width) / 2;
-        // console.log(z)
         var positionsMap = [
             [
                 -viewWidth / 2, -height / 2, sideZAxis - width, 1.0,
@@ -318,7 +296,7 @@ var webGl = /** @class */ (function () {
         ];
         var key = index;
         var indexInPosition = this.curPointAt + key * 16;
-        key += 1; // -1,0,1 -> 0,1,2;
+        key += 1;
         var curPlane = positionsMap[key];
         for (var i = indexInPosition; i < indexInPosition + 16; i++) {
             this.positions[i] = curPlane[i - indexInPosition];
@@ -347,14 +325,12 @@ var webGl = /** @class */ (function () {
         }
     };
     webGl.prototype.drawPosition = function () {
-        // 生成黑色立方体作为背景
         this.clear();
         var gl = this.gl;
         gl.bindTexture(gl.TEXTURE_2D, this.texturesOther.get(0));
         for (var i = 0, L = 12; i < L; i += 4) {
             this.bindIndex(i);
         }
-        // 生成 真真的 图片
         var faces = (this.positions.length / 4 - 12) / 4;
         var textureIndex = (this.curIndex - 1);
         ;
@@ -365,21 +341,15 @@ var webGl = /** @class */ (function () {
                 this.bindTexture(img, img._id);
             }
             else {
-                // loading
                 console.log("shouldn't have");
             }
             this.bindIndex(12 + i * 4);
         }
-        // console.log('\n')
-        // console.log( this.positions )
     };
     webGl.prototype.rotatePosition = function (deg) {
         var zInitial = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
         var centerX = this.viewWidth / 2;
-        this.modelMatrix = matrix.multiplyMatrices(this.baseModel, matrix.translateMatrix(0, 0, centerX - zInitial), // 挪到坐标原点
-        matrix.rotateYMatrix(deg), //开始旋转
-        matrix.translateMatrix(0, 0, zInitial - (centerX)) // 挪到原位置
-        );
+        this.modelMatrix = matrix.multiplyMatrices(this.baseModel, matrix.translateMatrix(0, 0, centerX - zInitial), matrix.rotateYMatrix(deg), matrix.translateMatrix(0, 0, zInitial - (centerX)));
         this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'), false, this.modelMatrix);
         this.drawPosition();
     };
@@ -455,32 +425,26 @@ var webGl = /** @class */ (function () {
         var textureCoordBuffer = this.gl.createBuffer();
         gl.bindBuffer(this.gl.ARRAY_BUFFER, textureCoordBuffer);
         var textureCoordinates = [
-            // Front
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            //  right
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            // left
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            // Front
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            //  right
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
             0.0, 1.0,
-            // left
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
@@ -498,9 +462,7 @@ var webGl = /** @class */ (function () {
             gl.vertexAttribPointer(textureLocate, numComponents, type, normalize, stride, offset);
             gl.enableVertexAttribArray(textureLocate);
         }
-        // Bind the texture to texture unit 0
         gl.activeTexture(gl['TEXTURE0']);
-        // Tell the shader we bound the texture to texture unit 0
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, 'uSampler0'), 0);
     };
     webGl.prototype.bindTexture = function (image, id) {
@@ -509,11 +471,11 @@ var webGl = /** @class */ (function () {
             this.updateOtherTexture(1);
             return;
         }
-        if (!image.complete) { //loading ing
+        if (!image.complete) {
             this.updateOtherTexture(0);
             return;
         }
-        if (this.textures.get(id)) { // 该图片已经创建过贴图 直接拿来复用
+        if (this.textures.get(id)) {
             this.updateTexture(id, image);
             return;
         }
@@ -532,7 +494,7 @@ var webGl = /** @class */ (function () {
     webGl.prototype.updateOtherTexture = function (id) {
         var gl = this.gl;
         gl.bindTexture(gl.TEXTURE_2D, this.texturesOther.get(id));
-        this.setTexParameteri(0, 3); // default
+        this.setTexParameteri(0, 3);
     };
     webGl.prototype.texImage = function (image) {
         var gl = this.gl;
@@ -544,20 +506,14 @@ var webGl = /** @class */ (function () {
     };
     webGl.prototype.setTexParameteri = function (width, height) {
         var gl = this.gl;
-        // WebGL1 has different requirements for power of 2 images
-        // vs non power of 2 images so check if the image is a
-        // power of 2 in both dimensions.
         if (isPowerOf2(width) && isPowerOf2(height)) {
-            // Yes, it's a power of 2. Generate mips.
             gl.generateMipmap(gl.TEXTURE_2D);
         }
         else {
-            // No, it's not a power of 2. Turn of mips and set
-            // wrapping to clamp to edge
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); //gl.LINEAR_MIPMAP_LINE
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         }
     };
     webGl.prototype.bindIndex = function (index) {
@@ -576,7 +532,6 @@ var webGl = /** @class */ (function () {
                 var type = gl.UNSIGNED_SHORT;
                 var offset = 0;
                 gl.drawElements(drawType, vertexCount, type, offset);
-                // gl.drawArrays(gl.TRIANGLES,index,vertexCount)
             }
             return;
         }
@@ -584,7 +539,6 @@ var webGl = /** @class */ (function () {
         this.indinces[index] = indexBuffer;
         this.indinces.set(index, indexBuffer);
         gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        // console.log(indices)
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
         {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -592,7 +546,6 @@ var webGl = /** @class */ (function () {
             var type = gl.UNSIGNED_SHORT;
             var offset = 0;
             gl.drawElements(drawType, vertexCount, type, offset);
-            // gl.drawArrays(gl.TRIANGLES,index,vertexCount)
         }
     };
     webGl.prototype.generateCube = function (width, height) {
@@ -604,17 +557,14 @@ var webGl = /** @class */ (function () {
         width -= cubeMove;
         height -= cubeMove;
         var positionCube = [
-            // left
             -width / 2, -height / 2, z - width, 1.0,
             -width / 2, -height / 2, z, 1.0,
             -width / 2, height / 2, z, 1.0,
             -width / 2, height / 2, z - width, 1.0,
-            //front
             -width / 2, -height / 2, z, 1.0,
             width / 2, -height / 2, z, 1.0,
             width / 2, height / 2, z, 1.0,
             -width / 2, height / 2, z, 1.0,
-            // right
             width / 2, -height / 2, z, 1.0,
             width / 2, -height / 2, z - width, 1.0,
             width / 2, height / 2, z - width, 1.0,
@@ -622,11 +572,6 @@ var webGl = /** @class */ (function () {
         ];
         (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
     };
-    /**
-     * @param clientX 缩放点得x坐标
-     * @param clientY 缩放点得y坐标
-     * @returns [缩放x比率,缩放y比率,x轴偏移 y轴偏移]
-     */
     webGl.prototype.decideScaleRatio = function (clientX, clientY) {
         var width = 0, height = 0;
         var centerX = this.viewWidth / (2);
@@ -641,20 +586,17 @@ var webGl = /** @class */ (function () {
         var scaleX, scaleY, dx = 0, dy = 0;
         clientX *= this.dpr;
         clientY *= this.dpr;
-        if (this.isEnlargementForScale) { // 放大双击得时候就缩小
+        if (this.isEnlargementForScale) {
             var _a = this.imgShapeInitinal, initialWidth = _a[0], initinalHeight = _a[1];
             width = Math.abs(initialWidth);
             height = Math.abs(initinalHeight);
-            // eg. if ratio is 0.2 then result is -0.8 ,during animate  it becomes 1 0.9 .0.8 
             scaleX = width / curWidth - 1;
             scaleY = height / curHeight - 1;
-            //  it's should be the offset of the img's center Point
-            //  this coordinate center is 0 , 0  on the center of screen
             var _b = this.curCenterCoordinate, curCenterX = _b[0], curCenterY = _b[1];
             dx = -(curCenterX * (1 + scaleX));
             dy = -(curCenterY * (1 + scaleY));
         }
-        else { //缩小得时候双击就放大
+        else {
             if (this.curIsLongImg()) {
                 width = this.viewWidth;
                 height = nh / nw * width;
@@ -667,7 +609,7 @@ var webGl = /** @class */ (function () {
             scaleY = height / curHeight - 1;
             dx = -((clientX - centerX) * (scaleX));
             dy = ((clientY - centerY) * (scaleY));
-            if (this.curIsLongImg()) { // a long img dont need a horisontal offset
+            if (this.curIsLongImg()) {
                 dx = 0;
             }
         }
@@ -678,12 +620,6 @@ var webGl = /** @class */ (function () {
             dy
         ];
     };
-    /**
-     *
-     * @param imgWidth 图片宽度
-     * @param imgHeight 图片高度
-     * @returns  返回适配当前视口得图片宽高
-     */
     webGl.prototype.decideImgViewSize = function (imgWidth, imgHeight) {
         var width = 0, height = 0;
         if (this.viewWidth >= imgWidth) {
@@ -703,7 +639,7 @@ var webGl = /** @class */ (function () {
         ];
     };
     webGl.prototype.draw = function (index) {
-        this.positions = []; // 期望positions只保留一个底层的立方体，三个展示图片的面 共计六个面
+        this.positions = [];
         var imgLength = this.imgUrls.length;
         var maxWidth = 0, maxHeight = 0;
         for (var i = index - 1; i <= index + 1; i++) {
@@ -717,15 +653,15 @@ var webGl = /** @class */ (function () {
                 }
                 else {
                     image = this.imgUrls[i];
-                    if (typeof image._id == 'undefined') { // not intinial
+                    if (typeof image._id == 'undefined') {
                         this.imgUrls[i] = this.validateImg(image);
                         image = this.imgUrls[i];
                     }
                 }
                 this.imgs[i] = image;
                 var naturalWidth = image.naturalWidth, naturalHeight = image.naturalHeight;
-                if (image.loadError) { // a load wrong img
-                    naturalWidth = naturalHeight = 200; // default size. here maybe 
+                if (image.loadError) {
+                    naturalWidth = naturalHeight = 200;
                 }
                 var _a = this.decideImgViewSize(naturalWidth * this.dpr, naturalHeight * this.dpr), width = _a[0], height = _a[1];
                 if (i == this.curIndex) {
@@ -801,17 +737,11 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(webGl.prototype, "viewRect", {
-        /**
-         * a position ,return this rect's coordinate like htmlElement.getBoundingClientRect()
-         */
         get: function () {
             var topOriginX = -this.viewWidth / 2;
             var topOriginY = this.viewHeight / 2;
             var curPlaneIndex = this.curPointAt;
             var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            // 点的位置会旋转的,旋转之后 再去用固定的坐标计算的时候你就把握不住
-            //  so dynamic find the correct coordinate
-            //  
             for (var i = curPlaneIndex; i < curPlaneIndex + 16; i += 4) {
                 var x = this.positions[i];
                 var y = this.positions[i + 1];
@@ -835,10 +765,6 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(webGl.prototype, "curPlanePosition", {
-        /**
-         *    top      right
-         *    bottom   bottomright
-         */
         get: function () {
             var curPlaneIndex = this.curPointAt;
             return [];
@@ -847,9 +773,6 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(webGl.prototype, "isEnlargement", {
-        /**
-         * should return a value that indicate whether the curViewRect over the viewPort's boundry
-         */
         get: function () {
             var _a = this.imgShapeInitinal, iw = _a[0], ih = _a[1];
             var viewRect = this.viewRect;
@@ -861,9 +784,6 @@ var webGl = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(webGl.prototype, "isEnlargementForScale", {
-        /**
-         * should return curViewRect is enlarge or shrink compare with initialSize;
-         */
         get: function () {
             ;
             var _a = this.imgShapeInitinal, iw = _a[0], ih = _a[1];
@@ -876,7 +796,7 @@ var webGl = /** @class */ (function () {
     webGl.prototype.isLoadingError = function (index) {
         ;
         arguments.length == 0 && (index = this.curIndex);
-        return this.imgs[index]['loadError']; // to do 定义错误图片样式
+        return this.imgs[index]['loadError'];
     };
     webGl.prototype.loadImage = function (src, index) {
         var _this = this;
@@ -901,7 +821,6 @@ var webGl = /** @class */ (function () {
         return img;
     };
     webGl.prototype.handleImgLoaded = function (img, index) {
-        // imgs change , index change
         index = this.imgs.indexOf(img);
         if (!img.loadError) {
             img = this.validateImg(img);
@@ -928,11 +847,8 @@ var webGl = /** @class */ (function () {
             }
             var canvas = tailor(img, width, height);
             canvas._id = this.imgId++;
-            // @ts-ignore
             canvas.naturalHeight = height;
-            // @ts-ignore
             canvas.naturalWidth = width;
-            // @ts-ignore
             canvas.complete = true;
             return canvas;
         }
@@ -961,11 +877,8 @@ var webGl = /** @class */ (function () {
     };
     webGl.prototype.loadShader = function (gl, type, source) {
         var shader = gl.createShader(type);
-        // Send the source to the shader object
         gl.shaderSource(shader, source);
-        // Compile the shader program
         gl.compileShader(shader);
-        // See if it compiled successfully
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
             console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
@@ -989,7 +902,6 @@ var webGl = /** @class */ (function () {
         }
         this.viewWidth = canvas.width;
         this.viewHeight = canvas.height;
-        // gl.viewport(0,0,this.viewWidth,this.viewHeight)
         return gl;
     };
     webGl.prototype.animate = function (_a) {

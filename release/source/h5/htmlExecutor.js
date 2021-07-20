@@ -1,4 +1,4 @@
-var htmlExecutor = /** @class */ (function () {
+var htmlExecutor = (function () {
     function htmlExecutor() {
         this.prefix = "__";
         this.ref = this.intialView([]);
@@ -63,7 +63,6 @@ var htmlExecutor = /** @class */ (function () {
         return imagesNodes;
     };
     htmlExecutor.prototype.handleDoubleClick = function (e) {
-        // if (this.isAnimating) return;
         var curItem = this.imgItems[this.curIndex];
         var curImg = curItem;
         var curItemWidth = curItem.getBoundingClientRect().width;
@@ -98,8 +97,7 @@ var htmlExecutor = /** @class */ (function () {
             else {
                 toHeight = curItemHeight;
             }
-            // 竖直状态下 长图的双击放大放大至设备的宽度大小，
-            if ((curItemWidth * 1.5) < this.containerWidth) //长图的初始宽度应该小于屏幕宽度
+            if ((curItemWidth * 1.5) < this.containerWidth)
                 if (toHeight > toWidth) {
                     if (toWidth >= this.containerWidth) {
                         toWidth = this.containerWidth;
@@ -110,7 +108,7 @@ var htmlExecutor = /** @class */ (function () {
         var scaleX;
         var scaleY;
         var isBigSize = curItem.dataset.isEnlargement == "enlargement";
-        if (isBigSize) { //当前浏览元素为大尺寸时执行缩小操作，小尺寸执行放大操作
+        if (isBigSize) {
             switch (Math.abs(rotateDeg % 360)) {
                 case 0:
                 case 180:
@@ -131,7 +129,7 @@ var htmlExecutor = /** @class */ (function () {
             scaleY = toHeight / curItemHeight;
         }
         ;
-        if (scaleX > 1 || scaleY > 1) { //放大
+        if (scaleX > 1 || scaleY > 1) {
             this.setToNaturalImgSize(toWidth, toHeight, scaleX, scaleY, e);
         }
         else if (scaleX < 1 || scaleY < 1) {
@@ -182,10 +180,6 @@ var htmlExecutor = /** @class */ (function () {
     htmlExecutor.prototype.handleMove = function (e) {
         var _this = this;
         e.preventDefault();
-        // if( this.isAnimating ){
-        //     return;
-        // } 
-        // 双指缩放时的 处理 只移动和缩放。
         if (e.touches.length == 2) {
             clearTimeout(this.performerRecordMove);
             clearTimeout(this.performerClick);
@@ -207,17 +201,9 @@ var htmlExecutor = /** @class */ (function () {
         var curItemViewRight = curItem.getBoundingClientRect().right;
         var imgContainerRect = this.imgContainer.getBoundingClientRect();
         var conWidth = imgContainerRect.width;
-        /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
-         * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
-         * 并启动一个计时器 一定时间之后处理移动方向
-         **/
         if (this.fingerDirection) {
             this.performerRecordMove = 0;
             if (curItem.dataset.isEnlargement == 'enlargement') {
-                // 放大的时候的移动是查看放大后的图片
-                // 放大的时候,如果到达边界还是进行正常的切屏操作
-                // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
-                // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
                 if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
                     if (((isBoundaryLeft && direction == 'right') ||
                         (isBoundaryRight && direction == 'left') ||
@@ -245,13 +231,11 @@ var htmlExecutor = /** @class */ (function () {
                 }
             }
             else {
-                //正常情况下的移动是图片左右切换
                 this.handleMoveNormal(e);
             }
             this.isMotionless = false;
         }
         else {
-            // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
             if ((curItem.dataset.isEnlargement == 'enlargement' && curItemViewLeft < 0 && curItemViewRight > conWidth)
                 ||
                     (curItem.dataset.isEnlargement !== 'enlargement')) {
@@ -284,14 +268,10 @@ var htmlExecutor = /** @class */ (function () {
                     _this.fingerDirection = 'horizontal';
                 }
                 if (curItem.dataset.isEnlargement == 'enlargement') {
-                    // 放大的时候的移动是查看放大后的图片
-                    // 放大的时候,如果到达边界还是进行正常的切屏操作
-                    // 重置是否已到达边界的变量,如果容器内能容纳图片则不需要重置
                     var imgContainerRect_1 = _this.imgContainer.getBoundingClientRect();
                     var conWidth_1 = imgContainerRect_1.width;
                     var curItemViewLeft_1 = curItem.getBoundingClientRect().left;
                     var curItemViewRight_1 = curItem.getBoundingClientRect().right;
-                    // 对于长图单独处理，长图就是宽度可以容纳在当前容器内，但是高度很高的图片
                     if (curItemViewLeft_1 >= 0 && curItemViewRight_1 <= conWidth_1) {
                         if (((isBoundaryLeft && direction == 'right') ||
                             (isBoundaryRight && direction == 'left') ||
@@ -315,7 +295,6 @@ var htmlExecutor = /** @class */ (function () {
                     }
                 }
                 else {
-                    //正常情况下的移动是图片左右切换
                     _this.handleMoveNormal(e);
                 }
                 _this.isMotionless = false;
@@ -340,7 +319,6 @@ var htmlExecutor = /** @class */ (function () {
         var conHeight = imgContainerRect.height;
         var curItem = this.imgItems[this.curIndex];
         if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
         var curItemRect = curItem.getBoundingClientRect();
@@ -353,7 +331,6 @@ var htmlExecutor = /** @class */ (function () {
         var offsetY = curY - this.startY;
         var curTop;
         var curLeft;
-        // 如果容器内能完整展示图片就不需要移动
         showDebugger("\n            viewLeft:" + viewLeft + "\n            viewRight:" + viewRight + "\n        ");
         if (Math.round(viewLeft) < 0 || Math.round(viewRight) > conWidth) {
             curLeft = (offsetX);
@@ -378,28 +355,25 @@ var htmlExecutor = /** @class */ (function () {
         this.startY = curY;
     };
     htmlExecutor.prototype.handleTEndEnNormal = function (e) {
-        // if (this.isAnimating) {
-        //     return
-        // }
         var endX = (e.changedTouches[0].clientX);
         var offset = endX - this.touchStartX;
-        if (endX - this.touchStartX >= this.threshold) { //前一张
-            if (this.curIndex == 0) { //第一张
+        if (endX - this.touchStartX >= this.threshold) {
+            if (this.curIndex == 0) {
                 this.slideSelf();
                 return;
             }
             this.curIndex--;
             this.slidePrev();
         }
-        else if (endX - this.touchStartX <= -this.threshold) { //后一张
-            if (this.curIndex + 1 == this.imgsNumber) { //最后一张
+        else if (endX - this.touchStartX <= -this.threshold) {
+            if (this.curIndex + 1 == this.imgsNumber) {
                 this.slideSelf();
                 return;
             }
             this.curIndex++;
             this.slideNext();
         }
-        else { //复原
+        else {
             this.slideSelf();
         }
     };
@@ -409,7 +383,7 @@ var htmlExecutor = /** @class */ (function () {
             endX = -(this.containerWidth * (this.imgsNumber - 1));
             this.curIndex = this.imgsNumber - 1;
         }
-        if (this.imgContainerMoveX < endX) { /* infinite move */
+        if (this.imgContainerMoveX < endX) {
             this.slideSelf();
             return;
         }
@@ -430,7 +404,7 @@ var htmlExecutor = /** @class */ (function () {
             endX = 0;
             this.curIndex = 0;
         }
-        if (this.imgContainerMoveX > endX) { /* infinite move */
+        if (this.imgContainerMoveX > endX) {
             this.slideSelf();
             return;
         }
@@ -461,13 +435,11 @@ var htmlExecutor = /** @class */ (function () {
         });
     };
     htmlExecutor.prototype.handleTEndEnlarge = function (e) {
-        // ;debugger;
         this.isAnimating = false;
         var imgContainerRect = this.imgContainer.getBoundingClientRect();
         var conWidth = imgContainerRect.width;
         var conHeight = imgContainerRect.height;
         var actionExecutor = this.actionExecutor;
-        // 这里是curIttem
         var curItemRect = actionExecutor.viewRect;
         var curItemWidth = curItemRect.width;
         var curItemHeihgt = curItemRect.height;
@@ -478,7 +450,6 @@ var htmlExecutor = /** @class */ (function () {
         var minTop = conHeight - curItemHeihgt;
         var maxLeft = 0;
         var minLeft = conWidth - curItemWidth;
-        // debugger;
         var curItemTop = curItemRect.top;
         var curItemLeft = curItemRect.left;
         var recoverY = false;
@@ -501,7 +472,6 @@ var htmlExecutor = /** @class */ (function () {
             endY = minTop - curItemTop;
             recoverY = true;
         }
-        // 如果容器内能完整展示图片就不需要移动至边界
         if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
             recoverX = false;
             curItem.dataset.toLeft = 'true';
@@ -525,7 +495,6 @@ var htmlExecutor = /** @class */ (function () {
                 timingFunction: 'cubic-bezier(0, 0, 0, 0.93)'
             });
             if (endX == maxLeft - curItemLeft) {
-                //toLeft 即为到达左边界的意思下同
                 curItem.dataset.toLeft = 'true';
                 curItem.dataset.toRight = 'false';
             }
@@ -543,7 +512,6 @@ var htmlExecutor = /** @class */ (function () {
             }
         }
         else {
-            // 如果容器内能完整展示图片就不需要移动至边界
             if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
                 curItem.dataset.toLeft = 'true';
                 curItem.dataset.toRight = 'true';
@@ -567,10 +535,6 @@ var htmlExecutor = /** @class */ (function () {
             var dy = endPoint.y - startPoint.y;
             var degree = Math.atan2(dy, dx) * 180 / Math.PI;
             var touchTime = this.moveEndTime - this.moveStartTime;
-            // 手指移动时间较短的时候，手指离开屏幕时，会滑动一段时间
-            // bug fix: on android , there dx,dy is 0,still trigger moveEvent, since add distance restrict
-            // 上边确定的degree时 Math.atan2会返回这个向量相对原点的偏移角度，我们借此拿到直线的斜率进而根据直线方程确定
-            // 要滑动的x y的值
             if (touchTime < 90 && ((Math.abs(dx) + Math.abs(dy)) > 5)) {
                 var boundryObj = { maxTop: maxTop, minTop: minTop - curItemViewTop, maxLeft: maxLeft, minLeft: minLeft - curItemViewLeft };
                 this.autoMove(curItem, degree, 0, 0, boundryObj);
@@ -589,7 +553,6 @@ var htmlExecutor = /** @class */ (function () {
             duration: 1
         });
         if (endX == maxLeft) {
-            //toLeft 即为到达左边界的意思下同
             curItem.dataset.toLeft = 'true';
             curItem.dataset.toRight = 'false';
         }
@@ -626,7 +589,6 @@ var htmlExecutor = /** @class */ (function () {
         }
         var curItem = this.imgItems[this.curIndex];
         if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
         this.isAnimating = true;
@@ -656,7 +618,6 @@ var htmlExecutor = /** @class */ (function () {
         this.isZooming = true;
         var curItem = this.imgItems[this.curIndex];
         if (curItem.dataset.loaded == 'false') {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             this.isAnimating = false;
             return;
         }
@@ -675,20 +636,18 @@ var htmlExecutor = /** @class */ (function () {
         this.curPoint1.y = e.touches[0].clientY;
         this.curPoint2.x = e.touches[1].clientX;
         this.curPoint2.y = e.touches[1].clientY;
-        if (distaceBefore > distanceNow) { //缩小 retu
+        if (distaceBefore > distanceNow) {
             var y = ((this.zoomScale) * (centerFingerY - centerImgCenterY));
             var x = ((this.zoomScale) * (centerFingerX - centerImgCenterX));
             curItem.matrix = this.matrixMultipy(this.getScaleMatrix({ x: 1 - this.zoomScale, y: 1 - this.zoomScale, z: 1 }), curItem.matrix, this.getTranslateMatrix({ x: x, y: y, z: 1 }));
             var intialMatrix = this.matrixMultipy(this.getRotateZMatrix(curItem.rotateDeg * Math.PI / 180), curItem.intialMatrix);
-            // 缩放系数已经小于初始矩阵了 就让他维持到初始矩阵的样子
             if (intialMatrix[0][0] >= curItem.matrix[0][0]) {
                 curItem.matrix = intialMatrix;
                 curItem.dataset.isEnlargement = 'shrink';
             }
         }
-        else if (distaceBefore < distanceNow) { //放大
+        else if (distaceBefore < distanceNow) {
             curItem.dataset.isEnlargement = 'enlargement';
-            // biggest width for zoom in
             var maxWidth = this.containerWidth * 4;
             if (curItemWidth * (1 + this.zoomScale) > maxWidth) {
                 this.isAnimating = false;
@@ -706,10 +665,9 @@ var htmlExecutor = /** @class */ (function () {
         var mouseX = e.touches[0].clientX;
         var mouseY = e.touches[0].clientY;
         var curItem = this.imgItems[this.curIndex];
-        // 以下为旋转之后缩放时需要用到的参数
         var curItemRect = curItem.getBoundingClientRect();
-        var curItemViewTop = curItemRect.top; //当前元素距离视口的top
-        var curItemViewLeft = curItemRect.left; //当前元素距离视口的left
+        var curItemViewTop = curItemRect.top;
+        var curItemViewLeft = curItemRect.left;
         var centerX = (curItemRect.width) / 2 + curItemViewLeft;
         var centerY = (curItemRect.height) / 2 + curItemViewTop;
         var x = 0, y = 0;
@@ -762,14 +720,10 @@ var htmlExecutor = /** @class */ (function () {
             time: 0
         });
         var transformStr = this.matrixTostr(this.imgContainer.matrix);
-        // this.imgContainer.style.transform = `${transformStr}`;
         this.toggleClass(this.ref, this.defToggleClass);
     };
     htmlExecutor.prototype.mobileRecordInitialData = function (els) {
         var _this = this;
-        /**
-         * 记录并设置初始top，left值
-         */
         var record = function (el, img) {
             var imgContainerRect = _this.imgContainer.getBoundingClientRect();
             var imgContainerHeight = imgContainerRect.height;
@@ -780,7 +734,7 @@ var htmlExecutor = /** @class */ (function () {
             var scaleX = imgContainerWidth / imgNaturalWidth;
             var imgShouldHeight = imgContainerWidth * imgNaturalHeight / imgNaturalWidth;
             var scaleY = imgShouldHeight / imgNaturalHeight;
-            if (imgContainerHeight < styleObj.height) { // long img fill column direction. width auto fit
+            if (imgContainerHeight < styleObj.height) {
                 scaleY = imgContainerHeight / imgNaturalHeight;
                 var imgShouldWeidth = imgContainerHeight * imgNaturalWidth / imgNaturalHeight;
                 scaleX = imgShouldWeidth / imgNaturalWidth;
@@ -840,9 +794,6 @@ var htmlExecutor = /** @class */ (function () {
     };
     htmlExecutor.prototype.recordInitialData = function (els, record) {
         var _this = this;
-        /**
-         * 记录并设置初始top，left值
-         */
         els.forEach(function (el) {
             var img = el;
             if (img.complete) {
@@ -870,9 +821,6 @@ var htmlExecutor = /** @class */ (function () {
         });
     };
     htmlExecutor.prototype.handlePcClick = function (e) {
-        /**
-         * 这里把操作派发
-         */
         var type = (e.target).dataset.type;
         if (this.operateMaps[type]) {
             this[this.operateMaps[type]](e);

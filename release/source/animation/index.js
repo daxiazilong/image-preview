@@ -1,4 +1,4 @@
-var Animation = /** @class */ (function () {
+var Animation = (function () {
     function Animation() {
     }
     Animation.prototype.animate = function (_a) {
@@ -52,8 +52,6 @@ var Animation = /** @class */ (function () {
         prop = prop || 'all';
         el['style'][this.transitionEndPrefix] = " " + prop + " " + time + "s " + timingFunction;
     };
-    // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
-    // ============================================================
     Animation.prototype.transitionEnd = function () {
         var el = document.createElement('bootstrap');
         var transEndEventNames = {

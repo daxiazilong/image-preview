@@ -3,7 +3,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from) {
         to[j] = from[i];
     return to;
 };
-var Matrix = /** @class */ (function () {
+var Matrix = (function () {
     function Matrix() {
     }
     Matrix.prototype.matrixMultipy = function (a, b) {

@@ -34,7 +34,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var Rotate = /** @class */ (function () {
+var Rotate = (function () {
     function Rotate() {
     }
     Rotate.prototype.handleRotateLeft = function (e) {
@@ -44,18 +44,17 @@ var Rotate = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (this.isAnimating)
-                            return [2 /*return*/];
+                            return [2];
                         if (this.actionExecutor.isLoadingError()) {
-                            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-                            return [2 /*return*/];
+                            return [2];
                         }
                         changeDeg = -1 * Math.PI / 2;
                         this.isAnimating = true;
-                        return [4 /*yield*/, this.actionExecutor.rotateZ(changeDeg)];
+                        return [4, this.actionExecutor.rotateZ(changeDeg)];
                     case 1:
                         _a.sent();
                         this.isAnimating = false;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });
@@ -67,18 +66,17 @@ var Rotate = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (this.isAnimating)
-                            return [2 /*return*/];
+                            return [2];
                         if (this.actionExecutor.isLoadingError()) {
-                            // 除了切屏之外对于加载错误的图片一律禁止其他操作
-                            return [2 /*return*/];
+                            return [2];
                         }
                         changeDeg = 1 * Math.PI / 2;
                         this.isAnimating = true;
-                        return [4 /*yield*/, this.actionExecutor.rotateZ(changeDeg)];
+                        return [4, this.actionExecutor.rotateZ(changeDeg)];
                     case 1:
                         _a.sent();
                         this.isAnimating = false;
-                        return [2 /*return*/];
+                        return [2];
                 }
             });
         });

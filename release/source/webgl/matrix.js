@@ -39,7 +39,6 @@ export var matrix = {
         }
         return matrix.multiplyMatrices.apply(matrix, __spreadArray([result, rest.splice(0, 1)[0]], rest));
     },
-    // https://www.songho.ca/opengl/gl_rotate.html
     rotateByArbitrayAxis: function (x, y, z, deg) {
         var cos = Math.cos, sin = Math.sin, pow = Math.pow;
         var aNumber = (1 - cos(deg));

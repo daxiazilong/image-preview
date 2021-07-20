@@ -1,21 +1,18 @@
-// import { showDebugger } from '../tools/index';
-var Move = /** @class */ (function () {
+var Move = (function () {
     function Move() {
     }
     Move.prototype.handleMove = function (e) {
         var _this = this;
         e.preventDefault();
-        // 双指缩放时的。
         if (e.touches.length == 2) {
             clearTimeout(this.performerClick);
             this.handleZoom(e);
-            // this.handleMoveEnlage(e); 
             return;
         }
         var isBoundaryLeft = this.actionExecutor.IsBoundaryLeft;
         var isBoundaryRight = this.actionExecutor.isBoundaryRight;
         var isBoundary = isBoundaryLeft || isBoundaryRight;
-        if (e.touches[0].clientX - this.startXForDirection === 0) { //还没移动
+        if (e.touches[0].clientX - this.startXForDirection === 0) {
             return;
         }
         var direction = e.touches[0].clientX - this.startXForDirection > 0 ? 'right' : 'left';
@@ -23,12 +20,8 @@ var Move = /** @class */ (function () {
         var curItemViewLeft = viewRect.left;
         var curItemViewRight = viewRect.right;
         var conWidth = this.actionExecutor.viewWidth / this.actionExecutor.dpr;
-        /* 收集一段时间之内得移动得点，用于获取当前手指得移动方向
-         * 如果手指方向已经确定了 则按手指方向做出操作，否则 启动开始收集手指移动得点
-         **/
         if (this.fingerDirection) {
             if (this.actionExecutor.isEnlargement) {
-                // 放大了但是没有超出边界
                 if (curItemViewLeft >= 0 && curItemViewRight <= conWidth) {
                     if (((direction == 'right') ||
                         (direction == 'left') ||
@@ -68,28 +61,25 @@ var Move = /** @class */ (function () {
                 }
             }
             else {
-                //正常情况下的移动是图片左右切换
                 this.handleMoveNormal(e);
             }
         }
         else {
-            // 放大之后的非长图，以及非放大的图片，这里可以直接派发操作
             if ((this.actionExecutor.isEnlargement &&
                 (curItemViewLeft < 0 || curItemViewRight > conWidth))
                 ||
                     (!this.actionExecutor.isEnlargement)) {
-                // enlarge but not reach bonudry
                 if (this.actionExecutor.isEnlargement && !isBoundary && !this.normalMoved) {
                     this.handleMoveEnlage(e);
                 }
-                else if (!this.actionExecutor.isEnlargement) { // not enlage
+                else if (!this.actionExecutor.isEnlargement) {
                     this.handleMoveNormal(e);
                 }
-                else if (isBoundary || this.normalMoved) { // 放大了到边界了
-                    if (this.normalMoved) { // 已经有normal move 继续normalmove
+                else if (isBoundary || this.normalMoved) {
+                    if (this.normalMoved) {
                         this.handleMoveNormal(e);
                     }
-                    else { // 否则手指移动方向与到达的边界同向 才normalmove 反向就enlarge
+                    else {
                         if (direction == 'right') {
                             if (isBoundaryLeft) {
                                 this.handleMoveNormal(e);
@@ -113,9 +103,7 @@ var Move = /** @class */ (function () {
                 }
                 return;
             }
-            // 长图收集手指方向
             this.getMovePoints(e);
-            // 收集够一定数量的点才会执行下边的逻辑
             if (this.movePoints.length < this.maxMovePointCounts) {
                 return;
             }
@@ -124,12 +112,6 @@ var Move = /** @class */ (function () {
     };
     Move.prototype.handleMoveNormal = function (e) {
         var _this = this;
-        // showDebugger(`
-        // moveNormal:${Date.now()}
-        // this.isAnimating :${this.isAnimating }
-        // this.touchStartX:${this.touchStartX}
-        // e.touches.length:${e.touches.length}
-        // `)
         if (this.isAnimating) {
             return;
         }
@@ -156,7 +138,6 @@ var Move = /** @class */ (function () {
             var type_1 = 'normalMoved';
             var task = function (e) {
                 (_this.normalMoved = false);
-                // other finger change the offset 
                 var curX = (e.changedTouches[0].clientX);
                 var offset = curX - _this.touchStartX;
                 eventsHanlder.handleMoveNormal(e, offset);
@@ -171,13 +152,7 @@ var Move = /** @class */ (function () {
     };
     Move.prototype.handleMoveEnlage = function (e) {
         ;
-        // showDebugger(`
-        //     handlemoveEnlarge:this.isZooming ${this.isZooming}
-        //     this.isAnimating:${this.isAnimating}
-        //      ${Date.now()}
-        // `)
         if (this.actionExecutor.isLoadingError()) {
-            // 除了切屏之外对于加载错误的图片一律禁止其他操作
             return;
         }
         if (this.isZooming) {
@@ -190,16 +165,15 @@ var Move = /** @class */ (function () {
         }
         var actionExecutor = this.actionExecutor;
         var eventsHanlder = actionExecutor.eventsHanlder;
-        // 放大的时候自由滑动的时候是可以被中断的
         if (eventsHanlder.curBehaviorCanBreak) {
-            actionExecutor.curAimateBreaked = true; //直接中断当前动画
+            actionExecutor.curAimateBreaked = true;
             if (this.isAnimating) {
                 this.touchStartX = (e.touches[0].clientX);
                 this.touchStartY = (e.touches[0].clientY);
                 return;
             }
         }
-        else { // 不可中断动画进行时
+        else {
             if (this.isAnimating) {
                 return;
             }
@@ -221,7 +195,6 @@ var Move = /** @class */ (function () {
         var offsetY = curY - this.startY;
         var curTop;
         var curLeft;
-        // 如果容器内能完整展示图片就不需要移动
         if (Math.round(viewLeft) < 0 || Math.round(viewRight) > conWidth) {
             curLeft = (offsetX);
         }
@@ -248,7 +221,6 @@ var Move = /** @class */ (function () {
         var imgContainerRect = this.imgContainer.getBoundingClientRect();
         var conWidth = imgContainerRect.width;
         var conHeight = imgContainerRect.height;
-        // debugger;
         var _b = this.actionExecutor, viewRect = _b.viewRect, eventsHanlder = _b.eventsHanlder;
         var curItemRect = viewRect;
         var curItemViewTop = curItemRect.top;
@@ -267,15 +239,12 @@ var Move = /** @class */ (function () {
         else if (endX < minLeft) {
             endX = (minLeft);
         }
-        // debugger;
         if (endY > maxTop) {
             endY = (maxTop);
         }
         else if (endY < minTop) {
             endY = (minTop);
         }
-        // 容器宽度能容纳图片宽度，则水平方向不需要移动，
-        // 容器高度能容纳图片高度，则垂直方向不需要移动。
         var x = 0;
         var y = 0;
         if (!(curItemViewLeft >= 0 && curItemViewRight <= conWidth)) {
