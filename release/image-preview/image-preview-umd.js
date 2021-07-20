@@ -1566,7 +1566,9 @@
             get: function () {
                 var _a = this.imgShapeInitinal, iw = _a[0], ih = _a[1];
                 var rect = this.viewRect;
-                return rect.width * this.dpr > Math.abs(iw) || rect.height * this.dpr > Math.abs(ih);
+                return Math.round(rect.width * this.dpr) > Math.round(Math.abs(iw))
+                    ||
+                        Math.round(rect.height * this.dpr) > Math.round(Math.abs(ih));
             },
             enumerable: false,
             configurable: true
