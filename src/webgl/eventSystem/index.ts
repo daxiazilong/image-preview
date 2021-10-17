@@ -34,9 +34,11 @@ export class events {
         }
         this.resizeTimer = setTimeout(run,100)
     }
-    handleDoubleClick(e: TouchEvent & MouseEvent){
+    handleDoubleClick({clientX,clientY}:{
+        clientX:number,
+        clientY:number
+    }){
 
-        const { clientX, clientY } = e.touches[0];
         const { viewInstance } = this;
 
         const [scaleX,scaleY,dx,dy] = viewInstance.decideScaleRatio(clientX,clientY)

@@ -3,15 +3,15 @@ import { fps } from '../webgl/tools/index';
 fps()()
 
 let isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
-if(!isMobile){
-    if(confirm(`
-        仅适配移动端项目
-        only suitable for mobile terminal
-    `)){
-    }else{
-    };
-    throw 1;
-}
+// if(!isMobile){
+//     if(confirm(`
+//         仅适配移动端项目
+//         only suitable for mobile terminal
+//     `)){
+//     }else{
+//     };
+//     throw 1;
+// }
 const obj = new ImagePreview({
     imgs: [
         '/testImage/BBC82C020430AED149F8D18A0849D241.png',
