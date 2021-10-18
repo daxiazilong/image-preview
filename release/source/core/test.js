@@ -2,14 +2,6 @@ import { ImagePreview } from './image-preview';
 import { fps } from '../webgl/tools/index';
 fps()();
 var isMobile = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
-if (!isMobile) {
-    if (confirm("\n        \u4EC5\u9002\u914D\u79FB\u52A8\u7AEF\u9879\u76EE\n        only suitable for mobile terminal\n    ")) {
-    }
-    else {
-    }
-    ;
-    throw 1;
-}
 var obj = new ImagePreview({
     imgs: [
         '/testImage/BBC82C020430AED149F8D18A0849D241.png',

@@ -44,7 +44,7 @@ export class events {
         const [scaleX,scaleY,dx,dy] = viewInstance.decideScaleRatio(clientX,clientY)
         return viewInstance.scaleZPosition({scaleX,scaleY,dx,dy})
     }
-    handleMoveEnlage(e: TouchEvent & MouseEvent,x:number,y:number,z:number) {
+    handleMoveEnlage(x:number,y:number,z:number) {
         const { viewInstance } = this
         x *= viewInstance.dpr;
         y *= -viewInstance.dpr;
@@ -65,7 +65,7 @@ export class events {
         let deg = -offset / (viewInstance.viewWidth/viewInstance.dpr) * maxDeg
         viewInstance.rotatePosition(deg);
     }
-    handleZoom(e: TouchEvent & MouseEvent,sx:number,sy:number,dx:number,dy:number) {
+    handleZoom(sx:number,sy:number,dx:number,dy:number) {
         const { viewInstance } = this;
 
         let [nw,nh] = viewInstance.imgShape

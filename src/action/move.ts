@@ -249,7 +249,7 @@ export class Move{
         }else{
             curTop = 0
         }
-        actionExecutor.eventsHanlder.handleMoveEnlage(e,curLeft,curTop,0);
+        actionExecutor.eventsHanlder.handleMoveEnlage(curLeft,curTop,0);
 
         const type = 'handleTendEnlarte';
         this.addTouchEndTask(type,{

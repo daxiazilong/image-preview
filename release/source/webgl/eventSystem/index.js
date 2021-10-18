@@ -60,13 +60,13 @@ var events = (function () {
         };
         this.resizeTimer = setTimeout(run, 100);
     };
-    events.prototype.handleDoubleClick = function (e) {
-        var _a = e.touches[0], clientX = _a.clientX, clientY = _a.clientY;
+    events.prototype.handleDoubleClick = function (_a) {
+        var clientX = _a.clientX, clientY = _a.clientY;
         var viewInstance = this.viewInstance;
         var _b = viewInstance.decideScaleRatio(clientX, clientY), scaleX = _b[0], scaleY = _b[1], dx = _b[2], dy = _b[3];
         return viewInstance.scaleZPosition({ scaleX: scaleX, scaleY: scaleY, dx: dx, dy: dy });
     };
-    events.prototype.handleMoveEnlage = function (e, x, y, z) {
+    events.prototype.handleMoveEnlage = function (x, y, z) {
         var viewInstance = this.viewInstance;
         x *= viewInstance.dpr;
         y *= -viewInstance.dpr;
@@ -82,7 +82,7 @@ var events = (function () {
         var deg = -offset / (viewInstance.viewWidth / viewInstance.dpr) * maxDeg;
         viewInstance.rotatePosition(deg);
     };
-    events.prototype.handleZoom = function (e, sx, sy, dx, dy) {
+    events.prototype.handleZoom = function (sx, sy, dx, dy) {
         var viewInstance = this.viewInstance;
         var _a = viewInstance.imgShape, nw = _a[0], nh = _a[1];
         var _b = viewInstance.imgShapeInitinal, iW = _b[0], iH = _b[1];
