@@ -764,7 +764,7 @@ class webGl {
 
         }else{//缩小得时候双击就放大
             if( this.curIsLongImg() ){
-                width = this.viewWidth;
+                width = this.viewWidth > nw ? nw : this.viewWidth;
                 height = nh/nw * width;
             }else{
                 width = nw;
@@ -772,7 +772,6 @@ class webGl {
             }
             scaleX = width / curWidth - 1;
             scaleY = height / curHeight - 1;
-
             
             dx = -((clientX - centerX) * (scaleX));
             dy = ((clientY  - centerY) * (scaleY));

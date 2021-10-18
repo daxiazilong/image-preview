@@ -674,7 +674,7 @@ var webGl = (function () {
         }
         else {
             if (this.curIsLongImg()) {
-                width = this.viewWidth;
+                width = this.viewWidth > nw ? nw : this.viewWidth;
                 height = nh / nw * width;
             }
             else {

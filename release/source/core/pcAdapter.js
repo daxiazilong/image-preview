@@ -86,35 +86,11 @@ export default (function (constructor) {
             if (this.isAnimating) {
                 return;
             }
-            var curItemRect = actionExecutor.viewRect;
-            var viewLeft = curItemRect.left;
-            var viewRight = curItemRect.right;
-            var viewTop = curItemRect.top;
-            var viewBottom = curItemRect.bottom;
             var curX = (e.clientX);
             var curY = (e.clientY);
-            var eventsHanlder = actionExecutor.eventsHanlder;
-            var imgContainerRect = this.imgContainer.getBoundingClientRect();
-            var conWidth = imgContainerRect.width;
-            var conHeight = imgContainerRect.height;
-            var curItemHeihgt = curItemRect.height;
             var offsetX = curX - this.startX;
             var offsetY = curY - this.startY;
-            var curTop;
-            var curLeft;
-            if (Math.round(viewLeft) < 0 || Math.round(viewRight) > conWidth) {
-                curLeft = (offsetX);
-            }
-            else {
-                curLeft = 0;
-            }
-            if (Math.round(viewTop) < 0 || Math.round(viewBottom) > conHeight) {
-                curTop = (offsetY);
-            }
-            else {
-                curTop = 0;
-            }
-            actionExecutor.eventsHanlder.handleMoveEnlage(curLeft, curTop, 0);
+            actionExecutor.eventsHanlder.handleMoveEnlage(offsetX, offsetY, 0);
             this.startX = curX;
             this.startY = curY;
         };
@@ -214,6 +190,8 @@ export default (function (constructor) {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
+                            if (this.isAnimating)
+                                return [2];
                             this.isAnimating = true;
                             return [4, this.actionExecutor.slideBefore()];
                         case 1:
@@ -242,6 +220,8 @@ export default (function (constructor) {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
+                            if (this.isAnimating)
+                                return [2];
                             this.isAnimating = true;
                             return [4, this.actionExecutor.slideNext()];
                         case 1:

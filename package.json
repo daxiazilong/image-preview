@@ -1,6 +1,6 @@
 {
   "name": "image-preview",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "image-preview",
   "scripts": {
     "start": "webpack serve --open Chrome.exe --mode=development",

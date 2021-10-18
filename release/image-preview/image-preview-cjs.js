@@ -90,35 +90,11 @@ var adapterPC = (function (constructor) {
             if (this.isAnimating) {
                 return;
             }
-            var curItemRect = actionExecutor.viewRect;
-            var viewLeft = curItemRect.left;
-            var viewRight = curItemRect.right;
-            var viewTop = curItemRect.top;
-            var viewBottom = curItemRect.bottom;
             var curX = (e.clientX);
             var curY = (e.clientY);
-            actionExecutor.eventsHanlder;
-            var imgContainerRect = this.imgContainer.getBoundingClientRect();
-            var conWidth = imgContainerRect.width;
-            var conHeight = imgContainerRect.height;
-            curItemRect.height;
             var offsetX = curX - this.startX;
             var offsetY = curY - this.startY;
-            var curTop;
-            var curLeft;
-            if (Math.round(viewLeft) < 0 || Math.round(viewRight) > conWidth) {
-                curLeft = (offsetX);
-            }
-            else {
-                curLeft = 0;
-            }
-            if (Math.round(viewTop) < 0 || Math.round(viewBottom) > conHeight) {
-                curTop = (offsetY);
-            }
-            else {
-                curTop = 0;
-            }
-            actionExecutor.eventsHanlder.handleMoveEnlage(curLeft, curTop, 0);
+            actionExecutor.eventsHanlder.handleMoveEnlage(offsetX, offsetY, 0);
             this.startX = curX;
             this.startY = curY;
         };
@@ -218,6 +194,8 @@ var adapterPC = (function (constructor) {
                 return __generator$4(this, function (_a) {
                     switch (_a.label) {
                         case 0:
+                            if (this.isAnimating)
+                                return [2];
                             this.isAnimating = true;
                             return [4, this.actionExecutor.slideBefore()];
                         case 1:
@@ -246,6 +224,8 @@ var adapterPC = (function (constructor) {
                 return __generator$4(this, function (_a) {
                     switch (_a.label) {
                         case 0:
+                            if (this.isAnimating)
+                                return [2];
                             this.isAnimating = true;
                             return [4, this.actionExecutor.slideNext()];
                         case 1:
@@ -1722,7 +1702,7 @@ var webGl = (function () {
         }
         else {
             if (this.curIsLongImg()) {
-                width = this.viewWidth;
+                width = this.viewWidth > nw ? nw : this.viewWidth;
                 height = nh / nw * width;
             }
             else {
