@@ -4,6 +4,257 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.imagePreviewModule = {}));
 }(this, (function (exports) { 'use strict';
 
+    var __extends = (undefined && undefined.__extends) || (function () {
+        var extendStatics = function (d, b) {
+            extendStatics = Object.setPrototypeOf ||
+                ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+                function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            return extendStatics(d, b);
+        };
+        return function (d, b) {
+            if (typeof b !== "function" && b !== null)
+                throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+            extendStatics(d, b);
+            function __() { this.constructor = d; }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+    })();
+    var __awaiter$4 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+    var __generator$4 = (undefined && undefined.__generator) || function (thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (_) try {
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    };
+    var adapterPC = (function (constructor) {
+        return (function (_super) {
+            __extends(class_1, _super);
+            function class_1() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.mouseDown = false;
+                return _this;
+            }
+            class_1.prototype.pcInitial = function () {
+                this.ref.querySelector("." + this.prefix + "close").addEventListener('mousedown', this.close.bind(this));
+                this.ref.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                this.ref.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                this.ref.addEventListener('mouseup', this.handleMouseUp.bind(this));
+                this.ref.addEventListener('wheel', this.handleWheel.bind(this));
+                this.handleResize = this.handleResize.bind(this);
+                window.addEventListener('resize', this.handleResize);
+            };
+            class_1.prototype.handleMouseUp = function () {
+                this.mouseDown = false;
+                if (this.actionExecutor.isEnlargement) {
+                    this.ref.style.cursor = 'grab';
+                }
+                else {
+                    this.ref.style.cursor = 'initial';
+                }
+            };
+            class_1.prototype.handleMouseMove = function (e) {
+                var actionExecutor = this.actionExecutor;
+                if (!actionExecutor.isEnlargement) {
+                    return;
+                }
+                if (!this.mouseDown) {
+                    return;
+                }
+                if (this.isAnimating) {
+                    return;
+                }
+                clearTimeout(this.performerClick);
+                var curX = (e.clientX);
+                var curY = (e.clientY);
+                var offsetX = curX - this.startX;
+                var offsetY = curY - this.startY;
+                actionExecutor.eventsHanlder.handleMoveEnlage(offsetX, offsetY, 0);
+                this.startX = curX;
+                this.startY = curY;
+            };
+            class_1.prototype.handleWheel = function (e) {
+                return __awaiter$4(this, void 0, void 0, function () {
+                    var centerFingerX, centerFingerY, actionExecutor, centerImgCenterX, centerImgCenterY, x, y, sx, sy, zoomScale;
+                    return __generator$4(this, function (_a) {
+                        centerFingerX = e.clientX;
+                        centerFingerY = e.clientY;
+                        this.isZooming = true;
+                        this.isAnimating = true;
+                        actionExecutor = this.actionExecutor;
+                        centerImgCenterX = actionExecutor.viewWidth / (2 * actionExecutor.dpr);
+                        centerImgCenterY = actionExecutor.viewHeight / (2 * actionExecutor.dpr);
+                        x = 0, y = 0, sx = 1.0, sy = 1.0;
+                        zoomScale = this.zoomScale * 2;
+                        if (e.deltaY > 0) {
+                            y = -((centerFingerY - centerImgCenterY)) * zoomScale;
+                            x = -((centerFingerX - centerImgCenterX)) * zoomScale;
+                            sx = 1 + zoomScale;
+                            sy = 1 + zoomScale;
+                        }
+                        else {
+                            y = (centerFingerY - centerImgCenterY) * zoomScale;
+                            x = (centerFingerX - centerImgCenterX) * zoomScale;
+                            sx = 1 - zoomScale;
+                            sy = 1 - zoomScale;
+                        }
+                        actionExecutor.eventsHanlder.handleZoom(sx, sy, x, y);
+                        this.isZooming = false;
+                        this.isAnimating = false;
+                        if (this.actionExecutor.isEnlargement) {
+                            this.ref.style.cursor = 'grab';
+                        }
+                        else {
+                            this.ref.style.cursor = 'initial';
+                        }
+                        return [2];
+                    });
+                });
+            };
+            class_1.prototype.handlePCDoubleClick = function (e) {
+                return __awaiter$4(this, void 0, void 0, function () {
+                    return __generator$4(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (this.isAnimating) {
+                                    return [2];
+                                }
+                                this.isAnimating = true;
+                                return [4, this.actionExecutor.eventsHanlder.handleDoubleClick({ clientX: e.clientX, clientY: e.clientY })];
+                            case 1:
+                                _a.sent();
+                                this.isAnimating = false;
+                                if (this.actionExecutor.isEnlargement) {
+                                    this.ref.style.cursor = 'grab';
+                                }
+                                else {
+                                    this.ref.style.cursor = 'initial';
+                                }
+                                return [2];
+                        }
+                    });
+                });
+            };
+            class_1.prototype.handleMouseDown = function (e) {
+                var _this = this;
+                var type = (e.target).dataset.type;
+                if (this[type]) {
+                    this[type](e);
+                    return;
+                }
+                this.mouseDown = true;
+                var actionExecutor = this.actionExecutor;
+                if (actionExecutor.isEnlargement) {
+                    this.startX = e.clientX;
+                    this.startY = e.clientY;
+                    this.ref.style.cursor = 'grabbing';
+                }
+                else {
+                    this.ref.style.cursor = 'initial';
+                }
+                if (Date.now() - this.lastClick < this.doubleClickDuration) {
+                    clearTimeout(this.performerClick);
+                    this.handlePCDoubleClick(e);
+                }
+                else {
+                    this.performerClick = setTimeout(function () {
+                        _this.handleClick(e);
+                    }, this.doubleClickDuration);
+                }
+                this.lastClick = Date.now();
+            };
+            class_1.prototype.slideBefore = function () {
+                return __awaiter$4(this, void 0, void 0, function () {
+                    var isFirst;
+                    return __generator$4(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (this.isAnimating)
+                                    return [2];
+                                this.isAnimating = true;
+                                return [4, this.actionExecutor.slideBefore()];
+                            case 1:
+                                isFirst = (_a.sent())[0];
+                                if (isFirst) {
+                                    this.
+                                        ref.
+                                        querySelectorAll("." + this.prefix + "bottom ." + this.prefix + "item ")[0].style
+                                        .cursor = "not-allowed";
+                                }
+                                else {
+                                    this.
+                                        ref.
+                                        querySelectorAll("." + this.prefix + "bottom ." + this.prefix + "item ")[1].style
+                                        .cursor = "pointer";
+                                }
+                                this.isAnimating = false;
+                                return [2];
+                        }
+                    });
+                });
+            };
+            class_1.prototype.slideNext = function () {
+                return __awaiter$4(this, void 0, void 0, function () {
+                    var isLast;
+                    return __generator$4(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (this.isAnimating)
+                                    return [2];
+                                this.isAnimating = true;
+                                return [4, this.actionExecutor.slideNext()];
+                            case 1:
+                                isLast = (_a.sent())[0];
+                                if (isLast) {
+                                    this.
+                                        ref.
+                                        querySelectorAll("." + this.prefix + "bottom ." + this.prefix + "item ")[1].style
+                                        .cursor = "not-allowed";
+                                }
+                                else {
+                                    this.
+                                        ref.
+                                        querySelectorAll("." + this.prefix + "bottom ." + this.prefix + "item ")[0].style
+                                        .cursor = "pointer";
+                                }
+                                this.isAnimating = false;
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return class_1;
+        }(constructor));
+    });
+
     var Move = (function () {
         function Move() {
         }
@@ -211,7 +462,7 @@
             else {
                 curTop = 0;
             }
-            actionExecutor.eventsHanlder.handleMoveEnlage(e, curLeft, curTop, 0);
+            actionExecutor.eventsHanlder.handleMoveEnlage(curLeft, curTop, 0);
             var type = 'handleTendEnlarte';
             this.addTouchEndTask(type, {
                 priority: 10,
@@ -316,14 +567,14 @@
                 this.isAnimating = false;
                 return;
             }
-            actionExecutor.eventsHanlder.handleZoom(e, sx, sy, x, y);
+            actionExecutor.eventsHanlder.handleZoom(sx, sy, x, y);
             this.isZooming = false;
             this.isAnimating = false;
         };
         return Zoom;
     }());
 
-    var __awaiter$2 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    var __awaiter$3 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
         function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
         return new (P || (P = Promise))(function (resolve, reject) {
             function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -332,7 +583,7 @@
             step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
     };
-    var __generator$2 = (undefined && undefined.__generator) || function (thisArg, body) {
+    var __generator$3 = (undefined && undefined.__generator) || function (thisArg, body) {
         var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
         return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
         function verb(n) { return function (v) { return step([n, v]); }; }
@@ -362,10 +613,10 @@
     var Rotate = (function () {
         function Rotate() {
         }
-        Rotate.prototype.handleRotateLeft = function (e) {
-            return __awaiter$2(this, void 0, void 0, function () {
+        Rotate.prototype.rotateLeft = function (e) {
+            return __awaiter$3(this, void 0, void 0, function () {
                 var changeDeg;
-                return __generator$2(this, function (_a) {
+                return __generator$3(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             if (this.isAnimating)
@@ -384,10 +635,10 @@
                 });
             });
         };
-        Rotate.prototype.handleRotateRight = function (e) {
-            return __awaiter$2(this, void 0, void 0, function () {
+        Rotate.prototype.rotateRight = function (e) {
+            return __awaiter$3(this, void 0, void 0, function () {
                 var changeDeg;
-                return __generator$2(this, function (_a) {
+                return __generator$3(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             if (this.isAnimating)
@@ -586,7 +837,7 @@
     new cubicBezier(0, 0, .58, 1);
     new cubicBezier(.42, 0, .58, 1);
 
-    var __awaiter$1 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    var __awaiter$2 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
         function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
         return new (P || (P = Promise))(function (resolve, reject) {
             function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -595,7 +846,7 @@
             step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
     };
-    var __generator$1 = (undefined && undefined.__generator) || function (thisArg, body) {
+    var __generator$2 = (undefined && undefined.__generator) || function (thisArg, body) {
         var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
         return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
         function verb(n) { return function (v) { return step([n, v]); }; }
@@ -646,13 +897,13 @@
             };
             this.resizeTimer = setTimeout(run, 100);
         };
-        events.prototype.handleDoubleClick = function (e) {
-            var _a = e.touches[0], clientX = _a.clientX, clientY = _a.clientY;
+        events.prototype.handleDoubleClick = function (_a) {
+            var clientX = _a.clientX, clientY = _a.clientY;
             var viewInstance = this.viewInstance;
             var _b = viewInstance.decideScaleRatio(clientX, clientY), scaleX = _b[0], scaleY = _b[1], dx = _b[2], dy = _b[3];
             return viewInstance.scaleZPosition({ scaleX: scaleX, scaleY: scaleY, dx: dx, dy: dy });
         };
-        events.prototype.handleMoveEnlage = function (e, x, y, z) {
+        events.prototype.handleMoveEnlage = function (x, y, z) {
             var viewInstance = this.viewInstance;
             x *= viewInstance.dpr;
             y *= -viewInstance.dpr;
@@ -668,7 +919,7 @@
             var deg = -offset / (viewInstance.viewWidth / viewInstance.dpr) * maxDeg;
             viewInstance.rotatePosition(deg);
         };
-        events.prototype.handleZoom = function (e, sx, sy, dx, dy) {
+        events.prototype.handleZoom = function (sx, sy, dx, dy) {
             var viewInstance = this.viewInstance;
             var _a = viewInstance.imgShape, nw = _a[0]; _a[1];
             var _b = viewInstance.imgShapeInitinal, iW = _b[0]; _b[1];
@@ -689,9 +940,9 @@
             viewInstance.zoomCurPlan(sx, sy, dx, dy);
         };
         events.prototype.handleTEndEnNormal = function (e, offset) {
-            return __awaiter$1(this, void 0, void 0, function () {
+            return __awaiter$2(this, void 0, void 0, function () {
                 var viewInstance, maxDeg, degX, plusOrMinus, beforeIndex, nextIndex;
-                return __generator$1(this, function (_a) {
+                return __generator$2(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             viewInstance = this.viewInstance;
@@ -731,9 +982,9 @@
             });
         };
         events.prototype.handleTEndEnlarge = function (e, x, y, z) {
-            return __awaiter$1(this, void 0, void 0, function () {
+            return __awaiter$2(this, void 0, void 0, function () {
                 var viewInstance;
-                return __generator$1(this, function (_a) {
+                return __generator$2(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             viewInstance = this.viewInstance;
@@ -754,9 +1005,9 @@
             });
         };
         events.prototype.moveCurPlaneTo = function (x, y, z) {
-            return __awaiter$1(this, void 0, void 0, function () {
+            return __awaiter$2(this, void 0, void 0, function () {
                 var viewInstance;
-                return __generator$1(this, function (_a) {
+                return __generator$2(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             viewInstance = this.viewInstance;
@@ -790,6 +1041,42 @@
     }
     var tailor = initialCanvas;
 
+    var __awaiter$1 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+    var __generator$1 = (undefined && undefined.__generator) || function (thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (_) try {
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    };
     var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from) {
         for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
             to[j] = from[i];
@@ -974,7 +1261,47 @@
             this.draw(this.curIndex);
         };
         webGl.prototype.slideNext = function () {
-            this.rotate(0.5 * Math.PI);
+            return __awaiter$1(this, void 0, void 0, function () {
+                var _this = this;
+                return __generator$1(this, function (_a) {
+                    if (this.curIndex == this.imgUrls.length - 1) {
+                        return [2, [true]];
+                    }
+                    return [2, this.slide(0.5 * Math.PI, function () { return _this.curIndex++; })];
+                });
+            });
+        };
+        webGl.prototype.slideBefore = function () {
+            return __awaiter$1(this, void 0, void 0, function () {
+                var _this = this;
+                return __generator$1(this, function (_a) {
+                    if (this.curIndex == 0) {
+                        return [2, [true]];
+                    }
+                    return [2, this.slide(-0.5 * Math.PI, function () { return _this.curIndex--; })];
+                });
+            });
+        };
+        webGl.prototype.slide = function (deg, callback) {
+            return __awaiter$1(this, void 0, void 0, function () {
+                return __generator$1(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            this.baseModel = this.modelMatrix;
+                            return [4, this.rotate(deg)];
+                        case 1:
+                            _a.sent();
+                            callback();
+                            this.modelMatrix = this.baseModel = this.initialModel;
+                            this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'), false, this.modelMatrix);
+                            return [4, this.draw(this.curIndex)];
+                        case 2:
+                            _a.sent();
+                            this.modelMatrix = this.baseModel = this.initialModel;
+                            return [2, [false]];
+                    }
+                });
+            });
         };
         webGl.prototype.rotate = function (end) {
             var _this = this;
@@ -1378,7 +1705,7 @@
             }
             else {
                 if (this.curIsLongImg()) {
-                    width = this.viewWidth;
+                    width = this.viewWidth > nw ? nw : this.viewWidth;
                     height = nh / nw * width;
                 }
                 else {
@@ -1723,6 +2050,12 @@
         return webGl;
     }());
 
+    var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+        return c > 3 && r && Object.defineProperty(target, key, r), r;
+    };
     var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
         function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
         return new (P || (P = Promise))(function (resolve, reject) {
@@ -1782,10 +2115,7 @@
             this.fingerDirection = '';
             this.moveStartTime = 0;
             this.moveEndTime = 0;
-            this.operateMaps = {
-                rotateLeft: 'handleRotateLeft',
-                rotateRight: 'handleRotateRight'
-            };
+            this.doubleClickDuration = 300;
             this.initalMatrix = [
                 [1, 0, 0, 0],
                 [0, 1, 0, 0],
@@ -1813,8 +2143,8 @@
         ImagePreview.prototype.handleMove = function (e) { };
         ImagePreview.prototype.handleMoveNormal = function (e) { };
         ImagePreview.prototype.handleMoveEnlage = function (e) { };
-        ImagePreview.prototype.handleRotateLeft = function (e) { };
-        ImagePreview.prototype.handleRotateRight = function (e) { };
+        ImagePreview.prototype.rotateLeft = function (e) { };
+        ImagePreview.prototype.rotateRight = function (e) { };
         ImagePreview.prototype.autoMove = function (deg, startX, startY, _a) {
             _a.maxTop; _a.minTop; _a.maxLeft; _a.minLeft;
             return Promise.resolve(1);
@@ -1881,18 +2211,18 @@
         ImagePreview.prototype.handleOneStart = function (e) {
             var _this = this;
             var type = (e.target).dataset.type;
-            if (this.operateMaps[type]) {
-                this[this.operateMaps[type]](e);
+            if (this[type]) {
+                this[type](e);
                 return;
             }
-            if (Date.now() - this.lastClick < 300) {
+            if (Date.now() - this.lastClick < this.doubleClickDuration) {
                 clearTimeout(this.performerClick);
                 this.handleDoubleClick(e);
             }
             else {
                 this.performerClick = setTimeout(function () {
                     _this.handleClick(e);
-                }, 300);
+                }, this.doubleClickDuration);
             }
             this.lastClick = Date.now();
             this.getMovePoints(e);
@@ -1921,7 +2251,7 @@
                                 return [2];
                             }
                             this.isAnimating = true;
-                            return [4, this.actionExecutor.eventsHanlder.handleDoubleClick(e)];
+                            return [4, this.actionExecutor.eventsHanlder.handleDoubleClick(e.touches[0])];
                         case 1:
                             _a.sent();
                             this.isAnimating = false;
@@ -2096,7 +2426,8 @@
                     default: return '';
                 }
             };
-            var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\"></div>\n                <div class=\"" + this.prefix + "bottom\">\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\"  t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
+            var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\"></div>\n                <div class=\"" + this.prefix + "bottom\">\n                    " + (this.envClient == 'pc' ?
+                "<div class=\"" + this.prefix + "item\" title=\"before\">\n                        <svg data-type=\"slideBefore\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M170.666667 477.866667L349.866667 298.666667l29.866666 29.866666-149.333333 149.333334h669.866667v42.666666H128l42.666667-42.666666z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item \" title=\"next\">\n                        <svg data-type=\"slideNext\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M849.066667 512l-179.2 179.2-29.866667-29.866667 149.333333-149.333333H128v-42.666667h763.733333l-42.666666 42.666667z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>" : '') + "\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\"  t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
             var isIPhoneX = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 375 && window.screen.height === 812;
             var isIPhoneXSMax = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 414 && window.screen.height === 896;
             var isIPhoneXR = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 2 && window.screen.width === 414 && window.screen.height === 896;
@@ -2207,6 +2538,9 @@
                 return 'pc';
             }
         };
+        ImagePreview = __decorate([
+            adapterPC
+        ], ImagePreview);
         return ImagePreview;
     }());
     applyMixins(ImagePreview, [Move, Zoom, Rotate]);

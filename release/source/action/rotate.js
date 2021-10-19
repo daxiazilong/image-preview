@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var Rotate = (function () {
     function Rotate() {
     }
-    Rotate.prototype.handleRotateLeft = function (e) {
+    Rotate.prototype.rotateLeft = function (e) {
         return __awaiter(this, void 0, void 0, function () {
             var changeDeg;
             return __generator(this, function (_a) {
@@ -59,7 +59,7 @@ var Rotate = (function () {
             });
         });
     };
-    Rotate.prototype.handleRotateRight = function (e) {
+    Rotate.prototype.rotateRight = function (e) {
         return __awaiter(this, void 0, void 0, function () {
             var changeDeg;
             return __generator(this, function (_a) {

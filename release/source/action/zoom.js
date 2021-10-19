@@ -52,7 +52,7 @@ var Zoom = (function () {
             this.isAnimating = false;
             return;
         }
-        actionExecutor.eventsHanlder.handleZoom(e, sx, sy, x, y);
+        actionExecutor.eventsHanlder.handleZoom(sx, sy, x, y);
         this.isZooming = false;
         this.isAnimating = false;
     };

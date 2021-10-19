@@ -207,7 +207,7 @@ var Move = (function () {
         else {
             curTop = 0;
         }
-        actionExecutor.eventsHanlder.handleMoveEnlage(e, curLeft, curTop, 0);
+        actionExecutor.eventsHanlder.handleMoveEnlage(curLeft, curTop, 0);
         var type = 'handleTendEnlarte';
         this.addTouchEndTask(type, {
             priority: 10,

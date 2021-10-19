@@ -1,12 +1,15 @@
 /**
- * image-preview [2.0.0]
+ * image-preview [2.1.0]
  * author:zilong
  * https://github.com/daxiazilong
  * Released under the MIT License
  */
+import adapterPC from './pcAdapter'
 import { Move, Zoom, Rotate } from '../action/index';
 // import { showDebugger } from '../tools/index';
 import { webGl } from '../webgl/index'
+
+@adapterPC
 class ImagePreview implements Move, Zoom {
     public showTools: boolean = true;
     public lastClick: number = -Infinity;// 上次点击时间和执行单击事件的计时器
@@ -55,12 +58,7 @@ class ImagePreview implements Move, Zoom {
     actionExecutor: webGl;
     taskExecuteAfterTEnd: Map<string,task>; // touchend之后需要执行的任务 commonly, it is reset sth,and so on.
 
-    public operateMaps: {
-        [key: string]: string
-    } = {
-            rotateLeft: 'handleRotateLeft',
-            rotateRight: 'handleRotateRight'
-        }
+    doubleClickDuration = 300
 
     public envClient: string;
     public supportTransitionEnd: string;
@@ -101,8 +99,8 @@ class ImagePreview implements Move, Zoom {
     handleMove(e: TouchEvent & MouseEvent): void { }
     handleMoveNormal(e: TouchEvent & MouseEvent): void { }
     handleMoveEnlage(e: TouchEvent & MouseEvent): void { }
-    handleRotateLeft(e: TouchEvent & MouseEvent): void { }
-    handleRotateRight(e: TouchEvent & MouseEvent): void { }
+    rotateLeft(e: TouchEvent & MouseEvent): void { }
+    rotateRight(e: TouchEvent & MouseEvent): void { }
     autoMove(deg: number, startX: number, startY: number, { maxTop, minTop, maxLeft, minLeft }: { maxTop: any; minTop: any; maxLeft: any; minLeft: any; }):Promise<any> { return Promise.resolve(1) }
     insertImageAfter( image: string | image , index: number ){
         this.actionExecutor.addImg(image,index)
@@ -119,6 +117,7 @@ class ImagePreview implements Move, Zoom {
         window.addEventListener('resize',this.handleResize)
         window.addEventListener('orientationchange',this.handleResize)
     }
+    
     handleResize(){;
         this.actionExecutor.eventsHanlder.handleResize();
     }
@@ -178,11 +177,11 @@ class ImagePreview implements Move, Zoom {
          * 这里把操作派发
          */
         const type: string = (<HTMLElement>(e.target)).dataset.type;
-        if (this.operateMaps[type]) {
-            this[this.operateMaps[type]](e);
+        if (this[type]) {
+            this[type](e);
             return
         }
-        if ( Date.now() - this.lastClick < 300) {
+        if ( Date.now() - this.lastClick < this.doubleClickDuration) {
             /*
                 启动一个定时器，如果双击事件发生后就
                 取消单击事件的执行
@@ -192,7 +191,7 @@ class ImagePreview implements Move, Zoom {
         } else {
             this.performerClick = setTimeout(() => {
                 this.handleClick(e);
-            }, 300)
+            }, this.doubleClickDuration)
 
         }
         this.lastClick = Date.now();
@@ -221,7 +220,7 @@ class ImagePreview implements Move, Zoom {
         }
         this.isAnimating = true;
         // showDebugger(this.isAnimating.toString())
-        await this.actionExecutor.eventsHanlder.handleDoubleClick(e);
+        await this.actionExecutor.eventsHanlder.handleDoubleClick(e.touches[0]);
         this.isAnimating = false;
         // showDebugger(`animation done.`+this.isAnimating.toString())
 
@@ -405,6 +404,13 @@ class ImagePreview implements Move, Zoom {
                 </div>
                 <div class="${this.prefix}imgContainer"></div>
                 <div class="${this.prefix}bottom">
+                    ${ this.envClient == 'pc' ?
+                    `<div class="${this.prefix}item" title="before">
+                        <svg data-type="slideBefore" t="1563884004339" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1099" width="200" height="200"><path d="M170.666667 477.866667L349.866667 298.666667l29.866666 29.866666-149.333333 149.333334h669.866667v42.666666H128l42.666667-42.666666z" p-id="1100" fill="#ffffff"></path></svg>
+                    </div>
+                    <div class="${this.prefix}item " title="next">
+                        <svg data-type="slideNext" t="1563884004339" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1099" width="200" height="200"><path d="M849.066667 512l-179.2 179.2-29.866667-29.866667 149.333333-149.333333H128v-42.666667h763.733333l-42.666666 42.666667z" p-id="1100" fill="#ffffff"></path></svg>
+                    </div>`:'' }
                     <div class="${this.prefix}item ">
                         <svg data-type="rotateLeft" t="1563884004339" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1099" width="200" height="200"><path d="M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z" p-id="1100" fill="#ffffff"></path></svg>
                     </div>

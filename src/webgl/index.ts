@@ -237,9 +237,35 @@ class webGl {
     initData() {
         this.draw(this.curIndex)
     }
-    
-    slideNext(){
-        this.rotate(0.5 * Math.PI)
+    async slideNext(){
+        if( this.curIndex == this.imgUrls.length - 1 ){// 最后一张
+            return [true]
+        }
+        return this.slide(0.5 * Math.PI,() => this.curIndex++)
+    }
+    async slideBefore(){
+        if( this.curIndex == 0 ){// 第一张
+            return [true]
+        }
+        return this.slide(-0.5 * Math.PI,() => this.curIndex--)
+    }
+    async slide(deg: number,callback: Function){
+        
+        this.baseModel = this.modelMatrix;
+
+        await this.rotate(deg);
+        callback()
+
+        this.modelMatrix = this.baseModel = this.initialModel ;
+        this.gl.uniformMatrix4fv(
+            this.gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
+            false,
+            this.modelMatrix
+        );
+        await this.draw(this.curIndex)
+
+        this.modelMatrix = this.baseModel = this.initialModel ;
+        return [false]
     }
     // rotate around y axis
     rotate(end) {
@@ -738,7 +764,7 @@ class webGl {
 
         }else{//缩小得时候双击就放大
             if( this.curIsLongImg() ){
-                width = this.viewWidth;
+                width = this.viewWidth > nw ? nw : this.viewWidth;
                 height = nh/nw * width;
             }else{
                 width = nw;
@@ -746,7 +772,6 @@ class webGl {
             }
             scaleX = width / curWidth - 1;
             scaleY = height / curHeight - 1;
-
             
             dx = -((clientX - centerX) * (scaleX));
             dy = ((clientY  - centerY) * (scaleY));
