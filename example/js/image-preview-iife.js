@@ -89,6 +89,7 @@ var imagePreviewModule = (function (exports) {
                 if (this.isAnimating) {
                     return;
                 }
+                clearTimeout(this.performerClick);
                 var curX = (e.clientX);
                 var curY = (e.clientY);
                 var offsetX = curX - this.startX;

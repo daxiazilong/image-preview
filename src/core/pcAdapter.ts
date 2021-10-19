@@ -34,6 +34,9 @@ export default ( constructor: typeof ImagePreview) => {
             if( this.isAnimating ){
                 return
             }
+
+            clearTimeout(this.performerClick)
+            
             let curX: number = (e.clientX);
             let curY: number = (e.clientY);
 
