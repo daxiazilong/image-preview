@@ -2,14 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## 2.2.0 (2021-12-05)
-
+## 2.1.1 (2021-12-05)
 
 ### Features
 
-* adapter PC ([619b23c](https://github.com/daxiazilong/image-preview/commit/619b23ca8bd1d6a7d5833c482d33041b1ce4b8e6))
-* bugfix, initial widthout data-src , optimize style on pc ([8756f31](https://github.com/daxiazilong/image-preview/commit/8756f316a9674ee6982bad160d0c1d0e20ed99f6))
-
+* cache Bezier
 
 ### Bug Fixes
 
