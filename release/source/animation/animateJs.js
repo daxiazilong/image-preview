@@ -1,5 +1,6 @@
 var cubicBezier = (function () {
     function cubicBezier(x1, y1, x2, y2) {
+        this.cachedY = new Map();
         this.precision = 1e-5;
         this.p1 = {
             x: x1,
@@ -61,7 +62,10 @@ var cubicBezier = (function () {
         return t2;
     };
     cubicBezier.prototype.solve = function (x) {
-        return this.getY(this.solveCurveX(x));
+        if (!this.cachedY.get(x)) {
+            this.cachedY.set(x, this.getY(this.solveCurveX(x)));
+        }
+        return this.cachedY.get(x);
     };
     return cubicBezier;
 }());

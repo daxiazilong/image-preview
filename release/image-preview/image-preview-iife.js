@@ -765,6 +765,7 @@ var imagePreviewModule = (function (exports) {
 
     var cubicBezier = (function () {
         function cubicBezier(x1, y1, x2, y2) {
+            this.cachedY = new Map();
             this.precision = 1e-5;
             this.p1 = {
                 x: x1,
@@ -824,7 +825,10 @@ var imagePreviewModule = (function (exports) {
             return t2;
         };
         cubicBezier.prototype.solve = function (x) {
-            return this.getY(this.solveCurveX(x));
+            if (!this.cachedY.get(x)) {
+                this.cachedY.set(x, this.getY(this.solveCurveX(x)));
+            }
+            return this.cachedY.get(x);
         };
         return cubicBezier;
     }());
@@ -1342,7 +1346,8 @@ var imagePreviewModule = (function (exports) {
         };
         webGl.prototype.genPostion = function (width, height, index) {
             var _a;
-            var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+            var zNearHeight = (2 * Math.tan(this.fieldOfViewInRadians / 2));
+            var z = -(this.viewHeight) / (zNearHeight) - forDev;
             var viewWidth = this.viewWidth;
             var sideZAxis = z - (viewWidth - width) / 2;
             var positionsMap = [

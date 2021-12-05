@@ -310,7 +310,8 @@ var webGl = (function () {
     };
     webGl.prototype.genPostion = function (width, height, index) {
         var _a;
-        var z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        var zNearHeight = (2 * Math.tan(this.fieldOfViewInRadians / 2));
+        var z = -(this.viewHeight) / (zNearHeight) - forDev;
         var viewWidth = this.viewWidth;
         var sideZAxis = z - (viewWidth - width) / 2;
         var positionsMap = [
