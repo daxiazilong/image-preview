@@ -12,6 +12,7 @@ type coordinate = {
 export class cubicBezier{
     p1: coordinate
     p2: coordinate
+    cachedY: Map<number,number> = new Map();
     precision = 1e-5;
     constructor(x1,y1,x2,y2){
         this.p1 = {
@@ -89,7 +90,10 @@ export class cubicBezier{
         return t2;
     }
     solve(x:number){
-        return this.getY( this.solveCurveX(x) )
+        if( !this.cachedY.get(x)){
+            this.cachedY.set(x,this.getY( this.solveCurveX(x) ))
+        }
+        return this.cachedY.get(x)
     }
 }
 export var linear = new cubicBezier(0, 0, 1, 1);

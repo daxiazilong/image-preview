@@ -7,9 +7,9 @@ try{
     function compile(index,mini){
         let mod = moduler[index];
         let mininame = mini ? '-min': ''; 
-        let filename = `${releasePath}\\image-preview-${mod}${mininame}.js`;
+        let filename = `${releasePath}/image-preview-${mod}${mininame}.js`;
         let miniParam = mini ? '--compact' : '';
-        childProcess.exec(`..\\node_modules\\.bin\\rollup -c -f ${mod} -o ${filename} ${miniParam}`,(err,stdout)=>{
+        childProcess.exec(`../node_modules/.bin/rollup -c -f ${mod} -o ${filename} ${miniParam}`,(err,stdout)=>{
             if(err){
                 console.log(err)
                 console.log('编译失败')

@@ -311,7 +311,12 @@ class webGl {
         })
     }
     genPostion(width: number, height: number,index:number) {
-        const z = -(this.viewHeight) / (2 * Math.tan(this.fieldOfViewInRadians / 2)) - forDev;
+        //  zNearHeight = zNear * 2tan
+        // z           zNear
+        // -         =  -            => z = viewHeight / 2tan
+        // viewHeight  zNearHeight
+        const zNearHeight = (2 * Math.tan(this.fieldOfViewInRadians / 2));
+        const z = -(this.viewHeight) / (zNearHeight) - forDev;
         const viewWidth = this.viewWidth;
         
         let sideZAxis = z - ( viewWidth - width ) / 2;
