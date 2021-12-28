@@ -1,7 +1,9 @@
 {
-  "name": "image-preview",
-  "version": "2.1.1",
-  "description": "image-preview",
+  "name": "@daxiazilong/image-preview",
+  "version": "2.1.2",
+  "description": "preview image on web page。rotate,zoom.etc. 移动端JS 图片预览 插件 支持 预览图片，旋转，放大(双指/双击)。",
+  "keywords": ["image preview", "viewer", "preview image"],
+  "main": "release/image-preview/image-preview-esm-min.js",
   "scripts": {
     "start": "webpack serve --open Chrome.exe --mode=development",
     "build": "node scripts/beforeBuild.js && npm run genModule",

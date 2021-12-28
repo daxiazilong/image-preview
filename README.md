@@ -10,10 +10,12 @@ An image preview plugin for mobile web application.
 4. 🍂 Based webgl.
    
 ### How to use it:
-There are two ways:
-#### 1. Copy release
+There are three ways:
+#### 1. npm install
+`npm i @daxiazilong/image-preview`
+#### 2. Copy release
 * The `release/image-preview` directory is built for different module-system , include AMD,CommonJS,ES6,UMD,IIFE. You can choose one adapt to your project.
-#### 2.Install:
+#### 3.Install:
 * Clone it ,then `npm i & npm run build`
 * For different module-sysetem:
 * The `release/image-preview` directory is built for different module-system , include AMD,CommonJS,ES6,UMD,IIFE. You can choose one adapt to your project.
@@ -31,6 +33,10 @@ There are two ways:
   * esmodule:
     ```javascript
      import {ImagePreview} from 'js/image-preview-esm.js'
+    ```
+    or if installed in node_modules
+    ```javascript
+     import {ImagePreview} from '@daxiazilong/image-preview'
     ```
 #### usage:
 html:
