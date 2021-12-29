@@ -1,0 +1,15 @@
+example/
+node_modules/
+test/
+debug/
+scripts/
+.gitignore
+.eslintignore
+.eslintrc.json
+.stylelintignore
+.stylelintrc.json
+.npmignore
+yarn.lock
+*.log
+.DS_Store
+.cache
