@@ -1,6 +1,6 @@
+const shell = require('shelljs');
 const fs = require('fs');
 const path = require('path')
-const childProcess = require('child_process')
 const version = process.env.npm_package_version;
 
 const imagePreviewSrc = (path.resolve(__dirname,'../src/core/image-preview.ts')  )
@@ -28,12 +28,19 @@ const sourceVer = \`${verTexSource}\`;
 `)
 fs.writeFileSync(`${webglDir}/index.ts`,copiedWebglSource)
 console.log('ts编译开始')
-childProcess.exec(`npm run compileTs`,(err)=>{
-    fs.writeFileSync(`${webglDir}/index.ts`,webglSource)
-    if(err){
-        console.log(err)
-        console.log('编译失败')
-        return;
+const {output, code} =  shell.exec('npm run compileTs"');
+fs.writeFileSync(`${webglDir}/index.ts`,webglSource)
+if (code !== 0) {
+    throw output;
+}
+console.log('typescript compile complete!');
+
+shell.cd('scripts');
+{
+    const {output, code} =  shell.exec('node generateModule.js"');
+    if (code !== 0) {
+        throw output;
     }
-    console.log('typescript compile complete!')
-})
+
+}
+shell.cd('..');

@@ -8,5 +8,7 @@
           "outDir":"../release/source",
           "module": "ES6",
           "listFiles":true,
+          "declaration": true,
+          "declarationDir": "../release/types"
       }
   }
