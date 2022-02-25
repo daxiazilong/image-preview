@@ -6,5 +6,6 @@
           "removeComments":true,
           "watch": true,
           "experimentalDecorators": true
-      }
+      },
+      "exclude": ["release", "node_modules"],
   }

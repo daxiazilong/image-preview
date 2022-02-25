@@ -1,5 +1,5 @@
 /**
- * image-preview [2.1.1]
+ * image-preview [2.2.0]
  * author:zilong
  * https://github.com/daxiazilong
  * Released under the MIT License
@@ -535,6 +535,10 @@ class ImagePreview implements Move, Zoom {
     }
     mobileBeforeClose() { }
     show(index: number) {
+        if (typeof index !== 'number') {
+            console.error('index is not a number, will use zero as parameter');
+            index = 0;
+        }
         this.actionExecutor.curIndex = index;
         this.actionExecutor.draw(index)
         this.toggleClass(this.ref, this.defToggleClass)

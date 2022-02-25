@@ -1,13 +1,18 @@
 {
   "name": "@daxiazilong/image-preview",
-  "version": "2.1.3",
+  "version": "2.2.0",
   "description": "preview image on web page。rotate,zoom.etc. 移动端JS 图片预览 插件 支持 预览图片，旋转，放大(双指/双击)。",
-  "keywords": ["image preview", "viewer", "preview image"],
+  "keywords": [
+    "image preview",
+    "viewer",
+    "preview image"
+  ],
   "main": "release/image-preview/image-preview-cjs-min.js",
   "module": "release/image-preview/image-preview-esm-min.js",
+  "types": "release/types/core/image-preview.d.ts",
   "scripts": {
     "start": "webpack serve --open Chrome.exe --mode=development",
-    "build": "node scripts/beforeBuild.js && npm run genModule",
+    "build": "node scripts/build.js",
     "compileTs": "tsc --project ./src",
     "buildTest": "webpack --mode=production",
     "genModule": "./scripts/genModule.sh",
@@ -17,7 +22,6 @@
     "url": "https://github.com/daxiazilong/image-preview"
   },
   "author": "zilong",
-  "dependencies": {},
   "devDependencies": {
     "@commitlint/cli": "^12.1.4",
     "@commitlint/config-conventional": "^12.1.4",
@@ -26,6 +30,7 @@
     "husky": "^7.0.1",
     "rollup": "^2.32.0",
     "rollup-plugin-terser": "^7.0.2",
+    "shelljs": "^0.8.5",
     "standard-version": "^7.0.1",
     "ts-loader": "^9.2.3",
     "typescript": "^4.3.4",

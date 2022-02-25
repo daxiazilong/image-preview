@@ -2472,6 +2472,10 @@
         };
         ImagePreview.prototype.mobileBeforeClose = function () { };
         ImagePreview.prototype.show = function (index) {
+            if (typeof index !== 'number') {
+                console.error('index is not a number, will use zero as parameter');
+                index = 0;
+            }
             this.actionExecutor.curIndex = index;
             this.actionExecutor.draw(index);
             this.toggleClass(this.ref, this.defToggleClass);

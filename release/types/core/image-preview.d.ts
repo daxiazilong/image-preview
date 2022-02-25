@@ -1,0 +1,104 @@
+import { Move, Zoom } from '../action/index';
+import { webGl } from '../webgl/index';
+declare class ImagePreview implements Move, Zoom {
+    options: ImagePreviewConstrucor;
+    showTools: boolean;
+    lastClick: number;
+    performerClick: any;
+    startX: number;
+    touchStartX: number;
+    startY: number;
+    touchStartY: number;
+    startXForDirection: number;
+    curIndex: number;
+    imgContainerMoveX: number;
+    imgContainerMoveY: number;
+    imgsNumber: number;
+    slideTime: number;
+    zoomScale: number;
+    isZooming: boolean;
+    curPoint1: {
+        x: number;
+        y: number;
+    };
+    curPoint2: {
+        x: number;
+        y: number;
+    };
+    curStartPoint1: {
+        x: number;
+        y: number;
+    };
+    curStartPoint2: {
+        x: number;
+        y: number;
+    };
+    isAnimating: boolean;
+    isEnlargeMove: boolean;
+    isNormalMove: boolean;
+    normalMoved: boolean;
+    maxMovePointCounts: number;
+    touchIdentifier: number;
+    prefix: string;
+    ref: HTMLElement;
+    imgContainer: HTMLElement & {
+        matrix: Array<Array<number>>;
+    };
+    defToggleClass: string;
+    movePoints: Array<{
+        x: number;
+        y: number;
+    }>;
+    fingerDirection: string;
+    moveStartTime: number;
+    moveEndTime: number;
+    actionExecutor: webGl;
+    taskExecuteAfterTEnd: Map<string, task>;
+    doubleClickDuration: number;
+    envClient: string;
+    supportTransitionEnd: string;
+    transitionEndPrefix: string;
+    initalMatrix: number[][];
+    screenWidth: number;
+    constructor(options: ImagePreviewConstrucor);
+    handleZoom(e: TouchEvent & MouseEvent): void;
+    handleMove(e: TouchEvent & MouseEvent): void;
+    handleMoveNormal(e: TouchEvent & MouseEvent): void;
+    handleMoveEnlage(e: TouchEvent & MouseEvent): void;
+    rotateLeft(e: TouchEvent & MouseEvent): void;
+    rotateRight(e: TouchEvent & MouseEvent): void;
+    autoMove(deg: number, startX: number, startY: number, { maxTop, minTop, maxLeft, minLeft }: {
+        maxTop: any;
+        minTop: any;
+        maxLeft: any;
+        minLeft: any;
+    }): Promise<any>;
+    insertImageAfter(image: string | image, index: number): void;
+    delImage(index: number): void;
+    mobileInitial(): void;
+    handleResize(): void;
+    bindTrigger(): void;
+    addTouchEndTask(type: string, task: task): void;
+    handleTouchStart(e: TouchEvent & MouseEvent): void;
+    handleTwoStart(e: TouchEvent & MouseEvent): void;
+    handleOneStart(e: TouchEvent & MouseEvent): void;
+    handleClick(e?: TouchEvent & MouseEvent): void;
+    handleDoubleClick(e: TouchEvent & MouseEvent): Promise<void>;
+    handleToucnEnd(e: TouchEvent & MouseEvent): void;
+    handleTEndEnlarge(e: TouchEvent & MouseEvent): Promise<void>;
+    handleTEndEnNormal(e: TouchEvent & MouseEvent): Promise<void>;
+    genFrame(): void;
+    handleReausetAnimate(): void;
+    close(e: MouseEvent & TouchEvent): void;
+    pcBeforeClose(): void;
+    mobileBeforeClose(): void;
+    show(index: number): void;
+    mobileReadyShow(): void;
+    pcReadyShow(): void;
+    toggleClass(ref: HTMLElement, className: string): void;
+    getMovePoints(e: MouseEvent & TouchEvent): void;
+    decideMoveDirection(): void;
+    destroy(): void;
+    testEnv(): string;
+}
+export { ImagePreview };
