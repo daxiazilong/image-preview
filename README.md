@@ -8,7 +8,10 @@ An image preview plugin for mobile web application.
 2. 🎃 Rotate and zoom image.
 3. 🍓 Img lazy-loading default.
 4. 🍂 Based webgl.
-   
+
+### example
+[click here](https://daxiazilong.github.io/image-preview/index.html) . 
+
 ### How to use it:
 There are three ways:
 #### 1. npm install
@@ -165,8 +168,6 @@ export default() => {
 }
 
 ```
-### example
-[click here](https://daxiazilong.github.io/image-preview/index.html) . 
 
 ### Api
 * `new ImagePreview({imgs?: Array<string|HTMLImageElement>}) ` 
