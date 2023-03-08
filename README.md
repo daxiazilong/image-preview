@@ -8,6 +8,9 @@ An image preview plugin for mobile web application.
 2. 🎃 Rotate and zoom image.
 3. 🍓 Img lazy-loading default.
 4. 🍂 Based webgl.
+5. ☄🌰 3D view.
+<img width="375" alt="image" src="https://user-images.githubusercontent.com/23512886/223669339-d884340f-1976-4483-81c2-983c7290264e.png">
+
 
 ### example
 [click here](https://daxiazilong.github.io/image-preview/index.html) . 
