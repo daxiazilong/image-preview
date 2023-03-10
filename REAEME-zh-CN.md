@@ -11,10 +11,14 @@
 <img width="375" alt="image" src="https://user-images.githubusercontent.com/23512886/223669339-d884340f-1976-4483-81c2-983c7290264e.png">
    
 ### 用法
-有两种:
-#### 1. 复制release目录
+有三种:
+#### 1. npm install
+```bash
+   npm i @daxiazilong/image-preview 
+```
+#### 2. 复制release目录
 *  `release/image-preview` 目录下编译了适配不同模块系统的版本 , 包括 AMD,CommonJS,ES6,UMD,IIFE. 你可以选择适合自己的一个.
-#### 2.下载整个项目:
+#### 3.下载整个项目:
 * 克隆下来 ,然后跑命令 `npm i & npm run build`
 * 对于不同的模块系统:
 * `release/image-preview` 目录下编译了适配不同模块系统的版本 , 包括 AMD,CommonJS,ES6,UMD,IIFE. 你可以选择适合自己的一个.
