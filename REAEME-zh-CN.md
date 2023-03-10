@@ -7,6 +7,8 @@
 2. 🎃 旋转、缩放图片.
 3. 🍓 图片默认懒加载.
 4. 🍂 基于webgl.
+5. ☄🌰 3D 视图.
+<img width="375" alt="image" src="https://user-images.githubusercontent.com/23512886/223669339-d884340f-1976-4483-81c2-983c7290264e.png">
    
 ### 用法
 有两种:
