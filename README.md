@@ -18,7 +18,9 @@ An image preview plugin for mobile web application.
 ### How to use it:
 There are three ways:
 #### 1. npm install
-`npm i @daxiazilong/image-preview`
+```bash 
+npm i @daxiazilong/image-preview
+```
 #### 2. Copy release
 * The `release/image-preview` directory is built for different module-system , include AMD,CommonJS,ES6,UMD,IIFE. You can choose one adapt to your project.
 #### 3.Install:
