@@ -1,6 +1,6 @@
 {
   "name": "@daxiazilong/image-preview",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "preview image on web page。rotate,zoom.etc. 移动端JS 图片预览 插件 支持 预览图片，旋转，放大(双指/双击)。",
   "keywords": [
     "image preview",

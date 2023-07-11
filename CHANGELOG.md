@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 2.3.0 (2023-07-11)
+
+
+### Features
+
+* adapter PC ([619b23c](https://github.com/daxiazilong/image-preview/commit/619b23ca8bd1d6a7d5833c482d33041b1ce4b8e6))
+* bugfix, initial widthout data-src , optimize style on pc ([8756f31](https://github.com/daxiazilong/image-preview/commit/8756f316a9674ee6982bad160d0c1d0e20ed99f6))
+
+
+### Bug Fixes
+
+* * reset animate-state in transtionEnd event ([a53e365](https://github.com/daxiazilong/image-preview/commit/a53e36507f27a4ae2d76c806d1a07e580355ec97))
+* * reset animate-state in transtionEnd event ([ed0c6eb](https://github.com/daxiazilong/image-preview/commit/ed0c6eb843ed7657cb8b657020610d5006a3309d))
+
 ## 2.1.1 (2021-12-05)
 
 ### Features
