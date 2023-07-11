@@ -1,6 +1,6 @@
 import { cubicBezier } from '../animation/animateJs';
 import { events } from './eventSystem/index';
-declare type webGlConstructorProps = {
+type webGlConstructorProps = {
     images: Array<string | HTMLImageElement>;
 };
 declare class webGl {

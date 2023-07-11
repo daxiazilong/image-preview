@@ -33,7 +33,7 @@ var Animation = (function () {
         var styleText = el.style.cssText;
         options.forEach(function (_a) {
             var prop = _a.prop, endStr = _a.endStr;
-            styleText += prop + ":" + endStr + ";";
+            styleText += "".concat(prop, ":").concat(endStr, ";");
         });
         el.style.cssText = styleText;
         el.addEventListener(this.supportTransitionEnd, function () {
@@ -50,7 +50,7 @@ var Animation = (function () {
         var el = _a.el, prop = _a.prop, time = _a.time, timingFunction = _a.timingFunction;
         timingFunction = timingFunction || 'linear';
         prop = prop || 'all';
-        el['style'][this.transitionEndPrefix] = " " + prop + " " + time + "s " + timingFunction;
+        el['style'][this.transitionEndPrefix] = " ".concat(prop, " ").concat(time, "s ").concat(timingFunction);
     };
     Animation.prototype.transitionEnd = function () {
         var el = document.createElement('bootstrap');

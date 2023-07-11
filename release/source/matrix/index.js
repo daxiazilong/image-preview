@@ -1,7 +1,11 @@
-var __spreadArray = (this && this.__spreadArray) || function (to, from) {
-    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-        to[j] = from[i];
-    return to;
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
 };
 var Matrix = (function () {
     function Matrix() {
@@ -28,7 +32,7 @@ var Matrix = (function () {
             }
         }
         if (res.length) {
-            return this.matrixMultipy.apply(this, __spreadArray([result, res.splice(0, 1)[0]], res));
+            return this.matrixMultipy.apply(this, __spreadArray([result, res.splice(0, 1)[0]], res, false));
         }
         return result;
     };
@@ -40,7 +44,7 @@ var Matrix = (function () {
                 ans += (item + (index == innerIndex && index == lastIndex ? '' : ','));
             });
         });
-        return "matrix3d(" + ans + ")";
+        return "matrix3d(".concat(ans, ")");
     };
     Matrix.prototype.getTranslateMatrix = function (_a) {
         var x = _a.x, y = _a.y, z = _a.z;

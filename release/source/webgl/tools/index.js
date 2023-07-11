@@ -4,7 +4,7 @@ export function canvasForTextures(images) {
     var canvas = document.createElement('canvas');
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
-    canvas.style.cssText = "\n            position: fixed;\n            top: 0;\n            left:0;\n            z-index:100;\n            width:" + canvasWidth + "px;\n            height:" + canvasHeight + "px;\n            user-select:none;\n            font-size:0;\n        ";
+    canvas.style.cssText = "\n            position: fixed;\n            top: 0;\n            left:0;\n            z-index:100;\n            width:".concat(canvasWidth, "px;\n            height:").concat(canvasHeight, "px;\n            user-select:none;\n            font-size:0;\n        ");
     document.body.append(canvas);
     var ctx = canvas.getContext('2d');
     var allWidth = 0, allHeight = 0;

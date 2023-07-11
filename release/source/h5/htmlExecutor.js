@@ -52,12 +52,12 @@ var htmlExecutor = (function () {
                     default: return '';
                 }
             };
-            "." + this.prefix + "imagePreviewer ." + this.prefix + "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100% ;\n                height: 100%;\n                overflow: hidden;\n                \n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item{\n                box-sizing:border-box;\n                position: absolute;\n                top:0;left:0;\n                width: 100% ;\n                height: " + genStyle('itemHeight') + ";\n                overflow-x: " + genStyle('itemScroll') + ";\n                overflow-y:" + genStyle('itemScroll') + ";\n                font-size: 0;\n                text-align: " + genStyle('item-text-align') + ";\n                white-space: normal;\n                z-index:1;\n                transform-style: preserve-3d;\n                backface-visibility: hidden;\n                will-change:transform;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item::-webkit-scrollbar {\n                width: 5px;\n                height: 8px;\n                background-color: #aaa;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer ." + this.prefix + "item::-webkit-scrollbar-thumb {\n                background: #000;\n            }";
+            ".".concat(this.prefix, "imagePreviewer .").concat(this.prefix, "itemWraper{\n                box-sizing:border-box;\n                position: relative;\n                display:inline-block;\n                width: 100% ;\n                height: 100%;\n                overflow: hidden;\n                \n            }\n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "imgContainer .").concat(this.prefix, "item{\n                box-sizing:border-box;\n                position: absolute;\n                top:0;left:0;\n                width: 100% ;\n                height: ").concat(genStyle('itemHeight'), ";\n                overflow-x: ").concat(genStyle('itemScroll'), ";\n                overflow-y:").concat(genStyle('itemScroll'), ";\n                font-size: 0;\n                text-align: ").concat(genStyle('item-text-align'), ";\n                white-space: normal;\n                z-index:1;\n                transform-style: preserve-3d;\n                backface-visibility: hidden;\n                will-change:transform;\n            }\n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "imgContainer .").concat(this.prefix, "item::-webkit-scrollbar {\n                width: 5px;\n                height: 8px;\n                background-color: #aaa;\n            }\n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "imgContainer .").concat(this.prefix, "item::-webkit-scrollbar-thumb {\n                background: #000;\n            }");
         }
         images.forEach(function (src) {
             var div = document.createElement('div');
-            div.className = _this.prefix + "itemWraper";
-            div.innerHTML = "<img class=\"" + _this.prefix + "item\" src=\"" + src + "\">";
+            div.className = "".concat(_this.prefix, "itemWraper");
+            div.innerHTML = "<img class=\"".concat(_this.prefix, "item\" src=\"").concat(src, "\">");
             imagesNodes.push(div);
         });
         return imagesNodes;
@@ -308,7 +308,7 @@ var htmlExecutor = (function () {
             timingFunction: ''
         });
         this.imgContainer.matrix = this.matrixMultipy(this.imgContainer.matrix, this.getTranslateMatrix({ x: offset, y: 0, z: 0 }));
-        this.imgContainer.style.transform = "" + this.matrixTostr(this.imgContainer.matrix);
+        this.imgContainer.style.transform = "".concat(this.matrixTostr(this.imgContainer.matrix));
     };
     htmlExecutor.prototype.handleMoveEnlage = function (e) {
         if (!this.moveStartTime) {
@@ -331,7 +331,7 @@ var htmlExecutor = (function () {
         var offsetY = curY - this.startY;
         var curTop;
         var curLeft;
-        showDebugger("\n            viewLeft:" + viewLeft + "\n            viewRight:" + viewRight + "\n        ");
+        showDebugger("\n            viewLeft:".concat(viewLeft, "\n            viewRight:").concat(viewRight, "\n        "));
         if (Math.round(viewLeft) < 0 || Math.round(viewRight) > conWidth) {
             curLeft = (offsetX);
         }
@@ -350,7 +350,7 @@ var htmlExecutor = (function () {
             timingFunction: ''
         });
         curItem.matrix = this.matrixMultipy(curItem.matrix, this.getTranslateMatrix({ x: curLeft, y: curTop, z: 1 }));
-        curItem.style.transform = "" + this.matrixTostr(curItem.matrix);
+        curItem.style.transform = "".concat(this.matrixTostr(curItem.matrix));
         this.startX = curX;
         this.startY = curY;
     };
@@ -598,7 +598,7 @@ var htmlExecutor = (function () {
             timingFunction: 'linear'
         });
         curItem.matrix = this.matrixMultipy(this.getRotateZMatrix(changeDeg), curItem.matrix);
-        curItem.style.transform = "" + this.matrixTostr(curItem.matrix);
+        curItem.style.transform = "".concat(this.matrixTostr(curItem.matrix));
         var end = this.supportTransitionEnd;
         curItem.addEventListener(end, function () {
             _this.isAnimating = false;
@@ -657,7 +657,7 @@ var htmlExecutor = (function () {
             var x = -((this.zoomScale) * (centerFingerX - centerImgCenterX));
             curItem.matrix = this.matrixMultipy(this.getScaleMatrix({ x: 1 + this.zoomScale, y: 1 + this.zoomScale, z: 1 }), curItem.matrix, this.getTranslateMatrix({ x: x, y: y, z: 1 }));
         }
-        curItem.style.transform = "" + this.matrixTostr(curItem.matrix);
+        curItem.style.transform = "".concat(this.matrixTostr(curItem.matrix));
         this.isAnimating = false;
     };
     htmlExecutor.prototype.setToNaturalImgSize = function (toWidth, toHeight, scaleX, scaleY, e) {
@@ -680,7 +680,7 @@ var htmlExecutor = (function () {
         this.animate({
             el: curItem,
             prop: 'transform',
-            endStr: "" + this.matrixTostr(curItem.matrix),
+            endStr: "".concat(this.matrixTostr(curItem.matrix)),
             callback: function () {
                 curItem.dataset.isEnlargement = 'enlargement';
                 _this.isAnimating = false;
@@ -695,7 +695,7 @@ var htmlExecutor = (function () {
         curItem.matrix = this.matrixMultipy(this.getRotateZMatrix(rotateDeg * Math.PI / 180), curItem.intialMatrix);
         this.animate({
             el: curItem,
-            endStr: "" + this.matrixTostr(curItem.matrix),
+            endStr: "".concat(this.matrixTostr(curItem.matrix)),
             prop: 'transform',
             callback: function () {
                 curItem.dataset.isEnlargement = 'shrink';
@@ -747,7 +747,7 @@ var htmlExecutor = (function () {
             el.matrix = _this.initalMatrix;
             el.matrix = _this.matrixMultipy(el.matrix, _this.getScaleMatrix({ x: scaleX, y: scaleY, z: 1 }), _this.getTranslateMatrix({ x: left, y: top, z: 0 }));
             el.intialMatrix = el.matrix;
-            el.style.cssText = "\n                width: " + img.naturalWidth + "px;\n                height: " + img.naturalHeight + "px;\n                transform:" + _this.matrixTostr(el.matrix) + ";\n            ";
+            el.style.cssText = "\n                width: ".concat(img.naturalWidth, "px;\n                height: ").concat(img.naturalHeight, "px;\n                transform:").concat(_this.matrixTostr(el.matrix), ";\n            ");
             el.dataset.initialWidth = (styleObj.width * scaleX).toString();
             el.dataset.initialHeight = (styleObj.height * scaleY).toString();
             el.dataset.top = top.toString();
@@ -787,8 +787,8 @@ var htmlExecutor = (function () {
             el.dataset.viewLeftInitial = imgBoundingRect.left.toString();
             el.dataset.rotateDeg = '0';
             el.dataset.loaded = "true";
-            el.style.top = top + "px";
-            el.style.left = left + "px";
+            el.style.top = "".concat(top, "px");
+            el.style.left = "".concat(left, "px");
         };
         this.recordInitialData(els, record);
     };
@@ -815,7 +815,7 @@ var htmlExecutor = (function () {
                 el.dataset.top = top.toString();
                 el.dataset.initialTop = top.toString();
                 el.dataset.loaded = "false";
-                el.style.top = top + "px";
+                el.style.top = "".concat(top, "px");
                 (e.currentTarget).alt = "图片加载错误";
             };
         });

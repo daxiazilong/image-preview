@@ -28,7 +28,7 @@ var __generator$4 = (undefined && undefined.__generator) || function (thisArg, b
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -58,7 +58,7 @@ var adapterPC = (function (constructor) {
             return _this;
         }
         class_1.prototype.pcInitial = function () {
-            this.ref.querySelector("." + this.prefix + "close").addEventListener('mousedown', this.close.bind(this));
+            this.ref.querySelector(".".concat(this.prefix, "close")).addEventListener('mousedown', this.close.bind(this));
             this.ref.addEventListener('mousedown', this.handleMouseDown.bind(this));
             this.ref.addEventListener('mousemove', this.handleMouseMove.bind(this));
             this.ref.addEventListener('mouseup', this.handleMouseUp.bind(this));
@@ -200,13 +200,13 @@ var adapterPC = (function (constructor) {
                             if (isFirst) {
                                 this.
                                     ref.
-                                    querySelectorAll("." + this.prefix + "bottom ." + this.prefix + "item ")[0].style
+                                    querySelectorAll(".".concat(this.prefix, "bottom .").concat(this.prefix, "item "))[0].style
                                     .cursor = "not-allowed";
                             }
                             else {
                                 this.
                                     ref.
-                                    querySelectorAll("." + this.prefix + "bottom ." + this.prefix + "item ")[1].style
+                                    querySelectorAll(".".concat(this.prefix, "bottom .").concat(this.prefix, "item "))[1].style
                                     .cursor = "pointer";
                             }
                             this.isAnimating = false;
@@ -230,13 +230,13 @@ var adapterPC = (function (constructor) {
                             if (isLast) {
                                 this.
                                     ref.
-                                    querySelectorAll("." + this.prefix + "bottom ." + this.prefix + "item ")[1].style
+                                    querySelectorAll(".".concat(this.prefix, "bottom .").concat(this.prefix, "item "))[1].style
                                     .cursor = "not-allowed";
                             }
                             else {
                                 this.
                                     ref.
-                                    querySelectorAll("." + this.prefix + "bottom ." + this.prefix + "item ")[0].style
+                                    querySelectorAll(".".concat(this.prefix, "bottom .").concat(this.prefix, "item "))[0].style
                                     .cursor = "pointer";
                             }
                             this.isAnimating = false;
@@ -583,7 +583,7 @@ var __generator$3 = (undefined && undefined.__generator) || function (thisArg, b
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -654,10 +654,14 @@ var Rotate = (function () {
     return Rotate;
 }());
 
-var __spreadArray$1 = (undefined && undefined.__spreadArray) || function (to, from) {
-    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-        to[j] = from[i];
-    return to;
+var __spreadArray$1 = (undefined && undefined.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
 };
 var matrix = {
     multiplyPoint: function (point, rowMatrix) {
@@ -674,7 +678,7 @@ var matrix = {
         if (!rest.length) {
             return result;
         }
-        return matrix.multiplyPoint.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
+        return matrix.multiplyPoint.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest, false));
     },
     multiplyMatrices: function (a, b) {
         var rest = [];
@@ -692,7 +696,7 @@ var matrix = {
         if (!rest.length) {
             return result;
         }
-        return matrix.multiplyMatrices.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest));
+        return matrix.multiplyMatrices.apply(matrix, __spreadArray$1([result, rest.splice(0, 1)[0]], rest, false));
     },
     rotateByArbitrayAxis: function (x, y, z, deg) {
         var cos = Math.cos, sin = Math.sin, pow = Math.pow;
@@ -850,7 +854,7 @@ var __generator$2 = (undefined && undefined.__generator) || function (thisArg, b
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -882,8 +886,8 @@ var events = (function () {
         clearTimeout(resizeTimer);
         var run = function () {
             var canvas = viewInstance.ref;
-            canvas.style.width = window.innerWidth + "px";
-            canvas.style.height = window.innerHeight + "px";
+            canvas.style.width = "".concat(window.innerWidth, "px");
+            canvas.style.height = "".concat(window.innerHeight, "px");
             canvas.width = window.innerWidth * viewInstance.dpr;
             canvas.height = window.innerHeight * viewInstance.dpr;
             viewInstance.viewWidth = canvas.width;
@@ -1054,7 +1058,7 @@ var __generator$1 = (undefined && undefined.__generator) || function (thisArg, b
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -1075,10 +1079,14 @@ var __generator$1 = (undefined && undefined.__generator) || function (thisArg, b
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from) {
-    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-        to[j] = from[i];
-    return to;
+var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
 };
 var sourceFrag = "precision mediump float;\n\nvarying vec2 vTextureCoord;\nuniform sampler2D uSampler0;\nuniform vec2 iResolution;\nvoid main() {\n\n    // vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);\n    vec4 color0 = texture2D(uSampler0, vTextureCoord) ;\n    gl_FragColor = color0;\n}";
 var sourceVer = "attribute vec4 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying mediump vec2 vTextureCoord;\n\nvoid main(void) {\n    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n    vTextureCoord = aTextureCoord;\n}";
@@ -1516,7 +1524,7 @@ var webGl = (function () {
             var planeIndex = i - this.curPointAt;
             var x = curPlane[planeIndex], y = curPlane[planeIndex + 1], z = curPlane[planeIndex + 2], w = curPlane[planeIndex + 3];
             var newPoint = matrix.multiplyPoint.apply(matrix, __spreadArray([[x, y, z, w],
-                a], matrixes));
+                a], matrixes, false));
             for (var j = i; j < 4 + i; j++) {
                 positions[j] = newPoint[j - i];
             }
@@ -1676,7 +1684,7 @@ var webGl = (function () {
             width / 2, height / 2, z - width, 1.0,
             width / 2, height / 2, z, 1.0,
         ];
-        (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube));
+        (_a = this.positions).splice.apply(_a, __spreadArray([0, 0], positionCube, false));
     };
     webGl.prototype.decideScaleRatio = function (clientX, clientY) {
         var width = 0, height = 0;
@@ -1995,7 +2003,7 @@ var webGl = (function () {
     };
     webGl.prototype.intialView = function () {
         var canvas = document.createElement('canvas');
-        canvas.style.cssText = "\n            position: absolute;\n            top: 0;\n            left:0;\n            z-index: 9;\n            width:" + window.innerWidth + "px;\n            height:" + window.innerHeight + "px;\n            user-select:none;\n            font-size:0;\n        ";
+        canvas.style.cssText = "\n            position: absolute;\n            top: 0;\n            left:0;\n            z-index: 9;\n            width:".concat(window.innerWidth, "px;\n            height:").concat(window.innerHeight, "px;\n            user-select:none;\n            font-size:0;\n        ");
         canvas.width = window.innerWidth * this.dpr;
         canvas.height = window.innerHeight * this.dpr;
         this.ref = canvas;
@@ -2070,7 +2078,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -2134,7 +2142,7 @@ var ImagePreview = (function () {
         this.envClient = this.testEnv();
         this.genFrame();
         this.handleReausetAnimate();
-        this.imgContainer = this.ref.querySelector("." + this.prefix + "imgContainer");
+        this.imgContainer = this.ref.querySelector(".".concat(this.prefix, "imgContainer"));
         this.imgContainer.matrix = this.initalMatrix;
         this[this.envClient + 'Initial']();
     }
@@ -2158,7 +2166,7 @@ var ImagePreview = (function () {
         this.ref.addEventListener('touchstart', this.handleTouchStart.bind(this));
         this.ref.addEventListener('touchmove', this.handleMove.bind(this));
         this.ref.addEventListener('touchend', this.handleToucnEnd.bind(this));
-        this.ref.querySelector("." + this.prefix + "close").addEventListener('touchstart', this.close.bind(this));
+        this.ref.querySelector(".".concat(this.prefix, "close")).addEventListener('touchstart', this.close.bind(this));
         this.handleResize = this.handleResize.bind(this);
         window.addEventListener('resize', this.handleResize);
         window.addEventListener('orientationchange', this.handleResize);
@@ -2228,8 +2236,8 @@ var ImagePreview = (function () {
         this.startXForDirection = e.touches[0].clientX;
     };
     ImagePreview.prototype.handleClick = function (e) {
-        var close = (this.ref.querySelector("." + this.prefix + "close"));
-        var bottom = (this.ref.querySelector("." + this.prefix + "bottom"));
+        var close = (this.ref.querySelector(".".concat(this.prefix, "close")));
+        var bottom = (this.ref.querySelector(".".concat(this.prefix, "bottom")));
         this.showTools = !this.showTools;
         if (this.isAnimating) ;
         if (this.showTools) {
@@ -2425,23 +2433,23 @@ var ImagePreview = (function () {
                 default: return '';
             }
         };
-        var html = "\n                <div class=\"" + this.prefix + "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"" + this.prefix + "imgContainer\"></div>\n                <div class=\"" + this.prefix + "bottom\">\n                    " + (this.envClient == 'pc' ?
-            "<div class=\"" + this.prefix + "item\" title=\"before\">\n                        <svg data-type=\"slideBefore\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M170.666667 477.866667L349.866667 298.666667l29.866666 29.866666-149.333333 149.333334h669.866667v42.666666H128l42.666667-42.666666z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item \" title=\"next\">\n                        <svg data-type=\"slideNext\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M849.066667 512l-179.2 179.2-29.866667-29.866667 149.333333-149.333333H128v-42.666667h763.733333l-42.666666 42.666667z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>" : '') + "\n                    <div class=\"" + this.prefix + "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"" + this.prefix + "item\">\n                        <svg data-type=\"rotateRight\"  t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ";
+        var html = "\n                <div class=\"".concat(this.prefix, "close\">\n                    <svg t=\"1563161688682\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5430\">\n                        <path d=\"M10.750656 1013.12136c-13.822272-13.822272-13.822272-36.347457 0-50.169729l952.200975-952.200975c13.822272-13.822272 36.347457-13.822272 50.169729 0 13.822272 13.822272 13.822272 36.347457 0 50.169729l-952.200975 952.200975c-14.334208 14.334208-36.347457 14.334208-50.169729 0z\" fill=\"#ffffff\" p-id=\"5431\"></path><path d=\"M10.750656 10.750656c13.822272-13.822272 36.347457-13.822272 50.169729 0L1013.633296 963.463567c13.822272 13.822272 13.822272 36.347457 0 50.169729-13.822272 13.822272-36.347457 13.822272-50.169729 0L10.750656 60.920385c-14.334208-14.334208-14.334208-36.347457 0-50.169729z\" fill=\"#ffffff\" p-id=\"5432\">\n                        </path>\n                    </svg>\n                </div>\n                <div class=\"").concat(this.prefix, "imgContainer\"></div>\n                <div class=\"").concat(this.prefix, "bottom\">\n                    ").concat(this.envClient == 'pc' ?
+            "<div class=\"".concat(this.prefix, "item\" title=\"before\">\n                        <svg data-type=\"slideBefore\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M170.666667 477.866667L349.866667 298.666667l29.866666 29.866666-149.333333 149.333334h669.866667v42.666666H128l42.666667-42.666666z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"").concat(this.prefix, "item \" title=\"next\">\n                        <svg data-type=\"slideNext\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M849.066667 512l-179.2 179.2-29.866667-29.866667 149.333333-149.333333H128v-42.666667h763.733333l-42.666666 42.666667z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>") : '', "\n                    <div class=\"").concat(this.prefix, "item \">\n                        <svg data-type=\"rotateLeft\" t=\"1563884004339\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1099\" width=\"200\" height=\"200\"><path d=\"M520.533333 285.866667c140.8 12.8 251.733333 132.266667 251.733334 277.333333 0 153.6-123.733333 277.333333-277.333334 277.333333-98.133333 0-192-55.466667-238.933333-140.8-4.266667-8.533333-4.266667-21.333333 8.533333-29.866666 8.533333-4.266667 21.333333-4.266667 29.866667 8.533333 42.666667 72.533333 119.466667 119.466667 204.8 119.466667 128 0 234.666667-106.666667 234.666667-234.666667s-98.133333-230.4-226.133334-234.666667l64 102.4c4.266667 8.533333 4.266667 21.333333-8.533333 29.866667-8.533333 4.266667-21.333333 4.266667-29.866667-8.533333l-89.6-145.066667c-4.266667-8.533333-4.266667-21.333333 8.533334-29.866667L597.333333 187.733333c8.533333-4.266667 21.333333-4.266667 29.866667 8.533334 4.266667 8.533333 4.266667 21.333333-8.533333 29.866666l-98.133334 59.733334z\" p-id=\"1100\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                    <div class=\"").concat(this.prefix, "item\">\n                        <svg data-type=\"rotateRight\"  t=\"1563884064737\" class=\"icon\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"1251\" width=\"200\" height=\"200\"><path d=\"M503.466667 285.866667L405.333333 226.133333c-8.533333-8.533333-12.8-21.333333-8.533333-29.866666 8.533333-8.533333 21.333333-12.8 29.866667-8.533334l145.066666 89.6c8.533333 4.266667 12.8 17.066667 8.533334 29.866667l-89.6 145.066667c-4.266667 8.533333-17.066667 12.8-29.866667 8.533333-8.533333-4.266667-12.8-17.066667-8.533333-29.866667l64-102.4c-123.733333 4.266667-226.133333 106.666667-226.133334 234.666667s106.666667 234.666667 234.666667 234.666667c85.333333 0 162.133333-46.933333 204.8-119.466667 4.266667-8.533333 17.066667-12.8 29.866667-8.533333 8.533333 4.266667 12.8 17.066667 8.533333 29.866666-51.2 85.333333-140.8 140.8-238.933333 140.8-153.6 0-277.333333-123.733333-277.333334-277.333333 0-145.066667 110.933333-264.533333 251.733334-277.333333z\" p-id=\"1252\" fill=\"#ffffff\"></path></svg>\n                    </div>\n                </div>\n        ");
         var isIPhoneX = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 375 && window.screen.height === 812;
         var isIPhoneXSMax = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 3 && window.screen.width === 414 && window.screen.height === 896;
         var isIPhoneXR = /iphone/gi.test(window.navigator.userAgent) && window.devicePixelRatio && window.devicePixelRatio === 2 && window.screen.width === 414 && window.screen.height === 896;
         var needHigher = isIPhoneX || isIPhoneXSMax || isIPhoneXR;
-        var style = "\n            ." + this.prefix + "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: " + genStyle('conBackground') + ";\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            \n            ." + this.prefix + "imagePreviewer." + this.defToggleClass + "{\n                left: 0%;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 10;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            ." + this.prefix + "imagePreviewer svg{\n                overflow:visible;\n            }\n            ." + this.prefix + "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            ." + this.prefix + "imagePreviewer " + this.prefix + ".close." + this.prefix + "scroll{\n                height: 0;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "imgContainer{\n                position: relative;\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            \n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom{\n                position: absolute;\n                bottom: " + (needHigher ? 20 : 0) + "px;\n                left: 20px;\n                right: 20px;\n                z-index: 10;\n                padding: 0 10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item{\n                display:inline-block;\n                width: 42px;\n                height: 42px;\n                cursor:pointer;\n            }\n            ." + this.prefix + "imagePreviewer ." + this.prefix + "bottom ." + this.prefix + "item svg{\n                box-sizing: border-box;\n                width: 100%;\n                height: 100%;\n                padding:10px;\n            }\n        ";
+        var style = "\n            .".concat(this.prefix, "imagePreviewer{\n                position: fixed;\n                top:0;\n                left: 100%;\n                width: 100%;\n                height: 100%;\n                background: ").concat(genStyle('conBackground'), ";\n                color:#fff;\n                transform: translate3d(0,0,0);\n                transition: left 0.5s;\n                overflow:hidden;\n                user-select: none;\n            }\n            \n            .").concat(this.prefix, "imagePreviewer.").concat(this.defToggleClass, "{\n                left: 0%;\n            }\n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "close{\n                position: absolute;\n                top: 20px;\n                right: 20px;\n                z-index: 10;\n                box-sizing: border-box;\n                width: 22px;\n                height: 22px;\n                cursor:pointer;\n            }\n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "close svg{\n                width: 100%;\n                height: 100%;             \n            }\n            .").concat(this.prefix, "imagePreviewer svg{\n                overflow:visible;\n            }\n            .").concat(this.prefix, "imagePreviewer svg path{\n                stroke: #948888;\n                stroke-width: 30px;\n            }\n            \n            .").concat(this.prefix, "imagePreviewer ").concat(this.prefix, ".close.").concat(this.prefix, "scroll{\n                height: 0;\n            }\n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "imgContainer{\n                position: relative;\n                height: 100%;\n                font-size: 0;\n                white-space: nowrap;\n            }\n            \n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "bottom{\n                position: absolute;\n                bottom: ").concat(needHigher ? 20 : 0, "px;\n                left: 20px;\n                right: 20px;\n                z-index: 10;\n                padding: 0 10px;\n                text-align: center;\n                border-top: 1px solid rgba(255, 255, 255, .2);\n            }\n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "bottom .").concat(this.prefix, "item{\n                display:inline-block;\n                width: 42px;\n                height: 42px;\n                cursor:pointer;\n            }\n            .").concat(this.prefix, "imagePreviewer .").concat(this.prefix, "bottom .").concat(this.prefix, "item svg{\n                box-sizing: border-box;\n                width: 100%;\n                height: 100%;\n                padding:10px;\n            }\n        ");
         this.ref = document.createElement('div');
-        this.ref.className = this.prefix + "imagePreviewer";
+        this.ref.className = "".concat(this.prefix, "imagePreviewer");
         this.ref.innerHTML = html;
-        if (!document.querySelector("#" + this.prefix + "style")) {
+        if (!document.querySelector("#".concat(this.prefix, "style"))) {
             var styleElem = document.createElement('style');
-            styleElem.id = this.prefix + "style";
+            styleElem.id = "".concat(this.prefix, "style");
             styleElem.innerHTML = style;
             document.querySelector('head').appendChild(styleElem);
         }
-        this.ref.querySelector("." + this.prefix + "imgContainer").append(this.actionExecutor.ref);
+        this.ref.querySelector(".".concat(this.prefix, "imgContainer")).append(this.actionExecutor.ref);
         document.body.appendChild(this.ref);
     };
     ImagePreview.prototype.handleReausetAnimate = function () {

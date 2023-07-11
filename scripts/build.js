@@ -28,7 +28,7 @@ const sourceVer = \`${verTexSource}\`;
 `)
 fs.writeFileSync(`${webglDir}/index.ts`,copiedWebglSource)
 console.log('ts编译开始')
-const {output, code} =  shell.exec('npm run compileTs"');
+const {output, code} =  shell.exec('npm run compileTs');
 fs.writeFileSync(`${webglDir}/index.ts`,webglSource)
 if (code !== 0) {
     throw output;
@@ -37,7 +37,7 @@ console.log('typescript compile complete!');
 
 shell.cd('scripts');
 {
-    const {output, code} =  shell.exec('node generateModule.js"');
+    const {output, code} =  shell.exec('node generateModule.js');
     if (code !== 0) {
         throw output;
     }

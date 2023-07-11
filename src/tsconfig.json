@@ -10,5 +10,6 @@
           "listFiles":true,
           "declaration": true,
           "declarationDir": "../release/types"
-      }
+      },
+      "exclude": ["nodule_modules"]
   }

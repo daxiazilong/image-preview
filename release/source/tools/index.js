@@ -5,7 +5,7 @@ function showDebugger(msg) {
     msgs.push(msg);
     var stat = document.getElementById('stat');
     timer = setTimeout(function () {
-        stat.innerHTML = "<pre style=\"word-break: break-all;white-space: pre-line;\">" + msgs.join('\n') + "</pre>";
+        stat.innerHTML = "<pre style=\"word-break: break-all;white-space: pre-line;\">".concat(msgs.join('\n'), "</pre>");
         msgs = [];
     }, 200);
 }

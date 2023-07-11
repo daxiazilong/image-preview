@@ -1,24 +1,24 @@
-declare type ImagePreviewConstrucor = {
+type ImagePreviewConstrucor = {
     imgs?: Array<string | HTMLImageElement>;
 } & {
     selector?: string;
 };
-declare type interFaceElementMatrix = HTMLElement & {
+type interFaceElementMatrix = HTMLElement & {
     matrix: Array<Array<number>>;
     intialMatrix: Array<Array<number>>;
 } & transformParam;
-declare type transformParam = {
+type transformParam = {
     rotateDeg: number;
 };
-declare type task = {
+type task = {
     priority: number;
     callback: (e: any) => any;
 };
-declare type image = HTMLImageElement & {
+type image = HTMLImageElement & {
     loadError: boolean;
     _id: number;
 };
-declare type animateProps = {
+type animateProps = {
     el: HTMLElement;
     prop: string;
     endStr: string;
@@ -26,7 +26,7 @@ declare type animateProps = {
     callback?: () => any;
     duration?: number;
 };
-declare type setTransitionPropertyProps = {
+type setTransitionPropertyProps = {
     el: HTMLElement;
     time: number;
     timingFunction?: string;
@@ -40,7 +40,7 @@ declare module "*.frag" {
     const sourceFrag: string;
     export { sourceFrag };
 }
-declare type createPlaneParam = {
+type createPlaneParam = {
     x: number;
     y: number;
     width: number;

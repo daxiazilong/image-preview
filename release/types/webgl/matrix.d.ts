@@ -1,4 +1,4 @@
-declare type matrixType = Array<number>;
+type matrixType = Array<number>;
 export declare const matrix: {
     multiplyPoint(point: matrixType, rowMatrix: matrixType, ...rest: Array<matrixType>): any;
     multiplyMatrices(a: matrixType, b: matrixType, ...rest: any[]): any;

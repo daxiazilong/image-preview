@@ -33,5 +33,5 @@ setTimeout(function () {
 }, 500);
 var statShow = document.querySelector('#stat');
 window.onerror = function (message, source, lineno, colno, error) {
-    statShow.innerHTML = "\n        " + message + "\n        " + source + "\n        " + lineno + "\n        " + colno + "\n        " + error + "\n    ";
+    statShow.innerHTML = "\n        ".concat(message, "\n        ").concat(source, "\n        ").concat(lineno, "\n        ").concat(colno, "\n        ").concat(error, "\n    ");
 };
