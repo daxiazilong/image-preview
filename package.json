@@ -37,7 +37,7 @@
     "vue": "^2.6.10",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.7.0",
-    "webpack-dev-server": "^3.11.2"
+    "webpack-dev-server": "^4.15.1"
   },
   "standard-version": {
     "skip": {
